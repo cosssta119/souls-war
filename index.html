@@ -1328,6 +1328,23 @@
 				<div style="text-align: center; margin-top: 15px; color: var(--text-muted); font-size: 0.8rem;">${formation.name}</div>
 				${formation.comment ? `<div style="text-align: center; margin-top: 10px; padding: 10px; background: var(--bg-input); border-radius: 8px; border-left: 3px solid var(--accent-gold);"><span style="color: var(--accent-gold);">💬</span> ${formation.comment}</div>` : ''}`;
 		}
+		
+		function renderEnemyFormationGrid(heroes, pet) {
+		    const slot = (i) => {
+		        const hero = heroes[i] || '';
+		        return `<div class="hero-slot ${hero ? 'filled' : ''}">${hero || '—'}</div>`;
+		    };
+		    const petSlot = pet ? `<div class="pet-slot filled">🐾 ${pet}</div>` : `<div class="pet-slot">🐾 —</div>`;
+		    
+		    return `
+		        <div class="formation-grid">
+		            ${petSlot}
+		            <div class="formation-row">${slot(5)}${slot(6)}${slot(7)}</div>
+		            <div class="formation-row">${slot(3)}${slot(4)}</div>
+		            <div class="formation-row">${slot(0)}${slot(1)}${slot(2)}</div>
+		        </div>`;
+		}
+		
 		function renderFormationGrid(heroes, pet) {
 		    const slot = (i) => {
 		        const hero = heroes[i] || '';
@@ -1345,22 +1362,6 @@
 		            ${petSlot}
 		        </div>`;
 		}
-		
-        function renderFormationGrid(heroes, pet) {
-            const slot = (i) => {
-                const hero = heroes[i] || '';
-                return `<div class="hero-slot ${hero ? 'filled' : ''}">${hero || '—'}</div>`;
-            };
-            const petSlot = pet ? `<div class="pet-slot filled">🐾 ${pet}</div>` : `<div class="pet-slot">🐾 —</div>`;
-            
-            return `
-                <div class="formation-grid">
-                    <div class="formation-row">${slot(0)}${slot(1)}${slot(2)}</div>
-                    <div class="formation-row">${slot(3)}${slot(4)}</div>
-                    <div class="formation-row">${slot(5)}${slot(6)}${slot(7)}</div>
-                    ${petSlot}
-                </div>`;
-        }
         
         // ========== DODAWANIE ==========
         
@@ -1776,5 +1777,6 @@
     </script>
 </body>
 </html>
+
 
 
