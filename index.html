@@ -527,27 +527,27 @@
             
             <div class="form-grid">
                 <div class="autocomplete-wrapper">
-                    <label>Pozycja 1</label>
+                    <label>Hero 1</label>
                     <input type="text" id="search-pos1" placeholder="np. Taros" autocomplete="off" data-type="hero">
                     <div class="autocomplete-list" id="list-search-pos1"></div>
                 </div>
                 <div class="autocomplete-wrapper">
-                    <label>Pozycja 2</label>
+                    <label>Hero 2</label>
                     <input type="text" id="search-pos2" placeholder="np. Solina" autocomplete="off" data-type="hero">
                     <div class="autocomplete-list" id="list-search-pos2"></div>
                 </div>
                 <div class="autocomplete-wrapper">
-                    <label>Pozycja 3</label>
+                    <label>Hero 3</label>
                     <input type="text" id="search-pos3" placeholder="np. Roze" autocomplete="off" data-type="hero">
                     <div class="autocomplete-list" id="list-search-pos3"></div>
                 </div>
                 <div class="autocomplete-wrapper">
-                    <label>Pozycja 4</label>
+                    <label>Hero 4</label>
                     <input type="text" id="search-pos4" placeholder="np. Nebula" autocomplete="off" data-type="hero">
                     <div class="autocomplete-list" id="list-search-pos4"></div>
                 </div>
                 <div class="autocomplete-wrapper">
-                    <label>Pozycja 5</label>
+                    <label>Hero 5</label>
                     <input type="text" id="search-pos5" placeholder="np. Lena" autocomplete="off" data-type="hero">
                     <div class="autocomplete-list" id="list-search-pos5"></div>
                 </div>
@@ -672,7 +672,12 @@
                     <div class="autocomplete-list" id="list-add-enemyPet"></div>
                 </div>
             </div>
-            
+
+			<div class="autocomplete-wrapper full-width" style="margin-top: 15px;">
+			    <label>💬 Komentarz (opcjonalnie)</label>
+			    <input type="text" id="add-comment" placeholder="np. Unikać Death, Silbren u przeciwnika... itp.">
+			</div>
+			
             <button class="btn btn-success" onclick="saveFormation()">💾 ZAPISZ FORMACJĘ</button>
             <button class="btn btn-secondary" onclick="clearAddForm()" style="margin-top: 8px;">✖ Wyczyść</button>
         </div>
@@ -777,7 +782,7 @@
     
     <script>
         // =====================================================
-        // 🔥 FIREBASE CONFIGURATION - UZUPEŁNIJ SWOIMI DANYMI!
+        // 🔥 FIREBASE CONFIGURATION - UZUPEŁNIĆ SWOIMI DANYMI!
         // =====================================================
 
 		const firebaseConfig = {
@@ -1320,8 +1325,9 @@
 			        <div class="formation-title">⚔️ TWÓJ SKŁAD (ID: ${formation.id}) ${badge}</div>
 			        ${renderFormationGrid(formation.my, formation.myPet)}
 			    </div>
-			    <div style="text-align: center; margin-top: 15px; color: var(--text-muted); font-size: 0.8rem;">${formation.name}</div>`;
-        }
+				<div style="text-align: center; margin-top: 15px; color: var(--text-muted); font-size: 0.8rem;">${formation.name}</div>
+				${formation.comment ? `<div style="text-align: center; margin-top: 10px; padding: 10px; background: var(--bg-input); border-radius: 8px; border-left: 3px solid var(--accent-gold);"><span style="color: var(--accent-gold);">💬</span> ${formation.comment}</div>` : ''}`;
+		}
 		function renderEnemyFormationGrid(heroes, pet) {
 			const slot = (i) => {
 				const hero = heroes[i] || '';
@@ -1378,17 +1384,19 @@
             }
             
             const newId = allFormations.length > 0 ? Math.max(...allFormations.map(f => f.id)) + 1 : 1;
-            
-            const formation = {
-                id: newId,
-                name,
-                my,
-                myPet,
-                enemy,
-                enemyPet,
-                isBase: false,
-                dateAdded: new Date().toISOString()
-            };
+			const comment = document.getElementById('add-comment').value.trim();
+			
+			const formation = {
+			    id: newId,
+			    name,
+			    my,
+			    myPet,
+			    enemy,
+			    enemyPet,
+			    comment,
+			    isBase: false,
+			    dateAdded: new Date().toISOString()
+			};
             
             try {
                 await formationsRef.child(newId).set(formation);
@@ -1407,6 +1415,7 @@
             }
             document.getElementById('add-myPet').value = '';
             document.getElementById('add-enemyPet').value = '';
+			document.getElementById('add-comment').value = '';
         }
         
         async function deleteFormation(id) {
@@ -1766,3 +1775,4 @@
     </script>
 </body>
 </html>
+
