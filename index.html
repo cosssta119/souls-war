@@ -220,9 +220,19 @@
             margin-bottom: 10px;
             cursor: pointer;
             transition: all 0.3s;
+			animation: fadeIn 0.3s ease;
         }
+
+		@keyframes fadeIn {
+		    from { opacity: 0; transform: translateY(10px); }
+		    to { opacity: 1; transform: translateY(0); }
+		}
         
-        .result-card:hover { border-color: var(--accent-gold); transform: translateX(5px); }
+		.result-card:hover { 
+		    border-color: var(--accent-gold); 
+		    transform: translateX(5px);
+		    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.2);
+		}
         
         .result-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .result-id { font-family: 'Cinzel', serif; color: var(--accent-gold); font-size: 0.85rem; }
@@ -232,10 +242,17 @@
         .match-4 { background: #f9a825; color: #000; }
         .match-3 { background: #ef6c00; }
         .match-2 { background: #c62828; }
+		.match-1 { background: #757575; }
         
         .result-name { font-size: 0.9rem; margin-bottom: 5px; }
         .result-heroes { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; }
-        .matched-hero { color: #4caf50; font-weight: 600; }
+		.matched-hero { 
+		    color: #4caf50; 
+		    font-weight: 600;
+		    background: rgba(76, 175, 80, 0.15);
+		    padding: 1px 4px;
+		    border-radius: 3px;
+		}
         
         .badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 3px; margin-left: 5px; }
         .user-badge { background: var(--accent-purple); color: white; }
@@ -1154,45 +1171,52 @@
         
         function normalize(str) { return (str || '').trim().toLowerCase(); }
         
-        function searchFormations() {
-            const searchHeroes = [];
-            for (let i = 1; i <= 5; i++) {
-                const val = document.getElementById(`search-pos${i}`).value.trim();
-                if (val) searchHeroes.push(normalize(val));
-            }
-            const searchPet = normalize(document.getElementById('search-pet').value);
-            
-            if (searchHeroes.length === 0 && !searchPet) {
-                showToast('Wpisz przynajmniej jedną postać!', true);
-                return;
-            }
-            
-            const results = [];
-            
-            allFormations.forEach(formation => {
-                const enemyHeroes = formation.enemy.filter(h => h).map(h => normalize(h));
-                const enemyPet = normalize(formation.enemyPet);
-                
-                let matchedHeroes = [];
-                searchHeroes.forEach(sh => {
-                    if (enemyHeroes.some(eh => eh.includes(sh) || sh.includes(eh))) {
-                        matchedHeroes.push(sh);
-                    }
-                });
-                
-                let petMatched = searchPet && (enemyPet.includes(searchPet) || searchPet.includes(enemyPet));
-                
-                const totalSearched = searchHeroes.length + (searchPet ? 1 : 0);
-                const totalMatched = matchedHeroes.length + (petMatched ? 1 : 0);
-                
-                if (totalMatched > 0) {
-                    results.push({ formation, matchedHeroes, petMatched, score: totalMatched, maxScore: totalSearched });
-                }
-            });
-            
-            results.sort((a, b) => b.score - a.score);
-            displayResults(results);
-        }
+		function searchFormations() {
+		    const searchHeroes = [];
+		    for (let i = 1; i <= 5; i++) {
+		        const val = document.getElementById(`search-pos${i}`).value.trim();
+		        if (val) searchHeroes.push(normalize(val));
+		    }
+		    const searchPet = normalize(document.getElementById('search-pet').value);
+		    
+		    if (searchHeroes.length === 0 && !searchPet) {
+		        showToast('Wpisz przynajmniej jedną postać!', true);
+		        return;
+		    }
+		    
+		    const results = [];
+		    
+		    allFormations.forEach(formation => {
+		        const enemyHeroes = formation.enemy.filter(h => h).map(h => normalize(h));
+		        const enemyPet = normalize(formation.enemyPet);
+		        
+		        let matchedHeroes = [];
+		        searchHeroes.forEach(sh => {
+					const isMatch = enemyHeroes.some(eh => 
+					    eh === sh || eh.startsWith(sh)
+					);
+		            if (isMatch) {
+		                matchedHeroes.push(sh);
+		            }
+		        });
+		        
+		        // Pet - dokładne dopasowanie lub startsWith
+		        let petMatched = searchPet && (
+		            enemyPet === searchPet || 
+		            enemyPet.startsWith(searchPet)
+		        );
+		        
+		        const totalSearched = searchHeroes.length + (searchPet ? 1 : 0);
+		        const totalMatched = matchedHeroes.length + (petMatched ? 1 : 0);
+		        
+		        if (totalMatched > 0) {
+		            results.push({ formation, matchedHeroes, petMatched, score: totalMatched, maxScore: totalSearched });
+		        }
+		    });
+		    
+		    results.sort((a, b) => b.score - a.score);
+		    displayResults(results);
+		}
         
         function displayResults(results) {
             const container = document.getElementById('results-section');
@@ -1207,7 +1231,9 @@
             results.forEach(result => {
                 const f = result.formation;
                 const enemyDisplay = f.enemy.filter(h => h).map(h => {
-                    const isMatched = result.matchedHeroes.some(mh => normalize(h).includes(mh) || mh.includes(normalize(h)));
+				const isMatched = result.matchedHeroes.some(mh => 
+				    normalize(h) === mh || normalize(h).startsWith(mh)
+				);
                     return isMatched ? `<span class="matched-hero">${h}</span>` : h;
                 }).join(', ');
                 
@@ -1295,12 +1321,16 @@
         }
         
         // ========== PODGLĄD ==========
-        
-        function lookupById() {
-            const id = parseInt(document.getElementById('lookup-id').value);
-            if (!id) { showToast('Wpisz numer ID!', true); return; }
-            showFormation(id);
-        }
+		function lookupById() {
+		    const input = document.getElementById('lookup-id').value.trim();
+		    const id = parseInt(input);
+		    
+		    if (!input || isNaN(id) || id < 1) { 
+		        showToast('Wpisz prawidłowy numer ID!', true); 
+		        return; 
+		    }
+		    showFormation(id);
+		}
         
         function showFormation(id) {
             const formation = allFormations.find(f => f.id === id);
@@ -1366,50 +1396,78 @@
 		}
         
         // ========== DODAWANIE ==========
-        
-        async function saveFormation() {
-            if (!isOnline) { showToast('Brak połączenia z bazą!', true); return; }
-            
-            const name = document.getElementById('add-name').value.trim();
-            if (!name) { showToast('Podaj nazwę formacji!', true); return; }
-            
-            const my = [], enemy = [];
-            for (let i = 1; i <= 8; i++) {
-                my.push(document.getElementById(`add-my${i}`).value.trim());
-                enemy.push(document.getElementById(`add-enemy${i}`).value.trim());
-            }
-            
-            const myPet = document.getElementById('add-myPet').value.trim();
-            const enemyPet = document.getElementById('add-enemyPet').value.trim();
-            
-            if (my.filter(h => h).length === 0 && enemy.filter(h => h).length === 0) {
-                showToast('Dodaj przynajmniej jedną postać!', true);
-                return;
-            }
-            
-            const newId = allFormations.length > 0 ? Math.max(...allFormations.map(f => f.id)) + 1 : 1;
-			const comment = document.getElementById('add-comment').value.trim();
-			
-			const formation = {
-			    id: newId,
-			    name,
-			    my,
-			    myPet,
-			    enemy,
-			    enemyPet,
-			    comment,
-			    isBase: false,
-			    dateAdded: new Date().toISOString()
-			};
-            
-            try {
-                await formationsRef.child(newId).set(formation);
-                showToast(`Zapisano formację #${newId}!`);
-                clearAddForm();
-            } catch (error) {
-                showToast('Błąd zapisu: ' + error.message, true);
-            }
-        }
+		async function saveFormation() {
+		    if (!isOnline) { 
+		        showToast('Brak połączenia z bazą!', true); 
+		        return; 
+		    }
+		    
+		    const name = document.getElementById('add-name').value.trim();
+		    if (!name) { 
+		        showToast('Podaj nazwę formacji!', true); 
+		        return; 
+		    }
+		    
+		    // Zbierz dane z formularza
+		    const my = [], enemy = [];
+		    for (let i = 1; i <= 8; i++) {
+		        my.push(document.getElementById(`add-my${i}`).value.trim());
+		        enemy.push(document.getElementById(`add-enemy${i}`).value.trim());
+		    }
+		    
+		    const myPet = document.getElementById('add-myPet').value.trim();
+		    const enemyPet = document.getElementById('add-enemyPet').value.trim();
+		    
+		    // Sprawdź czy jest przynajmniej jeden bohater
+		    if (my.filter(h => h).length === 0 && enemy.filter(h => h).length === 0) {
+		        showToast('Dodaj przynajmniej jedną postać!', true);
+		        return;
+		    }
+		    
+		    // Walidacja bohaterów - sprawdź czy istnieją w bazie
+		    const allHeroNames = heroes.map(h => h.name.toLowerCase());
+		    const enteredHeroes = [...my, ...enemy].filter(h => h); // tylko niepuste
+		    const invalidHeroes = enteredHeroes.filter(h => !allHeroNames.includes(h.toLowerCase()));
+		    
+		    if (invalidHeroes.length > 0) {
+		        showToast(`Nieznani bohaterowie: ${invalidHeroes.slice(0, 3).join(', ')}${invalidHeroes.length > 3 ? '...' : ''}`, true);
+		        return;
+		    }
+		    
+		    // Walidacja petów - sprawdź czy istnieją w bazie
+		    const allPetNames = pets.map(p => (typeof p === 'string' ? p : p.name).toLowerCase());
+		    const enteredPets = [myPet, enemyPet].filter(p => p); // tylko niepuste
+		    const invalidPets = enteredPets.filter(p => !allPetNames.includes(p.toLowerCase()));
+		    
+		    if (invalidPets.length > 0) {
+		        showToast(`Nieznane pety: ${invalidPets.join(', ')}`, true);
+		        return;
+		    }
+		    
+		    // Generuj nowe ID
+		    const newId = allFormations.length > 0 ? Math.max(...allFormations.map(f => f.id)) + 1 : 1;
+		    const comment = document.getElementById('add-comment').value.trim();
+		    
+		    const formation = {
+		        id: newId,
+		        name,
+		        my,
+		        myPet,
+		        enemy,
+		        enemyPet,
+		        comment,
+		        isBase: false,
+		        dateAdded: new Date().toISOString()
+		    };
+		    
+		    try {
+		        await formationsRef.child(String(newId)).set(formation);
+		        showToast(`Zapisano formację #${newId}!`);
+		        clearAddForm();
+		    } catch (error) {
+		        showToast('Błąd zapisu: ' + error.message, true);
+		    }
+		}
         
         function clearAddForm() {
             document.getElementById('add-name').value = '';
@@ -1435,7 +1493,7 @@
             if (!confirm(`Usunąć formację #${id}: "${formation.name}"?`)) return;
             
             try {
-                await formationsRef.child(id).remove();
+				await formationsRef.child(String(id)).remove();
                 showToast('Formacja usunięta!');
             } catch (error) {
                 showToast('Błąd usuwania: ' + error.message, true);
@@ -1448,7 +1506,7 @@
             try {
                 const userFormations = allFormations.filter(f => !f.isBase);
                 for (const f of userFormations) {
-                    await formationsRef.child(f.id).remove();
+					await formationsRef.child(String(f.id)).remove();
                 }
                 showToast(`Usunięto ${userFormations.length} formacji użytkowników`);
             } catch (error) {
@@ -1483,73 +1541,79 @@
             showToast(`Wyeksportowano ${allFormations.length} formacji`);
         }
         
-        async function importFromCSV(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            if (!isOnline) { showToast('Brak połączenia z bazą!', true); return; }
-            
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const text = e.target.result;
-                    const lines = text.split('\n').filter(l => l.trim());
-                    
-                    // Wykryj separator (średnik lub przecinek)
-                    const separator = lines[0].includes(';') ? ';' : ',';
-                    
-                    let imported = 0;
-                    let maxId = allFormations.length > 0 ? Math.max(...allFormations.map(f => f.id)) : 0;
-                    
-                    for (let i = 1; i < lines.length; i++) {
-                        const values = parseCSVLine(lines[i], separator);
-                        if (values.length < 20) continue;
-                        
-                        // Obsługa starego i nowego formatu
-                        const startIdx = values[0].match(/^\d+$/) ? 1 : 0; // Czy pierwsza kolumna to ID?
-                        
-                        maxId++;
-                        const formation = {
-                            id: maxId,
-                            name: cleanValue(values[startIdx]),
-                            my: [
-                                cleanValue(values[startIdx + 1]),
-                                cleanValue(values[startIdx + 2]),
-                                cleanValue(values[startIdx + 3]),
-                                cleanValue(values[startIdx + 4]),
-                                cleanValue(values[startIdx + 5]),
-                                cleanValue(values[startIdx + 6]),
-                                cleanValue(values[startIdx + 7]),
-                                cleanValue(values[startIdx + 8])
-                            ],
-                            myPet: cleanValue(values[startIdx + 9]),
-                            enemy: [
-                                cleanValue(values[startIdx + 10]),
-                                cleanValue(values[startIdx + 11]),
-                                cleanValue(values[startIdx + 12]),
-                                cleanValue(values[startIdx + 13]),
-                                cleanValue(values[startIdx + 14]),
-                                cleanValue(values[startIdx + 15]),
-                                cleanValue(values[startIdx + 16]),
-                                cleanValue(values[startIdx + 17])
-                            ],
-                            enemyPet: cleanValue(values[startIdx + 18]),
-                            isBase: false,
-                            dateAdded: new Date().toISOString()
-                        };
-                        
-                        await formationsRef.child(formation.id).set(formation);
-                        imported++;
-                    }
-                    
-                    showToast(`Zaimportowano ${imported} formacji!`);
-                } catch (error) {
-                    showToast('Błąd importu: ' + error.message, true);
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        }
+		async function importFromCSV(event) {
+		    const file = event.target.files[0];
+		    if (!file) return;
+		    
+		    if (!isOnline) { showToast('Brak połączenia z bazą!', true); return; }
+		    
+		    const reader = new FileReader();
+		    reader.onload = async (e) => {
+		        try {
+		            const text = e.target.result;
+		            const lines = text.split('\n').filter(l => l.trim());
+		            
+		            const separator = lines[0].includes(';') ? ';' : ',';
+		            
+		            let imported = 0;
+		            // Pobierz aktualne maksymalne ID z Firebase
+		            const existingIds = allFormations.map(f => f.id);
+		            let maxId = existingIds.length > 0 ? Math.max(...existingIds) : 0;
+		            
+		            for (let i = 1; i < lines.length; i++) {
+		                const values = parseCSVLine(lines[i], separator);
+		                if (values.length < 20) continue;
+		                
+		                const startIdx = values[0].match(/^\d+$/) ? 1 : 0;
+		                
+		                // Upewnij się że ID jest unikalne
+		                maxId++;
+		                while (existingIds.includes(maxId)) {
+		                    maxId++;
+		                }
+		                existingIds.push(maxId); // Dodaj do listy żeby kolejne też były unikalne
+		                
+		                const formation = {
+		                    id: maxId,
+		                    name: cleanValue(values[startIdx]),
+		                    my: [
+		                        cleanValue(values[startIdx + 1]),
+		                        cleanValue(values[startIdx + 2]),
+		                        cleanValue(values[startIdx + 3]),
+		                        cleanValue(values[startIdx + 4]),
+		                        cleanValue(values[startIdx + 5]),
+		                        cleanValue(values[startIdx + 6]),
+		                        cleanValue(values[startIdx + 7]),
+		                        cleanValue(values[startIdx + 8])
+		                    ],
+		                    myPet: cleanValue(values[startIdx + 9]),
+		                    enemy: [
+		                        cleanValue(values[startIdx + 10]),
+		                        cleanValue(values[startIdx + 11]),
+		                        cleanValue(values[startIdx + 12]),
+		                        cleanValue(values[startIdx + 13]),
+		                        cleanValue(values[startIdx + 14]),
+		                        cleanValue(values[startIdx + 15]),
+		                        cleanValue(values[startIdx + 16]),
+		                        cleanValue(values[startIdx + 17])
+		                    ],
+		                    enemyPet: cleanValue(values[startIdx + 18]),
+		                    isBase: false,
+		                    dateAdded: new Date().toISOString()
+		                };
+		                
+		                await formationsRef.child(String(formation.id)).set(formation);
+		                imported++;
+		            }
+		            
+		            showToast(`Zaimportowano ${imported} formacji!`);
+		        } catch (error) {
+		            showToast('Błąd importu: ' + error.message, true);
+		        }
+		    };
+		    reader.readAsText(file);
+		    event.target.value = '';
+		}
         
         function parseCSVLine(line, separator = ';') {
             const result = [];
@@ -1718,7 +1782,7 @@
 	            try {
 	                let count = 0;
 	                for (const f of baseFormations) {
-	                    await formationsRef.child(f.id).set(f);
+						await formationsRef.child(String(f.id)).set(f);
 	                    count++;
 	                    if (count % 20 === 0) {
 	                        showToast(`Ładowanie... ${count}/126`);
@@ -1779,6 +1843,7 @@
     </script>
 </body>
 </html>
+
 
 
 
