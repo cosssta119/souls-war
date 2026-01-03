@@ -176,6 +176,7 @@
 		[data-theme="light"] .search-formation-grid input:focus {
 			border-color: #996515 !important;
 			background: #fffefa !important;
+			box-shadow: 0 0 8px rgba(212, 175, 55, 0.3) !important;
 		}
 
 		[data-theme="light"] .search-formation-grid label {
@@ -588,10 +589,11 @@
 			transition: all 0.3s;
 		}
 		.search-formation-grid input:focus {
-			background: rgba(212, 175, 55, 0.05);
-			border-color: var(--accent-gold);
-			box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+			background: rgba(212, 175, 55, 0.1) !important;
+			border-color: var(--accent-gold) !important;
+			box-shadow: 0 0 8px rgba(212, 175, 55, 0.3) !important;
 		}
+
 		.search-formation-grid input::placeholder {
 			color: rgba(255, 255, 255, 0.3);
 		}
@@ -1747,7 +1749,7 @@
             
             <div class="autocomplete-wrapper full-width" style="margin-bottom: 15px;">
                 <label data-i18n="add.nameLabel">Nazwa formacji</label>
-                <input type="text" id="add-name" data-i18n-placeholder="add.namePlaceholder" placeholder="np. Nick 01-01-2025 W1">
+                <input type="text" id="add-name" data-i18n-placeholder="add.namePlaceholder" placeholder="np. Nick 01-01-2026 W1 / Kontra Dark-Undead v1">
             </div>
             
         <div class="add-formations-grid">    
@@ -1799,7 +1801,7 @@
         </div>
             <div class="autocomplete-wrapper full-width" style="margin-top: 15px;">
                 <label>💬 <span data-i18n="add.commentLabel">Komentarz (opcjonalnie)</span></label>
-                <input type="text" id="add-comment" data-i18n-placeholder="add.commentPlaceholder" placeholder="np. Unikać Death, Silbren u przeciwnika... itp.">
+                <input type="text" id="add-comment" data-i18n-placeholder="add.commentPlaceholder" placeholder="np. Unikać Death, Silbren u przeciwnika, kolejność speed: xxx > yyy > zzz, Pao runa PR, itp.">
             </div>
             
             <button class="btn btn-success" onclick="saveFormation()">💾 <span data-i18n="add.saveBtn">ZAPISZ FORMACJĘ</span></button>
@@ -2031,7 +2033,7 @@
         let favorites = JSON.parse(localStorage.getItem('souls_favorites') || '[]');
         let currentLang = localStorage.getItem('souls_lang') || 'pl';
         let currentDbFilter = 'all';
-        let quickSelectTarget = null, activeAddField = null;
+        let quickSelectTarget = null, activeAddField = null, activeSearchField = null;
 		let currentTheme = localStorage.getItem('souls_theme') || 'dark';
         
         let heroes = [
@@ -2075,9 +2077,9 @@
                 'preview.title': 'Podgląd formacji', 'preview.idPlaceholder': 'Wpisz ID (np. 12)', 'preview.showBtn': 'POKAŻ',
                 'preview.emptyState': 'Wpisz ID aby zobaczyć układ formacji', 'preview.notFound': 'Nie znaleziono formacji',
                 'preview.enemy': 'PRZECIWNIK', 'preview.yourTeam': 'TWÓJ SKŁAD', 'preview.noPet': 'Brak peta', 'preview.invalidId': 'Wpisz prawidłowy numer ID!',
-                'add.title': 'Dodaj nową formację', 'add.nameLabel': 'Nazwa formacji', 'add.namePlaceholder': 'np. Nick 01-01-2025 W1',
+                'add.title': 'Dodaj nową formację', 'add.nameLabel': 'Nazwa formacji', 'add.namePlaceholder': 'np. Nick 01-01-2026 W1 / Kontra Dark-Undead v1',
                 'add.yourTeam': 'Twój skład', 'add.enemyTeam': 'Skład przeciwnika', 'add.commentLabel': 'Komentarz (opcjonalnie)',
-                'add.commentPlaceholder': 'np. Unikać Death, Silbren u przeciwnika... itp.', 'add.saveBtn': 'ZAPISZ FORMACJĘ',
+                'add.commentPlaceholder': 'np. Unikać Death, Silbren u przeciwnika, kolejność speed: xxx > yyy > zzz, Pao runa PR, itp.', 'add.saveBtn': 'ZAPISZ FORMACJĘ',
                 'add.enterName': 'Podaj nazwę formacji!', 'add.addAtLeastOne': 'Dodaj przynajmniej jedną postać!',
                 'add.unknownHeroes': 'Nieznani bohaterowie', 'add.unknownPets': 'Nieznane pety', 'add.saved': 'Zapisano formację',
                 'settings.title': 'Import / Eksport', 'settings.status': 'Status', 'settings.checking': 'Sprawdzanie połączenia...',
@@ -2101,6 +2103,7 @@
                 'common.error': 'Błąd', 'common.noConnection': 'Brak połączenia z bazą!', 'common.formationDeleted': 'Formacja usunięta!',
                 'common.cannotDeleteBase': 'Nie możesz usunąć formacji bazowej!', 'common.confirmDelete': 'Usunąć formację',
                 'common.addedToFavorites': 'Dodano do ulubionych ⭐', 'common.removedFromFavorites': 'Usunięto z ulubionych',
+				'common.adminRequired': 'Tylko admin może usuwać formacje!',
                 'badge.base': 'BAZA', 'badge.user': 'DODANA'
             },
             en: {
@@ -2117,9 +2120,9 @@
                 'preview.title': 'Formation preview', 'preview.idPlaceholder': 'Enter ID (e.g. 12)', 'preview.showBtn': 'SHOW',
                 'preview.emptyState': 'Enter ID to see formation layout', 'preview.notFound': 'Formation not found',
                 'preview.enemy': 'ENEMY', 'preview.yourTeam': 'YOUR TEAM', 'preview.noPet': 'No pet', 'preview.invalidId': 'Enter a valid ID number!',
-                'add.title': 'Add new formation', 'add.nameLabel': 'Formation name', 'add.namePlaceholder': 'e.g. Nick 01-01-2025 W1',
+                'add.title': 'Add new formation', 'add.nameLabel': 'Formation name', 'add.namePlaceholder': 'e.g. Nick 01-01-2026 W1 / Counter Dark-Undead v1',
                 'add.yourTeam': 'Your team', 'add.enemyTeam': 'Enemy team', 'add.commentLabel': 'Comment (optional)',
-                'add.commentPlaceholder': 'e.g. Avoid Death, Silbren on enemy... etc.', 'add.saveBtn': 'SAVE FORMATION',
+                'add.commentPlaceholder': 'e.g. Avoid Death, Silbren on enemy, speed order: xxx > yyy > zzz, Pao rune PR, etc.', 'add.saveBtn': 'SAVE FORMATION',
                 'add.enterName': 'Enter formation name!', 'add.addAtLeastOne': 'Add at least one hero!',
                 'add.unknownHeroes': 'Unknown heroes', 'add.unknownPets': 'Unknown pets', 'add.saved': 'Formation saved',
                 'settings.title': 'Import / Export', 'settings.status': 'Status', 'settings.checking': 'Checking connection...',
@@ -2143,6 +2146,7 @@
                 'common.error': 'Error', 'common.noConnection': 'No database connection!', 'common.formationDeleted': 'Formation deleted!',
                 'common.cannotDeleteBase': 'Cannot delete base formation!', 'common.confirmDelete': 'Delete formation',
                 'common.addedToFavorites': 'Added to favorites ⭐', 'common.removedFromFavorites': 'Removed from favorites',
+				'common.adminRequired': 'Only admin can delete formations!',
                 'badge.base': 'BASE', 'badge.user': 'ADDED'
             }
         };
@@ -2407,42 +2411,60 @@
         // =====================================================
         // WYSZUKIWARKA
         // =====================================================
+		function addToSearch(heroName) {
+			// Sprawdź czy już jest - jeśli tak, usuń (toggle)
+			for (let i = 1; i <= 8; i++) {
+				const input = $(`search-pos${i}`);
+				if (input.value.trim().toLowerCase() === heroName.toLowerCase()) {
+					input.value = '';
+					updateSearchTagsSelection();
+					updateSearchCounter();
+					return;
+				}
+			}
+			
+			// Jeśli jest aktywne pole, dodaj tam
+			if (activeSearchField) {
+				const activeInput = $(activeSearchField);
+				if (activeInput && activeInput.id.startsWith('search-pos')) {
+					activeInput.value = heroName;
+					updateSearchTagsSelection();
+					updateSearchCounter();
+					return;
+				}
+			}
+			
+			// W przeciwnym razie dodaj do pierwszego wolnego
+			for (let i = 1; i <= 8; i++) {
+				const input = $(`search-pos${i}`);
+				if (!input.value.trim()) {
+					input.value = heroName;
+					updateSearchTagsSelection();
+					updateSearchCounter();
+					return;
+				}
+			}
+			showToast(t('search.allSlotsFull'), true);
+		}
         
-        function addToSearch(heroName) {
-            for (let i = 1; i <= 8; i++) {
-                const input = $(`search-pos${i}`);
-                if (input.value.trim().toLowerCase() === heroName.toLowerCase()) {
-                    input.value = '';
-                    updateSearchTagsSelection();
-                    updateSearchCounter();
-                    return;
-                }
-            }
-            for (let i = 1; i <= 8; i++) {
-                const input = $(`search-pos${i}`);
-                if (!input.value.trim()) {
-                    input.value = heroName;
-                    updateSearchTagsSelection();
-                    updateSearchCounter();
-                    return;
-                }
-            }
-            showToast(t('search.allSlotsFull'), true);
-        }
-        
-        function addPetToSearch(petName) {
-            const petInput = $('search-pet');
-            if (petInput.value.trim().toLowerCase() === petName.toLowerCase()) {
-                petInput.value = '';
-            } else if (!petInput.value.trim()) {
-                petInput.value = petName;
-            } else {
-                showToast(t('search.petSlotFull'), true);
-                return;
-            }
-            updateSearchTagsSelection();
-            updateSearchCounter();
-        }
+		function addPetToSearch(petName) {
+			const petInput = $('search-pet');
+			
+			// Toggle - jeśli ten sam pet, usuń
+			if (petInput.value.trim().toLowerCase() === petName.toLowerCase()) {
+				petInput.value = '';
+			} 
+			// Jeśli pole pet jest aktywne LUB puste, wpisz
+			else if (activeSearchField === 'search-pet' || !petInput.value.trim()) {
+				petInput.value = petName;
+			} 
+			else {
+				showToast(t('search.petSlotFull'), true);
+				return;
+			}
+			updateSearchTagsSelection();
+			updateSearchCounter();
+		}
         
         function updateSearchCounter() {
             let count = getFieldValues('search-pos', 8).filter(v => v).length;
@@ -2693,11 +2715,11 @@
                         <div class="db-item-name">${f.name}</div>
                         <div class="db-item-details"><div>⚔️ ${f.my.filter(h => h).join(', ') || '—'} + ${f.myPet || '—'}</div><div>👹 ${f.enemy.filter(h => h).join(', ') || '—'} + ${f.enemyPet || '—'}</div></div>
                     </div>
-                    <div class="db-item-actions">
-                        <button class="btn btn-small ${isFavorite(f.id) ? 'btn-favorite-active' : ''}" onclick="toggleFavorite(${f.id}, event)">${isFavorite(f.id) ? '⭐' : '☆'}</button>
-                        <button class="btn btn-small" onclick="event.stopPropagation(); showFormation(${f.id})">👁️</button>
-                        ${isAdmin || !f.isBase ? `<button class="btn btn-small btn-danger" onclick="event.stopPropagation(); deleteFormation(${f.id})">🗑️</button>` : ''}
-                    </div>
+					<div class="db-item-actions">
+						<button class="btn btn-small ${isFavorite(f.id) ? 'btn-favorite-active' : ''}" onclick="toggleFavorite(${f.id}, event)">${isFavorite(f.id) ? '⭐' : '☆'}</button>
+						<button class="btn btn-small" onclick="event.stopPropagation(); showFormation(${f.id})">👁️</button>
+						${isAdmin ? `<button class="btn btn-small btn-danger" onclick="event.stopPropagation(); deleteFormation(${f.id})">🗑️</button>` : ''}
+					</div>
                 </div>`).join('') : `<div class="empty-state"><p>${t('database.noFormations')}</p></div>`;
         }
         
@@ -2789,11 +2811,11 @@
         // USUWANIE
         // =====================================================
         
-        async function deleteFormation(id) {
-            const f = allFormations.find(x => x.id === id);
-            if (!f) return;
-            if (f.isBase && !isAdmin) { showToast(t('common.cannotDeleteBase'), true); return; }
-            if (!confirm(`${t('common.confirmDelete')} #${id}: "${f.name}"?`)) return;
+		async function deleteFormation(id) {
+			const f = allFormations.find(x => x.id === id);
+			if (!f) return;
+			if (!isAdmin) { showToast(t('common.adminRequired') || 'Tylko admin może usuwać formacje!', true); return; }
+			if (!confirm(`${t('common.confirmDelete')} #${id}: "${f.name}"?`)) return;
             
             try {
                 await formationsRef.child(String(id)).remove();
@@ -3626,6 +3648,8 @@
             
 			document.querySelectorAll('#tab-search input[data-type]').forEach(input => {
 				input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchFormations(); } });
+				input.addEventListener('focus', () => { activeSearchField = input.id; });
+				input.addEventListener('blur', () => { setTimeout(() => { activeSearchField = null; }, 200); });
 			});
             
             $('lookup-id').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lookupById(); } });
