@@ -1118,9 +1118,9 @@
                     if (val.length < 1) { list.classList.remove('show'); return; }
                     
                     let items = type === 'pet' ? pets : heroes;
-                    let filtered = type === 'pet' 
-                        ? items.filter(p => p.toLowerCase().includes(val)).slice(0, 6)
-                        : items.filter(h => h.name.toLowerCase().includes(val)).slice(0, 6);
+					let filtered = type === 'pet' 
+					    ? items.filter(p => p.toLowerCase().startsWith(val)).slice(0, 6)
+					    : items.filter(h => h.name.toLowerCase().startsWith(val)).slice(0, 6);
                     
                     if (filtered.length === 0) { list.classList.remove('show'); return; }
                     
@@ -1766,5 +1766,6 @@
     </script>
 </body>
 </html>
+
 
 
