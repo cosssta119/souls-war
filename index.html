@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Souls Online - Wyszukiwarka Kontr-Formacji</title>
+    <title>Souls Online - Wyszukiwarka kontr-formacji na wojnach</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Nunito:wght@400;600;700&display=swap');
         
@@ -503,7 +503,7 @@
     <header>
         <h1 onclick="headerClick()">⚔️ SOULS ONLINE ⚔️</h1>
         <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">
-            Wyszukiwarka Kontr-Formacji
+            Wyszukiwarka kontr-formacji
             <span class="admin-badge" id="admin-badge" style="display: none;">ADMIN</span>
         </p>
         <div class="status-bar">
@@ -522,7 +522,7 @@
         <div class="section">
             <h2>🔍 Szukaj kontr-formacji</h2>
             <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px; text-align: center;">
-                Wpisz skład przeciwnika — znajdę Twoje zwycięskie formacje
+                Wpisz skład przeciwnika
             </p>
             
             <div class="form-grid">
@@ -624,7 +624,7 @@
             
             <div class="autocomplete-wrapper full-width" style="margin-bottom: 15px;">
                 <label>Nazwa formacji</label>
-                <input type="text" id="add-name" placeholder="np. Cossta 01-01-2025 W1">
+                <input type="text" id="add-name" placeholder="np. Nick 01-01-2025 W1">
             </div>
             
             <div class="add-form-section">
@@ -689,7 +689,7 @@
             
             <h3 style="font-size: 0.85rem; color: var(--text-muted); margin: 20px 0 10px;">📤 Eksport do CSV</h3>
             <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">
-                Pobierz wszystkie formacje jako plik CSV (kompatybilny z poprzednią wersją)
+                Pobierz wszystkie formacje jako plik CSV
             </p>
             <button class="btn" onclick="exportToCSV()">📤 Eksportuj CSV</button>
             
@@ -885,7 +885,7 @@
             headerClickCount++;
             clearTimeout(headerClickTimer);
             
-            if (headerClickCount >= 5) {
+            if (headerClickCount >= 8) {
                 headerClickCount = 0;
                 if (isAdmin) {
                     showToast('Już jesteś zalogowany jako Admin');
@@ -1766,6 +1766,3 @@
     </script>
 </body>
 </html>
-
-
-
