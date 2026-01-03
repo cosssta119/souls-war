@@ -790,8 +790,6 @@
 		  appId: "1:700986594564:web:114ff3c81a42edb1d2ac51"
 		};
         
-        // 🔐 HASŁO ADMINISTRATORA - ZMIEŃ NA WŁASNE!
-        const ADMIN_PASSWORD = "souls2025admin";
         // =====================================================
         
         // Zmienne globalne
@@ -904,19 +902,26 @@
             document.getElementById('admin-password').value = '';
         }
         
-        function tryAdminLogin() {
-            const password = document.getElementById('admin-password').value;
-            
-            if (password === ADMIN_PASSWORD) {
-                isAdmin = true;
-                localStorage.setItem('souls_admin', 'true');
-                closeAdminModal();
-                enableAdminMode();
-                showToast('🔓 Zalogowano jako Administrator!');
-            } else {
-                showToast('❌ Nieprawidłowe hasło!', true);
-            }
-        }
+		async function tryAdminLogin() {
+		    const password = document.getElementById('admin-password').value;
+		    
+		    try {
+		        const snapshot = await db.ref('config/adminPassword').once('value');
+		        const correctPassword = snapshot.val();
+		        
+		        if (password === correctPassword) {
+		            isAdmin = true;
+		            localStorage.setItem('souls_admin', 'true');
+		            closeAdminModal();
+		            enableAdminMode();
+		            showToast('🔓 Zalogowano jako Administrator!');
+		        } else {
+		            showToast('❌ Nieprawidłowe hasło!', true);
+		        }
+		    } catch (error) {
+		        showToast('❌ Błąd weryfikacji: ' + error.message, true);
+		    }
+		}
         
 		function enableAdminMode() {
 		    isAdmin = true;
@@ -1761,4 +1766,5 @@
     </script>
 </body>
 </html>
+
 
