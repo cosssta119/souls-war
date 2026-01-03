@@ -1294,19 +1294,35 @@
             
             const badge = formation.isBase ? '<span class="badge base-badge">BAZA</span>' : '<span class="badge user-badge">DODANA</span>';
             
-            document.getElementById('formation-display').innerHTML = `
-                <div class="formation-view my-formation">
-                    <div class="formation-title">⚔️ TWÓJ SKŁAD (ID: ${formation.id}) ${badge}</div>
-                    ${renderFormationGrid(formation.my, formation.myPet)}
-                </div>
-                <div class="vs-divider">— VS —</div>
-                <div class="formation-view enemy-formation">
-                    <div class="formation-title">👹 PRZECIWNIK</div>
-                    ${renderFormationGrid(formation.enemy, formation.enemyPet)}
-                </div>
-                <div style="text-align: center; margin-top: 15px; color: var(--text-muted); font-size: 0.8rem;">${formation.name}</div>`;
+			document.getElementById('formation-display').innerHTML = `
+			    <div class="formation-view enemy-formation">
+			        <div class="formation-title">👹 PRZECIWNIK</div>
+			        ${renderEnemyFormationGrid(formation.enemy, formation.enemyPet)}
+			    </div>
+			    <div class="vs-divider">— VS —</div>
+			    <div class="formation-view my-formation">
+			        <div class="formation-title">⚔️ TWÓJ SKŁAD (ID: ${formation.id}) ${badge}</div>
+			        ${renderFormationGrid(formation.my, formation.myPet)}
+			    </div>
+			    <div style="text-align: center; margin-top: 15px; color: var(--text-muted); font-size: 0.8rem;">${formation.name}</div>`;
         }
-        
+		function renderEnemyFormationGrid(heroes, pet) {
+			const slot = (i) => {
+				const hero = heroes[i] || '';
+				return `<div class="hero-slot ${hero ? 'filled' : ''}">${hero || '—'}</div>`;
+			};
+			const petSlot = pet ? `<div class="pet-slot filled">🐾 ${pet}</div>` : `<div class="pet-slot">🐾 —</div>`;
+			
+			// Odwrócona kolejność: 6,7,8 na górze, potem 4,5, potem 1,2,3
+			return `
+				<div class="formation-grid">
+					<div class="formation-row">${slot(5)}${slot(6)}${slot(7)}</div>
+					<div class="formation-row">${slot(3)}${slot(4)}</div>
+					<div class="formation-row">${slot(0)}${slot(1)}${slot(2)}</div>
+					${petSlot}
+				</div>`;
+		}
+		
         function renderFormationGrid(heroes, pet) {
             const slot = (i) => {
                 const hero = heroes[i] || '';
@@ -1700,4 +1716,5 @@ async function initializeBaseData() {
     </script>
 </body>
 </html>
+
 
