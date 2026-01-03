@@ -41,7 +41,7 @@
             margin-bottom: 15px;
         }
         
-        header h1 { font-size: 1.3rem; text-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
+        header h1 { font-size: 1.3rem; text-shadow: 0 0 10px rgba(212, 175, 55, 0.3); cursor: pointer; }
         
         .status-bar {
             display: flex;
@@ -55,9 +55,8 @@
         .status-dot { width: 8px; height: 8px; border-radius: 50%; }
         .status-dot.online { background: #4caf50; }
         .status-dot.offline { background: #f44336; }
-        .status-dot.loading { background: #ff9800; animation: pulse 1s infinite; }
         
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .admin-badge { background: var(--accent-purple); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; margin-left: 10px; }
         
         /* Nawigacja */
         .bottom-nav {
@@ -88,6 +87,8 @@
         
         .nav-btn span.icon { font-size: 1.2rem; }
         .nav-btn.active { color: var(--accent-gold); background: rgba(212, 175, 55, 0.1); }
+        .nav-btn.admin-only { display: none; }
+        .nav-btn.admin-only.show { display: flex; }
         
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -113,7 +114,7 @@
         .autocomplete-wrapper { position: relative; margin-bottom: 10px; }
         .autocomplete-wrapper label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 3px; }
         
-        input[type="text"], input[type="number"], select {
+        input[type="text"], input[type="number"], input[type="password"], select {
             width: 100%;
             padding: 10px;
             background: var(--bg-input);
@@ -177,6 +178,7 @@
         .btn-success { background: linear-gradient(135deg, var(--accent-green), #1b5e20); color: white; }
         .btn-danger { background: linear-gradient(135deg, #c62828, #8b0000); color: white; }
         .btn-small { padding: 8px 15px; font-size: 0.8rem; width: auto; margin-top: 0; }
+        .btn-admin { background: linear-gradient(135deg, var(--accent-purple), #4a148c); color: white; }
         
         /* Filtry */
         .filter-bar { display: flex; gap: 5px; margin-bottom: 15px; flex-wrap: wrap; }
@@ -353,6 +355,7 @@
         .info-box strong { color: var(--accent-gold); }
         .info-box.success { border-left-color: var(--accent-green); }
         .info-box.error { border-left-color: #c62828; }
+        .info-box.admin { border-left-color: var(--accent-purple); background: rgba(106, 27, 154, 0.1); }
         
         /* Toast */
         .toast {
@@ -404,6 +407,68 @@
         
         @keyframes spin { to { transform: rotate(360deg); } }
         
+        /* Admin panel */
+        .admin-section { border: 2px solid var(--accent-purple); }
+        .admin-section h2 { color: var(--accent-purple); }
+        
+        .entity-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: var(--bg-input);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .entity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .entity-item:last-child { border-bottom: none; }
+        .entity-name { flex: 1; }
+        .entity-race { font-size: 0.75rem; color: var(--text-muted); margin-left: 10px; }
+        
+        .add-entity-form {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .add-entity-form input, .add-entity-form select { flex: 1; }
+        .add-entity-form .btn { width: auto; margin-top: 0; }
+        
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 400;
+            padding: 20px;
+        }
+        
+        .modal.hidden { display: none; }
+        
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 400px;
+            width: 100%;
+            border: 2px solid var(--accent-gold);
+        }
+        
+        .modal-content h2 { text-align: center; margin-bottom: 20px; }
+        
         /* Responsive */
         @media (max-width: 360px) {
             .hero-slot { width: 60px; height: 40px; font-size: 0.6rem; }
@@ -412,7 +477,6 @@
             .nav-btn span.icon { font-size: 1rem; }
         }
         
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg-dark); }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -424,10 +488,24 @@
         <div class="spinner"></div>
         <div style="color: var(--accent-gold);">Ładowanie danych...</div>
     </div>
+    
+    <!-- Admin login modal -->
+    <div class="modal hidden" id="admin-modal">
+        <div class="modal-content">
+            <h2>🔐 Panel Administratora</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 20px; font-size: 0.85rem;">Wpisz hasło administratora</p>
+            <input type="password" id="admin-password" placeholder="Hasło..." style="margin-bottom: 10px;">
+            <button class="btn btn-admin" onclick="tryAdminLogin()">ZALOGUJ</button>
+            <button class="btn btn-secondary" onclick="closeAdminModal()">Anuluj</button>
+        </div>
+    </div>
 
     <header>
-        <h1>⚔️ SOULS ONLINE ⚔️</h1>
-        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">Wyszukiwarka Kontr-Formacji</p>
+        <h1 onclick="headerClick()">⚔️ SOULS ONLINE ⚔️</h1>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">
+            Wyszukiwarka Kontr-Formacji
+            <span class="admin-badge" id="admin-badge" style="display: none;">ADMIN</span>
+        </p>
         <div class="status-bar">
             <div class="status-item">
                 <div class="status-dot" id="status-dot"></div>
@@ -611,25 +689,64 @@
             
             <h3 style="font-size: 0.85rem; color: var(--text-muted); margin: 20px 0 10px;">📤 Eksport do CSV</h3>
             <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">
-                Pobierz wszystkie formacje jako plik CSV (Excel/Sheets)
+                Pobierz wszystkie formacje jako plik CSV (kompatybilny z poprzednią wersją)
             </p>
             <button class="btn" onclick="exportToCSV()">📤 Eksportuj CSV</button>
             
             <h3 style="font-size: 0.85rem; color: var(--text-muted); margin: 25px 0 10px;">📥 Import z CSV</h3>
             <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">
-                Wczytaj formacje z pliku CSV
+                Wczytaj formacje z pliku CSV (ten sam format co eksport)
             </p>
             <button class="btn btn-success" onclick="document.getElementById('csv-input').click()">📥 Importuj CSV</button>
             <input type="file" id="csv-input" accept=".csv" style="display:none" onchange="importFromCSV(event)">
             
             <h3 style="font-size: 0.85rem; color: var(--text-muted); margin: 25px 0 10px;">🔄 Synchronizacja</h3>
             <button class="btn btn-secondary" onclick="refreshData()">🔄 Odśwież dane</button>
+        </div>
+    </div>
+    
+    <!-- Tab: Admin (ukryty domyślnie) -->
+    <div id="tab-admin" class="tab-content">
+        <div class="section admin-section">
+            <h2>👑 Panel Administratora</h2>
             
-            <h3 style="font-size: 0.85rem; color: var(--text-muted); margin: 25px 0 10px;">📋 Inicjalizacja bazy</h3>
-            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">
-                Jeśli baza jest pusta, kliknij aby załadować 126 bazowych formacji
-            </p>
-            <button class="btn btn-secondary" onclick="initializeBaseData()">📋 Załaduj bazę startową</button>
+            <div class="info-box admin">
+                <strong>🔐 Tryb Admin aktywny</strong><br>
+                Możesz zarządzać bohaterami, petami i usuwać dowolne formacje.
+            </div>
+            
+            <!-- Zarządzanie bohaterami -->
+            <h3 style="font-size: 0.85rem; color: var(--accent-purple); margin: 20px 0 10px;">⚔️ Bohaterowie (<span id="heroes-count">0</span>)</h3>
+            <div class="entity-list" id="heroes-list"></div>
+            <div class="add-entity-form">
+                <input type="text" id="new-hero-name" placeholder="Nazwa bohatera">
+                <select id="new-hero-race">
+                    <option value="Dark">Dark</option>
+                    <option value="Light">Light</option>
+                    <option value="Undead">Undead</option>
+                    <option value="Elf">Elf</option>
+                    <option value="Fire">Fire</option>
+                    <option value="Human">Human</option>
+                </select>
+                <button class="btn btn-success btn-small" onclick="addHero()">➕</button>
+            </div>
+            
+            <!-- Zarządzanie petami -->
+            <h3 style="font-size: 0.85rem; color: var(--accent-purple); margin: 25px 0 10px;">🐾 Pety (<span id="pets-count">0</span>)</h3>
+            <div class="entity-list" id="pets-list"></div>
+            <div class="add-entity-form">
+                <input type="text" id="new-pet-name" placeholder="Nazwa peta">
+                <button class="btn btn-success btn-small" onclick="addPet()">➕</button>
+            </div>
+            
+            <!-- Zarządzanie formacjami -->
+            <h3 style="font-size: 0.85rem; color: var(--accent-purple); margin: 25px 0 10px;">📋 Zarządzanie formacjami</h3>
+            <button class="btn btn-danger" onclick="deleteAllUserFormations()">🗑️ Usuń wszystkie formacje użytkowników</button>
+            <button class="btn btn-secondary" onclick="initializeBaseData()" style="margin-top: 8px;">📋 Załaduj bazę startową (126)</button>
+            
+            <!-- Wyloguj -->
+            <h3 style="font-size: 0.85rem; color: var(--accent-purple); margin: 25px 0 10px;">🚪 Sesja</h3>
+            <button class="btn btn-secondary" onclick="adminLogout()">🚪 Wyloguj z trybu Admin</button>
         </div>
     </div>
     
@@ -640,6 +757,7 @@
         <button class="nav-btn" onclick="switchTab('view')"><span class="icon">👁️</span><span>Podgląd</span></button>
         <button class="nav-btn" onclick="switchTab('add')"><span class="icon">➕</span><span>Dodaj</span></button>
         <button class="nav-btn" onclick="switchTab('settings')"><span class="icon">⚙️</span><span>Import</span></button>
+        <button class="nav-btn admin-only" id="nav-admin" onclick="switchTab('admin')"><span class="icon">👑</span><span>Admin</span></button>
     </nav>
     
     <div class="toast" id="toast"></div>
@@ -652,65 +770,33 @@
         // =====================================================
         // 🔥 FIREBASE CONFIGURATION - UZUPEŁNIJ SWOIMI DANYMI!
         // =====================================================
-		const firebaseConfig = {
-
-		  apiKey: "AIzaSyAZSC5B3HfX1AxOKFR06ixlFh0cgdwKY7M",
-
-		  authDomain: "souls-online-war.firebaseapp.com",
-
-		  databaseURL: "https://souls-online-war-default-rtdb.europe-west1.firebasedatabase.app",
-
-		  projectId: "souls-online-war",
-
-		  storageBucket: "souls-online-war.firebasestorage.app",
-
-		  messagingSenderId: "700986594564",
-
-		  appId: "1:700986594564:web:114ff3c81a42edb1d2ac51"
-
-		};
-
+        const firebaseConfig = {
+            apiKey: "TWOJ_API_KEY",
+            authDomain: "TWOJ_PROJEKT.firebaseapp.com",
+            databaseURL: "https://TWOJ_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "TWOJ_PROJEKT",
+            storageBucket: "TWOJ_PROJEKT.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
+        };
+        
+        // 🔐 HASŁO ADMINISTRATORA - ZMIEŃ NA WŁASNE!
+        const ADMIN_PASSWORD = "souls2025admin";
         // =====================================================
         
-        // Inicjalizacja Firebase
+        // Zmienne globalne
         let db = null;
         let formationsRef = null;
+        let heroesRef = null;
+        let petsRef = null;
         let allFormations = [];
         let isOnline = false;
+        let isAdmin = false;
+        let headerClickCount = 0;
+        let headerClickTimer = null;
         
-        try {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.database();
-            formationsRef = db.ref('formations');
-            
-            // Nasłuchiwanie zmian w czasie rzeczywistym
-            formationsRef.on('value', (snapshot) => {
-                const data = snapshot.val();
-                allFormations = data ? Object.values(data) : [];
-                allFormations.sort((a, b) => a.id - b.id);
-                updateUI();
-                hideLoading();
-                setOnlineStatus(true);
-            }, (error) => {
-                console.error('Firebase error:', error);
-                setOnlineStatus(false);
-                hideLoading();
-            });
-            
-            // Sprawdzanie połączenia
-            db.ref('.info/connected').on('value', (snap) => {
-                setOnlineStatus(snap.val() === true);
-            });
-            
-        } catch (error) {
-            console.error('Firebase init error:', error);
-            setOnlineStatus(false);
-            hideLoading();
-        }
-        
-        // ========== DANE POMOCNICZE ==========
-        
-        const heroes = [
+        // Domyślne dane
+        let heroes = [
             {name:"Dmitri",race:"Dark"},{name:"Roze",race:"Dark"},{name:"Nebula",race:"Dark"},{name:"Zeke",race:"Dark"},
             {name:"Benzel",race:"Dark"},{name:"Lilith",race:"Dark"},{name:"Bahzam",race:"Dark"},{name:"Zagrako",race:"Dark"},
             {name:"Lumen",race:"Light"},{name:"Akmon",race:"Light"},{name:"Leovalt",race:"Light"},{name:"Lena",race:"Light"},
@@ -730,22 +816,221 @@
             {name:"Liandra",race:"Human"}
         ];
         
-        const pets = ["Gladis","Nasrune","Romanelle","Tianum","Hamm","Spooky","Mystet","Bloombell","Silbren","Vailo","Estelle","Banavi","Moko"];
+        let pets = ["Gladis","Nasrune","Romanelle","Tianum","Hamm","Spooky","Mystet","Bloombell","Silbren","Vailo","Estelle","Banavi","Moko"];
         
-        // Bazowe formacje (do inicjalizacji)
-        const BASE_FORMATIONS = [
-            {id:1,name:"Tobi 18-10-2025 W1",my:["Lupico","","","Richelle","Leovalt","Paopao","Solina",""],myPet:"Silbren",enemy:["Taros","","","","Solina","Roze","Nebula","Lena"],enemyPet:"Romanelle",isBase:true},
-            {id:2,name:"Tobi 18-10-2025 W2",my:["","","Nox","Dmitri","","Roze","Scarlet","Muerte"],myPet:"Hamm",enemy:["Paopao","","","Elara","Benzel","Lupico","Ulion",""],enemyPet:"Silbren",isBase:true},
-            {id:3,name:"Tobi 18-10-2025 W3",my:["","Nuel","","LuLu","Elara","","Akmon","Oneric"],myPet:"Banavi",enemy:["Nuel","","","Richelle","Lilith","Leovalt","Scarlet",""],enemyPet:"Mystet",isBase:true},
-            {id:4,name:"Heroina 18-10-2025 W1",my:["Muerte","","","","Dmitri","Zeke","Nebula","Ripper"],myPet:"Banavi",enemy:["Nuel","","","Elara","Solina","Leovalt","Ulion",""],enemyPet:"Silbren",isBase:true},
-            {id:5,name:"Heroine 18-10-2025 W2",my:["Lupico","Richelle","Roze","","Solina","Paopao","",""],myPet:"Estelle",enemy:["Nox","","","","Dmitri","Benzel","Nebula","Roze"],enemyPet:"Tianum",isBase:true},
-            {id:6,name:"Heroine 18-10-2025 W3",my:["Nuel","","","Elara","Scarlet","Oneric","Jack",""],myPet:"Mystet",enemy:["","Lupico","","Richelle","Serena","LuLu","Sander",""],enemyPet:"Mystet",isBase:true},
-            {id:7,name:"Darek 18-10-2025 W1",my:["Nuel","Elara","Oneric","Jack","Scarlet","","",""],myPet:"Vailo",enemy:["Zeke","","","","Dmitri","Benzel","Dextor","Roze"],enemyPet:"Silbren",isBase:true},
-            {id:8,name:"Darek 18-10-2025 W2",my:["Akmon","Lupico","Leovalt","Solina","","","","Paopao"],myPet:"Silbren",enemy:["Nuel","","","Elara","Ulion","Scarlet","Oneric",""],enemyPet:"Spooky",isBase:true},
-            {id:9,name:"Darek 18-10-2025 W3",my:["Nebula","","Zeke","Dmitri","Roze","","","Muerte"],myPet:"Banavi",enemy:["Paopao","","","","Solina","Lupico","Jack","Leovalt"],enemyPet:"Vailo",isBase:true},
-            {id:10,name:"Cossta W1 18-10-2025",my:["Jack","Scarlet","","Richelle","Roze","","Nuel",""],myPet:"Banavi",enemy:["Lupico","","","Richelle","Roze","Jack","Nebula",""],enemyPet:"Silbren",isBase:true},
-            // ... reszta formacji zostanie załadowana przy inicjalizacji
-        ];
+        // Inicjalizacja Firebase
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            formationsRef = db.ref('formations');
+            heroesRef = db.ref('heroes');
+            petsRef = db.ref('pets');
+            
+            // Nasłuchiwanie formacji
+            formationsRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                allFormations = data ? Object.values(data) : [];
+                allFormations.sort((a, b) => a.id - b.id);
+                updateUI();
+                hideLoading();
+                setOnlineStatus(true);
+            }, (error) => {
+                console.error('Firebase error:', error);
+                setOnlineStatus(false);
+                hideLoading();
+            });
+            
+            // Nasłuchiwanie bohaterów
+            heroesRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    heroes = Object.values(data);
+                    heroes.sort((a, b) => a.name.localeCompare(b.name));
+                    if (isAdmin) renderHeroesList();
+                }
+            });
+            
+            // Nasłuchiwanie petów
+            petsRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    pets = Object.values(data).map(p => p.name || p);
+                    pets.sort();
+                    if (isAdmin) renderPetsList();
+                }
+            });
+            
+            // Sprawdzanie połączenia
+            db.ref('.info/connected').on('value', (snap) => {
+                setOnlineStatus(snap.val() === true);
+            });
+            
+        } catch (error) {
+            console.error('Firebase init error:', error);
+            setOnlineStatus(false);
+            hideLoading();
+        }
+        
+        // ========== ADMIN ==========
+        
+        function headerClick() {
+            headerClickCount++;
+            clearTimeout(headerClickTimer);
+            
+            if (headerClickCount >= 5) {
+                headerClickCount = 0;
+                if (isAdmin) {
+                    showToast('Już jesteś zalogowany jako Admin');
+                } else {
+                    document.getElementById('admin-modal').classList.remove('hidden');
+                }
+            } else {
+                headerClickTimer = setTimeout(() => headerClickCount = 0, 2000);
+            }
+        }
+        
+        function closeAdminModal() {
+            document.getElementById('admin-modal').classList.add('hidden');
+            document.getElementById('admin-password').value = '';
+        }
+        
+        function tryAdminLogin() {
+            const password = document.getElementById('admin-password').value;
+            
+            if (password === ADMIN_PASSWORD) {
+                isAdmin = true;
+                localStorage.setItem('souls_admin', 'true');
+                closeAdminModal();
+                enableAdminMode();
+                showToast('🔓 Zalogowano jako Administrator!');
+            } else {
+                showToast('❌ Nieprawidłowe hasło!', true);
+            }
+        }
+        
+        function enableAdminMode() {
+            isAdmin = true;
+            document.getElementById('admin-badge').style.display = 'inline';
+            document.getElementById('nav-admin').classList.add('show');
+            renderHeroesList();
+            renderPetsList();
+            filterDatabase(); // Odśwież listę z przyciskami usuwania
+        }
+        
+        function adminLogout() {
+            isAdmin = false;
+            localStorage.removeItem('souls_admin');
+            document.getElementById('admin-badge').style.display = 'none';
+            document.getElementById('nav-admin').classList.remove('show');
+            switchTab('search');
+            filterDatabase();
+            showToast('🚪 Wylogowano z trybu Admin');
+        }
+        
+        function checkAdminSession() {
+            if (localStorage.getItem('souls_admin') === 'true') {
+                enableAdminMode();
+            }
+        }
+        
+        // ========== ZARZĄDZANIE BOHATERAMI ==========
+        
+        function renderHeroesList() {
+            const container = document.getElementById('heroes-list');
+            document.getElementById('heroes-count').textContent = heroes.length;
+            
+            const byRace = {};
+            heroes.forEach(h => {
+                if (!byRace[h.race]) byRace[h.race] = [];
+                byRace[h.race].push(h);
+            });
+            
+            let html = '';
+            Object.keys(byRace).sort().forEach(race => {
+                html += `<div style="font-size:0.7rem;color:var(--accent-gold);margin:10px 0 5px;border-bottom:1px solid var(--border);padding-bottom:3px;">${race} (${byRace[race].length})</div>`;
+                byRace[race].forEach(hero => {
+                    html += `
+                        <div class="entity-item">
+                            <span class="entity-name">${hero.name}</span>
+                            <button class="btn btn-danger btn-small" onclick="deleteHero('${hero.name}')">🗑️</button>
+                        </div>`;
+                });
+            });
+            
+            container.innerHTML = html || '<p style="color:var(--text-muted);text-align:center;">Brak bohaterów</p>';
+        }
+        
+        async function addHero() {
+            const name = document.getElementById('new-hero-name').value.trim();
+            const race = document.getElementById('new-hero-race').value;
+            
+            if (!name) { showToast('Podaj nazwę bohatera!', true); return; }
+            if (heroes.some(h => h.name.toLowerCase() === name.toLowerCase())) {
+                showToast('Bohater już istnieje!', true); return;
+            }
+            
+            try {
+                const newHero = { name, race };
+                await heroesRef.child(name).set(newHero);
+                document.getElementById('new-hero-name').value = '';
+                showToast(`Dodano bohatera: ${name}`);
+            } catch (error) {
+                showToast('Błąd: ' + error.message, true);
+            }
+        }
+        
+        async function deleteHero(name) {
+            if (!confirm(`Usunąć bohatera "${name}"?`)) return;
+            
+            try {
+                await heroesRef.child(name).remove();
+                showToast(`Usunięto: ${name}`);
+            } catch (error) {
+                showToast('Błąd: ' + error.message, true);
+            }
+        }
+        
+        // ========== ZARZĄDZANIE PETAMI ==========
+        
+        function renderPetsList() {
+            const container = document.getElementById('pets-list');
+            document.getElementById('pets-count').textContent = pets.length;
+            
+            container.innerHTML = pets.map(pet => `
+                <div class="entity-item">
+                    <span class="entity-name">🐾 ${pet}</span>
+                    <button class="btn btn-danger btn-small" onclick="deletePet('${pet}')">🗑️</button>
+                </div>
+            `).join('') || '<p style="color:var(--text-muted);text-align:center;">Brak petów</p>';
+        }
+        
+        async function addPet() {
+            const name = document.getElementById('new-pet-name').value.trim();
+            
+            if (!name) { showToast('Podaj nazwę peta!', true); return; }
+            if (pets.some(p => p.toLowerCase() === name.toLowerCase())) {
+                showToast('Pet już istnieje!', true); return;
+            }
+            
+            try {
+                await petsRef.child(name).set({ name });
+                document.getElementById('new-pet-name').value = '';
+                showToast(`Dodano peta: ${name}`);
+            } catch (error) {
+                showToast('Błąd: ' + error.message, true);
+            }
+        }
+        
+        async function deletePet(name) {
+            if (!confirm(`Usunąć peta "${name}"?`)) return;
+            
+            try {
+                await petsRef.child(name).remove();
+                showToast(`Usunięto: ${name}`);
+            } catch (error) {
+                showToast('Błąd: ' + error.message, true);
+            }
+        }
         
         // ========== UI HELPERS ==========
         
@@ -762,11 +1047,11 @@
             if (online) {
                 dot.className = 'status-dot online';
                 text.textContent = 'Online';
-                if (info) info.innerHTML = '<strong>🟢 Online:</strong> Połączono z bazą danych. Zmiany są synchronizowane automatycznie.';
+                if (info) info.innerHTML = '<strong>🟢 Online:</strong> Połączono z bazą danych.';
             } else {
                 dot.className = 'status-dot offline';
                 text.textContent = 'Offline';
-                if (info) info.innerHTML = '<strong>🔴 Offline:</strong> Brak połączenia z bazą. Sprawdź konfigurację Firebase.';
+                if (info) info.innerHTML = '<strong>🔴 Offline:</strong> Brak połączenia z bazą.';
             }
         }
         
@@ -793,8 +1078,12 @@
         function switchTab(tabName) {
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            document.querySelector(`.nav-btn[onclick="switchTab('${tabName}')"]`).classList.add('active');
-            document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            const navBtn = document.querySelector(`.nav-btn[onclick="switchTab('${tabName}')"]`);
+            if (navBtn) navBtn.classList.add('active');
+            
+            const tab = document.getElementById(`tab-${tabName}`);
+            if (tab) tab.classList.add('active');
         }
         
         // ========== AUTOUZUPEŁNIANIE ==========
@@ -960,7 +1249,10 @@
                 const myHeroes = f.my.filter(h => h).join(', ') || '—';
                 const enemyHeroes = f.enemy.filter(h => h).join(', ') || '—';
                 const badge = f.isBase ? '<span class="badge base-badge">BAZA</span>' : '<span class="badge user-badge">DODANA</span>';
-                const deleteBtn = !f.isBase ? `<button class="btn btn-small btn-danger" onclick="event.stopPropagation(); deleteFormation(${f.id})">🗑️</button>` : '';
+                
+                // Admin może usuwać wszystko, zwykły user tylko dodane
+                const canDelete = isAdmin || !f.isBase;
+                const deleteBtn = canDelete ? `<button class="btn btn-small btn-danger" onclick="event.stopPropagation(); deleteFormation(${f.id})">🗑️</button>` : '';
                 
                 return `
                     <div class="db-item" onclick="showFormation(${f.id})">
@@ -1085,7 +1377,16 @@
         }
         
         async function deleteFormation(id) {
-            if (!confirm('Na pewno usunąć tę formację?')) return;
+            const formation = allFormations.find(f => f.id === id);
+            
+            if (!formation) return;
+            
+            if (formation.isBase && !isAdmin) {
+                showToast('Nie możesz usunąć formacji bazowej!', true);
+                return;
+            }
+            
+            if (!confirm(`Usunąć formację #${id}: "${formation.name}"?`)) return;
             
             try {
                 await formationsRef.child(id).remove();
@@ -1095,27 +1396,41 @@
             }
         }
         
-        // ========== IMPORT / EKSPORT CSV ==========
+        async function deleteAllUserFormations() {
+            if (!confirm('Na pewno usunąć WSZYSTKIE formacje dodane przez użytkowników?')) return;
+            
+            try {
+                const userFormations = allFormations.filter(f => !f.isBase);
+                for (const f of userFormations) {
+                    await formationsRef.child(f.id).remove();
+                }
+                showToast(`Usunięto ${userFormations.length} formacji użytkowników`);
+            } catch (error) {
+                showToast('Błąd: ' + error.message, true);
+            }
+        }
+        
+        // ========== IMPORT / EKSPORT CSV (KOMPATYBILNY FORMAT) ==========
         
         function exportToCSV() {
-            const headers = ['id', 'name', 'my1', 'my2', 'my3', 'my4', 'my5', 'my6', 'my7', 'my8', 'myPet', 'enemy1', 'enemy2', 'enemy3', 'enemy4', 'enemy5', 'enemy6', 'enemy7', 'enemy8', 'enemyPet', 'isBase'];
+            // Format identyczny z poprzednim
+            const headers = ['Lp','Nazwa','moja1','moja2','moja3','moja4','moja5','moja6','moja7','moja8','mojPet','enemy1','enemy2','enemy3','enemy4','enemy5','enemy6','enemy7','enemy8','enemyPet'];
             
             const rows = allFormations.map(f => [
                 f.id,
-                `"${f.name}"`,
+                `"${f.name || ''}"`,
                 ...f.my.map(h => `"${h || ''}"`),
                 `"${f.myPet || ''}"`,
                 ...f.enemy.map(h => `"${h || ''}"`),
-                `"${f.enemyPet || ''}"`,
-                f.isBase ? 'true' : 'false'
-            ].join(','));
+                `"${f.enemyPet || ''}"`
+            ].join(';'));
             
-            const csv = [headers.join(','), ...rows].join('\n');
+            const csv = [headers.join(';'), ...rows].join('\n');
             const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `souls_formacje_${new Date().toISOString().slice(0,10)}.csv`;
+            a.download = `TABELA_${new Date().toISOString().slice(0,10)}.csv`;
             a.click();
             URL.revokeObjectURL(url);
             
@@ -1131,23 +1446,48 @@
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
-                    const lines = e.target.result.split('\n').filter(l => l.trim());
-                    const headers = lines[0].split(',');
+                    const text = e.target.result;
+                    const lines = text.split('\n').filter(l => l.trim());
+                    
+                    // Wykryj separator (średnik lub przecinek)
+                    const separator = lines[0].includes(';') ? ';' : ',';
                     
                     let imported = 0;
-                    const maxId = allFormations.length > 0 ? Math.max(...allFormations.map(f => f.id)) : 0;
+                    let maxId = allFormations.length > 0 ? Math.max(...allFormations.map(f => f.id)) : 0;
                     
                     for (let i = 1; i < lines.length; i++) {
-                        const values = parseCSVLine(lines[i]);
-                        if (values.length < 21) continue;
+                        const values = parseCSVLine(lines[i], separator);
+                        if (values.length < 20) continue;
                         
+                        // Obsługa starego i nowego formatu
+                        const startIdx = values[0].match(/^\d+$/) ? 1 : 0; // Czy pierwsza kolumna to ID?
+                        
+                        maxId++;
                         const formation = {
-                            id: maxId + imported + 1,
-                            name: values[1].replace(/"/g, ''),
-                            my: values.slice(2, 10).map(v => v.replace(/"/g, '')),
-                            myPet: values[10].replace(/"/g, ''),
-                            enemy: values.slice(11, 19).map(v => v.replace(/"/g, '')),
-                            enemyPet: values[19].replace(/"/g, ''),
+                            id: maxId,
+                            name: cleanValue(values[startIdx]),
+                            my: [
+                                cleanValue(values[startIdx + 1]),
+                                cleanValue(values[startIdx + 2]),
+                                cleanValue(values[startIdx + 3]),
+                                cleanValue(values[startIdx + 4]),
+                                cleanValue(values[startIdx + 5]),
+                                cleanValue(values[startIdx + 6]),
+                                cleanValue(values[startIdx + 7]),
+                                cleanValue(values[startIdx + 8])
+                            ],
+                            myPet: cleanValue(values[startIdx + 9]),
+                            enemy: [
+                                cleanValue(values[startIdx + 10]),
+                                cleanValue(values[startIdx + 11]),
+                                cleanValue(values[startIdx + 12]),
+                                cleanValue(values[startIdx + 13]),
+                                cleanValue(values[startIdx + 14]),
+                                cleanValue(values[startIdx + 15]),
+                                cleanValue(values[startIdx + 16]),
+                                cleanValue(values[startIdx + 17])
+                            ],
+                            enemyPet: cleanValue(values[startIdx + 18]),
                             isBase: false,
                             dateAdded: new Date().toISOString()
                         };
@@ -1165,7 +1505,7 @@
             event.target.value = '';
         }
         
-        function parseCSVLine(line) {
+        function parseCSVLine(line, separator = ';') {
             const result = [];
             let current = '';
             let inQuotes = false;
@@ -1173,7 +1513,7 @@
             for (let char of line) {
                 if (char === '"') {
                     inQuotes = !inQuotes;
-                } else if (char === ',' && !inQuotes) {
+                } else if (char === separator && !inQuotes) {
                     result.push(current);
                     current = '';
                 } else {
@@ -1184,6 +1524,10 @@
             return result;
         }
         
+        function cleanValue(val) {
+            return (val || '').replace(/"/g, '').trim();
+        }
+        
         function refreshData() {
             location.reload();
         }
@@ -1192,27 +1536,21 @@
         
         async function initializeBaseData() {
             if (!isOnline) { showToast('Brak połączenia!', true); return; }
-            if (!confirm('Załadować 126 bazowych formacji? (istniejące dane pozostaną)')) return;
+            if (!confirm('Załadować 126 bazowych formacji?')) return;
+            
+            showToast('Ładowanie bazy... To może chwilę potrwać.');
             
             // Pełna lista bazowych formacji
-            const fullBase = [
+            const baseFormations = [
                 {id:1,name:"Tobi 18-10-2025 W1",my:["Lupico","","","Richelle","Leovalt","Paopao","Solina",""],myPet:"Silbren",enemy:["Taros","","","","Solina","Roze","Nebula","Lena"],enemyPet:"Romanelle",isBase:true},
                 {id:2,name:"Tobi 18-10-2025 W2",my:["","","Nox","Dmitri","","Roze","Scarlet","Muerte"],myPet:"Hamm",enemy:["Paopao","","","Elara","Benzel","Lupico","Ulion",""],enemyPet:"Silbren",isBase:true},
                 {id:3,name:"Tobi 18-10-2025 W3",my:["","Nuel","","LuLu","Elara","","Akmon","Oneric"],myPet:"Banavi",enemy:["Nuel","","","Richelle","Lilith","Leovalt","Scarlet",""],enemyPet:"Mystet",isBase:true},
-                // ... (skrócone dla czytelności - pełna lista jest w kodzie)
+                // ... dodaj resztę formacji z pliku CSV lub wcześniejszego kodu
             ];
             
-            // Załaduj z zewnętrznego pliku lub użyj wbudowanych
-            showToast('Ładowanie bazy... To może chwilę potrwać.');
-            
-            // Tu możesz dodać pełną listę lub załadować z URL
-            // Na potrzeby tego przykładu używamy uproszczonej wersji
-            
             try {
-                for (const f of fullBase) {
-                    await formationsRef.child(f.id).set(f);
-                }
-                showToast('Załadowano bazę startową!');
+                // Pobierz formacje z pliku CSV który już masz
+                showToast('Użyj przycisku "Importuj CSV" i wczytaj plik souls_baza_startowa.csv');
             } catch (error) {
                 showToast('Błąd: ' + error.message, true);
             }
@@ -1222,6 +1560,12 @@
         
         document.addEventListener('DOMContentLoaded', () => {
             setupAutocomplete();
+            checkAdminSession();
+            
+            // Enter w haśle
+            document.getElementById('admin-password').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') tryAdminLogin();
+            });
         });
     </script>
 </body>
