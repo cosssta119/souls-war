@@ -1,0 +1,209 @@
+# 🔥 Instrukcja konfiguracji Firebase dla Souls Online
+
+## Co to da?
+- ✅ Każdy widzi te same formacje
+- ✅ Dodajesz formację → wszyscy ją widzą natychmiast
+- ✅ Działa na telefonie i komputerze
+- ✅ 100% darmowe (plan Spark)
+- ✅ Bez żadnego serwera
+
+---
+
+## 🚀 KROK 1: Utwórz projekt Firebase (5 minut)
+
+### 1.1 Wejdź na Firebase
+1. Otwórz: https://console.firebase.google.com/
+2. Zaloguj się kontem Google
+
+### 1.2 Utwórz nowy projekt
+1. Kliknij **"Utwórz projekt"** (lub "Add project")
+2. Nazwa projektu: `souls-online` (lub dowolna inna)
+3. Wyłącz Google Analytics (niepotrzebne) → **Utwórz projekt**
+4. Poczekaj ~30 sekund → **Kontynuuj**
+
+---
+
+## 🗄️ KROK 2: Utwórz bazę danych (3 minuty)
+
+### 2.1 Włącz Realtime Database
+1. Po lewej stronie kliknij **"Build"** → **"Realtime Database"**
+2. Kliknij **"Utwórz bazę danych"**
+3. Lokalizacja: wybierz **europe-west1** (Belgium) - najbliżej Polski
+4. Kliknij **"Dalej"**
+
+### 2.2 Ustaw reguły bezpieczeństwa
+1. Wybierz **"Uruchom w trybie testowym"**
+2. Kliknij **"Włącz"**
+
+⚠️ **WAŻNE:** Tryb testowy pozwala każdemu czytać i zapisywać dane. 
+Dla gry z przyjaciółmi to OK. Dla publicznej strony później zmienimy reguły.
+
+---
+
+## 🔑 KROK 3: Pobierz dane konfiguracyjne (2 minuty)
+
+### 3.1 Dodaj aplikację webową
+1. Na głównej stronie projektu kliknij ikonę **"</>"** (Web)
+2. Nazwa aplikacji: `souls-web`
+3. **NIE** zaznaczaj "Firebase Hosting"
+4. Kliknij **"Zarejestruj aplikację"**
+
+### 3.2 Skopiuj konfigurację
+Zobaczysz kod podobny do tego:
+
+```javascript
+const firebaseConfig = {
+  apiKey: "AIzaSyC1234567890abcdefghijklmnop",
+  authDomain: "souls-online-12345.firebaseapp.com",
+  databaseURL: "https://souls-online-12345-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "souls-online-12345",
+  storageBucket: "souls-online-12345.appspot.com",
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:abcdef1234567890"
+};
+```
+
+**SKOPIUJ CAŁY TEN BLOK!** Będzie potrzebny w następnym kroku.
+
+---
+
+## 📝 KROK 4: Wklej konfigurację do aplikacji (1 minuta)
+
+### 4.1 Otwórz plik HTML
+Otwórz plik `souls_firebase.html` w notatniku (lub innym edytorze tekstu).
+
+### 4.2 Znajdź sekcję konfiguracji
+Szukaj linii (około linii 600):
+```javascript
+// 🔥 FIREBASE CONFIGURATION - UZUPEŁNIJ SWOIMI DANYMI!
+const firebaseConfig = {
+    apiKey: "TWOJ_API_KEY",
+```
+
+### 4.3 Zamień na swoje dane
+Zastąp cały blok `firebaseConfig` tym co skopiowałeś z Firebase.
+
+**Przed:**
+```javascript
+const firebaseConfig = {
+    apiKey: "TWOJ_API_KEY",
+    authDomain: "TWOJ_PROJEKT.firebaseapp.com",
+    ...
+};
+```
+
+**Po:**
+```javascript
+const firebaseConfig = {
+    apiKey: "AIzaSyC1234567890abcdefghijklmnop",
+    authDomain: "souls-online-12345.firebaseapp.com",
+    databaseURL: "https://souls-online-12345-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "souls-online-12345",
+    storageBucket: "souls-online-12345.appspot.com",
+    messagingSenderId: "123456789012",
+    appId: "1:123456789012:web:abcdef1234567890"
+};
+```
+
+### 4.4 Zapisz plik
+
+---
+
+## ✅ KROK 5: Przetestuj lokalnie
+
+1. Otwórz plik `souls_firebase.html` w przeglądarce
+2. Powinno pokazać **"🟢 Online"** w nagłówku
+3. Idź do zakładki **⚙️ Import** → kliknij **"Załaduj bazę startową"**
+4. Poczekaj aż załaduje 126 formacji
+5. Gotowe! 🎉
+
+---
+
+## 🌐 KROK 6: Udostępnij innym (opcjonalnie)
+
+### Opcja A: Wyślij plik znajomym
+- Po prostu wyślij im plik HTML (już z konfiguracją)
+- Każdy kto go otworzy widzi te same dane
+
+### Opcja B: Wrzuć na darmowy hosting
+
+**GitHub Pages (darmowe):**
+1. Utwórz konto na github.com
+2. Utwórz nowe repozytorium (np. `souls-online`)
+3. Wgraj plik `souls_firebase.html` jako `index.html`
+4. Settings → Pages → Source: main branch
+5. Dostaniesz link: `https://twojnick.github.io/souls-online/`
+
+**Netlify (darmowe):**
+1. Wejdź na netlify.com
+2. Przeciągnij folder z plikiem HTML
+3. Dostaniesz link automatycznie
+
+---
+
+## 🔒 KROK 7: Zabezpiecz bazę (zalecane)
+
+Domyślnie baza jest otwarta dla wszystkich. Aby ją zabezpieczyć:
+
+1. W Firebase Console → Realtime Database → **Reguły**
+2. Zmień reguły na:
+
+```json
+{
+  "rules": {
+    "formations": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}
+```
+
+To pozwala tylko na odczyt/zapis formacji, nie innych danych.
+
+---
+
+## ❓ Rozwiązywanie problemów
+
+### "🔴 Offline" - brak połączenia
+- Sprawdź czy `databaseURL` jest poprawny
+- Sprawdź czy projekt Firebase istnieje
+- Sprawdź czy Realtime Database jest włączona
+
+### Błąd "Permission denied"
+- Wróć do Firebase Console → Realtime Database → Reguły
+- Upewnij się że są ustawione na tryb testowy
+
+### Dane się nie synchronizują
+- Odśwież stronę (F5)
+- Sprawdź konsolę przeglądarki (F12 → Console) czy są błędy
+
+### Pusta baza po otwarciu
+- Idź do zakładki ⚙️ Import
+- Kliknij "Załaduj bazę startową"
+
+---
+
+## 📱 Dodanie do telefonu jako "aplikacja"
+
+### Android (Chrome):
+1. Otwórz stronę w Chrome
+2. Menu (3 kropki) → "Dodaj do ekranu głównego"
+3. Gotowe! Ikona pojawi się jak aplikacja
+
+### iPhone (Safari):
+1. Otwórz stronę w Safari
+2. Kliknij ikonę udostępniania (kwadrat ze strzałką)
+3. "Dodaj do ekranu początkowego"
+
+---
+
+## 🎉 Gotowe!
+
+Teraz możesz:
+- ✅ Wyszukiwać kontr-formacje
+- ✅ Dodawać nowe formacje (wszyscy je zobaczą!)
+- ✅ Eksportować/importować CSV
+- ✅ Udostępnić link znajomym
+
+Powodzenia w bitwach! ⚔️
