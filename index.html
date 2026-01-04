@@ -368,6 +368,22 @@
 		[data-theme="light"] ::-webkit-scrollbar-thumb {
 			background: #c9a227;
 		}
+		
+		/* Sortowanie */
+		[data-theme="light"] .sort-btn {
+			background: #f0ebe3;
+			border-color: #d4cfc7;
+			color: #6b6560;
+		}
+		[data-theme="light"] .sort-btn:hover {
+			border-color: #996515;
+			color: #996515;
+		}
+		[data-theme="light"] .sort-btn.active {
+			background: #996515;
+			color: #ffffff;
+			border-color: #996515;
+		}
         
         body {
             font-family: 'Nunito', sans-serif;
@@ -681,6 +697,40 @@
         
         .filter-btn:not(.active):hover { border-color: var(--accent-gold); color: var(--accent-gold); }
         
+		/* Sortowanie */
+		.sort-bar {
+			display: flex;
+			align-items: center;
+			gap: 5px;
+			margin-bottom: 12px;
+			flex-wrap: wrap;
+		}
+		.sort-label {
+			font-size: 0.7rem;
+			color: var(--text-muted);
+			margin-right: 5px;
+		}
+		.sort-btn {
+			padding: 4px 10px;
+			background: var(--bg-input);
+			border: 1px solid var(--border);
+			border-radius: 12px;
+			color: var(--text-muted);
+			font-size: 0.7rem;
+			cursor: pointer;
+			transition: all 0.2s;
+		}
+		.sort-btn:hover {
+			border-color: var(--accent-gold);
+			color: var(--accent-gold);
+		}
+		.sort-btn.active {
+			background: var(--accent-gold);
+			color: var(--bg-dark);
+			border-color: var(--accent-gold);
+			font-weight: 600;
+		}
+		
         .search-input {
             flex: 1;
             min-width: 120px;
@@ -1183,19 +1233,19 @@
         /* Database list */
         .database-list { max-height: 60vh; overflow-y: auto; }
         
-        .db-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            padding: 12px;
-            background: var(--bg-input);
-            border-radius: 8px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 1px solid transparent;
-            animation: fadeIn 0.3s ease;
-        }
+		.db-item {
+			display: flex;
+			justify-content: space-between;
+			align-items: flex-start;
+			padding: 8px 10px;
+			background: var(--bg-input);
+			border-radius: 6px;
+			margin-bottom: 6px;
+			cursor: pointer;
+			transition: all 0.3s;
+			border: 1px solid transparent;
+			animation: fadeIn 0.3s ease;
+		}
         
         .db-item:hover { 
             border-color: var(--accent-gold); 
@@ -1203,10 +1253,10 @@
             box-shadow: 0 2px 8px rgba(212, 175, 55, 0.15);
         }
         .db-item-info { flex: 1; }
-        .db-item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-        .db-item-id { font-family: 'Cinzel', serif; color: var(--accent-gold); font-size: 0.85rem; }
-        .db-item-name { font-size: 0.9rem; }
-        .db-item-details { font-size: 0.7rem; color: var(--text-muted); line-height: 1.4; }
+		.db-item-id { font-family: 'Cinzel', serif; color: var(--accent-gold); font-size: 0.75rem; }
+		.db-item-name { font-size: 0.8rem; }
+		.db-item-details { font-size: 0.65rem; color: var(--text-muted); line-height: 1.3; }
+		.db-item-header { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
         .db-item-actions { display: flex; gap: 5px; margin-left: 10px; }
         
         /* Info box */
@@ -1726,13 +1776,23 @@
                 </div>
             </div>
             
-            <div class="filter-bar">
-                <button class="filter-btn active" data-filter="all" onclick="setDbFilter('all')" data-i18n="database.filterAll">Wszystkie</button>
-                <button class="filter-btn" data-filter="base" onclick="setDbFilter('base')" data-i18n="database.filterBase">Bazowe</button>
-                <button class="filter-btn" data-filter="user" onclick="setDbFilter('user')" data-i18n="database.filterUser">Dodane</button>
-                <button class="filter-btn" data-filter="favorites" onclick="setDbFilter('favorites')">⭐ <span data-i18n="database.filterFavorites">Ulubione</span></button>
-                <input type="text" class="search-input" id="db-search" data-i18n-placeholder="database.searchPlaceholder" placeholder="🔍 Szukaj..." oninput="filterDatabase()">
-            </div>
+			<div class="filter-bar">
+				<button class="filter-btn active" data-filter="all" onclick="setDbFilter('all')" data-i18n="database.filterAll">Wszystkie</button>
+				<button class="filter-btn" data-filter="base" onclick="setDbFilter('base')" data-i18n="database.filterBase">Bazowe</button>
+				<button class="filter-btn" data-filter="user" onclick="setDbFilter('user')" data-i18n="database.filterUser">Dodane</button>
+				<button class="filter-btn" data-filter="favorites" onclick="setDbFilter('favorites')">⭐ <span data-i18n="database.filterFavorites">Ulubione</span></button>
+				<input type="text" class="search-input" id="db-search" data-i18n-placeholder="database.searchPlaceholder" placeholder="🔍 Szukaj..." oninput="filterDatabase()">
+			</div>
+
+			<div class="sort-bar">
+				<span class="sort-label" data-i18n="database.sortLabel">Sortuj:</span>
+				<button class="sort-btn active" data-sort="id-asc" onclick="setDbSort('id-asc')" title="ID rosnąco">ID ↑</button>
+				<button class="sort-btn" data-sort="id-desc" onclick="setDbSort('id-desc')" title="ID malejąco">ID ↓</button>
+				<button class="sort-btn" data-sort="name-asc" onclick="setDbSort('name-asc')" title="Nazwa A-Z">A-Z</button>
+				<button class="sort-btn" data-sort="name-desc" onclick="setDbSort('name-desc')" title="Nazwa Z-A">Z-A</button>
+				<button class="sort-btn" data-sort="date-desc" onclick="setDbSort('date-desc')" title="Najnowsze">🕐 ↓</button>
+				<button class="sort-btn" data-sort="date-asc" onclick="setDbSort('date-asc')" title="Najstarsze">🕐 ↑</button>
+			</div>
             
             <div id="database-list" class="database-list"></div>
         </div>
@@ -2119,6 +2179,7 @@
         let favorites = JSON.parse(localStorage.getItem('souls_favorites') || '[]');
         let currentLang = localStorage.getItem('souls_lang') || 'pl';
         let currentDbFilter = 'all';
+		let currentDbSort = 'id-asc';
         let quickSelectTarget = null, activeAddField = null, activeSearchField = null, editingFormationId = null;
 		let currentTheme = localStorage.getItem('souls_theme') || 'dark';
         
@@ -2189,7 +2250,7 @@
                 'common.error': 'Błąd', 'common.noConnection': 'Brak połączenia z bazą!', 'common.formationDeleted': 'Formacja usunięta!',
                 'common.cannotDeleteBase': 'Nie możesz usunąć formacji bazowej!', 'common.confirmDelete': 'Usunąć formację',
                 'common.addedToFavorites': 'Dodano do ulubionych ⭐', 'common.removedFromFavorites': 'Usunięto z ulubionych',
-				'common.adminRequired': 'Tylko admin może usuwać formacje!',
+				'common.adminRequired': 'Tylko admin może usuwać formacje!', 'database.sortLabel': 'Sortuj:',
 				'edit.title': 'Edytuj formację', 'edit.saveBtn': 'ZAPISZ ZMIANY',
                 'badge.base': 'BAZA', 'badge.user': 'DODANA'
             },
@@ -2233,7 +2294,7 @@
                 'common.error': 'Error', 'common.noConnection': 'No database connection!', 'common.formationDeleted': 'Formation deleted!',
                 'common.cannotDeleteBase': 'Cannot delete base formation!', 'common.confirmDelete': 'Delete formation',
                 'common.addedToFavorites': 'Added to favorites ⭐', 'common.removedFromFavorites': 'Removed from favorites',
-				'common.adminRequired': 'Only admin can delete formations!',
+				'common.adminRequired': 'Only admin can delete formations!', 'database.sortLabel': 'Sort:',
 				'edit.title': 'Edit formation', 'edit.saveBtn': 'SAVE CHANGES',
                 'badge.base': 'BASE', 'badge.user': 'ADDED'
             }
@@ -2779,24 +2840,67 @@
         // =====================================================
         // BAZA DANYCH
         // =====================================================
-        
         function setDbFilter(filter) {
             currentDbFilter = filter;
             document.querySelectorAll('.filter-btn[data-filter]').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
             filterDatabase();
         }
+		
+		function setDbSort(sort) {
+			currentDbSort = sort;
+			document.querySelectorAll('.sort-btn[data-sort]').forEach(b => b.classList.toggle('active', b.dataset.sort === sort));
+			filterDatabase();
+		}
+
+		function sortFormations(formations) {
+			const sorted = [...formations];
+			
+			switch (currentDbSort) {
+				case 'id-asc':
+					sorted.sort((a, b) => a.id - b.id);
+					break;
+				case 'id-desc':
+					sorted.sort((a, b) => b.id - a.id);
+					break;
+				case 'name-asc':
+					sorted.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pl'));
+					break;
+				case 'name-desc':
+					sorted.sort((a, b) => (b.name || '').localeCompare(a.name || '', 'pl'));
+					break;
+				case 'date-desc':
+					sorted.sort((a, b) => {
+						const dateA = a.dateAdded ? new Date(a.dateAdded) : new Date(0);
+						const dateB = b.dateAdded ? new Date(b.dateAdded) : new Date(0);
+						return dateB - dateA;
+					});
+					break;
+				case 'date-asc':
+					sorted.sort((a, b) => {
+						const dateA = a.dateAdded ? new Date(a.dateAdded) : new Date(0);
+						const dateB = b.dateAdded ? new Date(b.dateAdded) : new Date(0);
+						return dateA - dateB;
+					});
+					break;
+			}
+			
+			return sorted;
+		}
         
-        function filterDatabase() {
-            const searchTerm = normalize($('db-search')?.value || '');
-            let formations = allFormations;
-            
-            if (currentDbFilter === 'base') formations = formations.filter(f => f.isBase);
-            else if (currentDbFilter === 'user') formations = formations.filter(f => !f.isBase);
-            else if (currentDbFilter === 'favorites') formations = formations.filter(f => favorites.includes(f.id));
-            
-            if (searchTerm) formations = formations.filter(f => normalize(f.name).includes(searchTerm));
-            
-            $('database-list').innerHTML = formations.length ? formations.map(f => `
+		function filterDatabase() {
+			const searchTerm = normalize($('db-search')?.value || '');
+			let formations = allFormations;
+			
+			if (currentDbFilter === 'base') formations = formations.filter(f => f.isBase);
+			else if (currentDbFilter === 'user') formations = formations.filter(f => !f.isBase);
+			else if (currentDbFilter === 'favorites') formations = formations.filter(f => favorites.includes(f.id));
+			
+			if (searchTerm) formations = formations.filter(f => normalize(f.name).includes(searchTerm));
+			
+			// Sortowanie
+			formations = sortFormations(formations);
+			
+			$('database-list').innerHTML = formations.length ? formations.map(f => `
                 <div class="db-item" onclick="showFormation(${f.id})">
                     <div class="db-item-info">
                         <div class="db-item-header"><span class="db-item-id">#${f.id}</span><span class="badge ${f.isBase ? 'base-badge' : 'user-badge'}">${t(f.isBase ? 'badge.base' : 'badge.user')}</span></div>
