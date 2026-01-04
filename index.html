@@ -194,6 +194,10 @@
 			background: #ffffff;
 			border: 1px solid #d4cfc7;
 		}
+		
+		[data-theme="light"] .db-item-date {
+			color: #6b6560;
+		}
 
 		[data-theme="light"] .result-card:hover,
 		[data-theme="light"] .db-item:hover {
@@ -383,6 +387,11 @@
 			background: #996515;
 			color: #ffffff;
 			border-color: #996515;
+		}
+		
+		[data-theme="light"] .preview-meta {
+			color: #6b6560;
+			border-bottom-color: #d4cfc7;
 		}
         
         body {
@@ -999,6 +1008,23 @@
         .preview-actions { display: flex; gap: 8px; }
         .preview-actions .btn { padding: 10px 18px; font-size: 1rem; margin: 0; }
 
+		.preview-meta {
+			display: flex;
+			gap: 15px;
+			flex-wrap: wrap;
+			font-size: 0.7rem;
+			color: var(--text-muted);
+			margin-bottom: 15px;
+			padding-bottom: 10px;
+			border-bottom: 1px dashed var(--border);
+		}
+
+		.preview-meta-item {
+			display: flex;
+			align-items: center;
+			gap: 5px;
+		}
+
         .battle-section { border-radius: 12px; padding: 15px; position: relative; margin-bottom: 0; }
         .battle-section.enemy {
             background: rgba(139, 0, 0, 0.06);
@@ -1258,7 +1284,13 @@
 		.db-item-details { font-size: 0.65rem; color: var(--text-muted); line-height: 1.3; }
 		.db-item-header { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
         .db-item-actions { display: flex; gap: 5px; margin-left: 10px; }
-        
+        .db-item-date {
+			font-size: 0.65rem;
+			color: var(--text-muted);
+			white-space: nowrap;
+			padding: 0 10px;
+			align-self: center;
+		}
         /* Info box */
         .info-box {
             background: var(--bg-input);
@@ -1888,12 +1920,20 @@
                 </div>
             </div>
         </div>
-            <div class="autocomplete-wrapper full-width" style="margin-top: 15px;">
-                <label>💬 <span data-i18n="add.commentLabel">Komentarz (opcjonalnie)</span></label>
-                <input type="text" id="add-comment" data-i18n-placeholder="add.commentPlaceholder" placeholder="np. Unikać Death, Silbren u przeciwnika, kolejność speed: xxx > yyy > zzz, Pao runa PR, itp.">
-            </div>
-            
-            <button class="btn btn-success" onclick="saveFormation()">💾 <span data-i18n="add.saveBtn">ZAPISZ FORMACJĘ</span></button>
+		<div class="autocomplete-wrapper full-width" style="margin-top: 15px;">
+			<label>💬 <span data-i18n="add.commentLabel">Komentarz (opcjonalnie)</span></label>
+			<input type="text" id="add-comment" data-i18n-placeholder="add.commentPlaceholder" placeholder="np. Unikać Death, Silbren u przeciwnika, kolejność speed: xxx > yyy > zzz, Pao runa PR, itp.">
+		</div>
+
+		<div class="admin-only-option" id="add-base-option" style="display: none; margin-top: 15px; padding: 12px; background: rgba(106, 27, 154, 0.1); border: 1px solid var(--accent-purple); border-radius: 8px;">
+			<label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem;">
+				<input type="checkbox" id="add-isBase" style="width: 18px; height: 18px; cursor: pointer;">
+				<span>👑 <span data-i18n="add.markAsBase">Oznacz jako formację BAZOWĄ</span></span>
+			</label>
+			<p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px; margin-left: 28px;" data-i18n="add.baseHint">Formacje bazowe są oznaczone jako "BAZA"</p>
+		</div>
+
+		<button class="btn btn-success" onclick="saveFormation()">💾 <span data-i18n="add.saveBtn">ZAPISZ FORMACJĘ</span></button>
             <button class="btn btn-secondary" onclick="clearAddForm()" style="margin-top: 8px;">✖ <span data-i18n="common.clear">Wyczyść</span></button>
         </div>
     </div>
@@ -2065,7 +2105,6 @@
             
             <h3 style="font-size: 0.85rem; color: var(--accent-purple); margin: 25px 0 10px;">📋 <span data-i18n="admin.manageFormations">Zarządzanie formacjami</span></h3>
             <button class="btn btn-danger" onclick="deleteAllUserFormations()">🗑️ <span data-i18n="admin.deleteAllUser">Usuń wszystkie formacje użytkowników</span></button>
-            <button class="btn btn-secondary" onclick="initializeBaseData()" style="margin-top: 8px;">📋 <span data-i18n="admin.loadBase">Załaduj bazę startową (126)</span></button>
             
             <h3 style="font-size: 0.85rem; color: var(--accent-purple); margin: 25px 0 10px;">🚪 <span data-i18n="admin.session">Sesja</span></h3>
             <button class="btn btn-secondary" onclick="adminLogout()">🚪 <span data-i18n="admin.logout">Wyloguj z trybu Admin</span></button>
@@ -2142,7 +2181,14 @@
 				<label>💬 <span data-i18n="add.commentLabel">Komentarz</span></label>
 				<input type="text" id="edit-comment">
 			</div>
-			
+
+			<div style="margin: 15px 0; padding: 12px; background: rgba(106, 27, 154, 0.1); border: 1px solid var(--accent-purple); border-radius: 8px;">
+				<label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem;">
+					<input type="checkbox" id="edit-isBase" style="width: 18px; height: 18px; cursor: pointer;">
+					<span>👑 <span data-i18n="add.markAsBase">Oznacz jako formację BAZOWĄ</span></span>
+				</label>
+			</div>
+
 			<button class="btn btn-success" onclick="saveEditFormation()">💾 <span data-i18n="edit.saveBtn">ZAPISZ ZMIANY</span></button>
 			<button class="btn btn-secondary" onclick="closeEditModal()" style="margin-top: 8px;"><span data-i18n="common.cancel">Anuluj</span></button>
 		</div>
@@ -2260,7 +2306,8 @@
                 'common.cannotDeleteBase': 'Nie możesz usunąć formacji bazowej!', 'common.confirmDelete': 'Usunąć formację',
                 'common.addedToFavorites': 'Dodano do ulubionych ⭐', 'common.removedFromFavorites': 'Usunięto z ulubionych',
 				'common.adminRequired': 'Tylko admin może usuwać formacje!', 'database.sortLabel': 'Sortuj:',
-				'edit.title': 'Edytuj formację', 'edit.saveBtn': 'ZAPISZ ZMIANY',
+				'edit.title': 'Edytuj formację', 'edit.saveBtn': 'ZAPISZ ZMIANY', 'add.markAsBase': 'Oznacz jako formację BAZOWĄ',
+				'add.baseHint': 'Formacje bazowe są oznaczone jako "BAZA".', 'preview.added': 'Dodano', 'preview.edited': 'Edytowano',
                 'badge.base': 'BAZA', 'badge.user': 'DODANA'
             },
             en: {
@@ -2304,7 +2351,8 @@
                 'common.cannotDeleteBase': 'Cannot delete base formation!', 'common.confirmDelete': 'Delete formation',
                 'common.addedToFavorites': 'Added to favorites ⭐', 'common.removedFromFavorites': 'Removed from favorites',
 				'common.adminRequired': 'Only admin can delete formations!', 'database.sortLabel': 'Sort:',
-				'edit.title': 'Edit formation', 'edit.saveBtn': 'SAVE CHANGES',
+				'edit.title': 'Edit formation', 'edit.saveBtn': 'SAVE CHANGES', 'add.markAsBase': 'Mark as BASE formation',
+				'add.baseHint': 'Base formations are marked as "BASE".', 'preview.added': 'Added', 'preview.edited': 'Edited',
                 'badge.base': 'BASE', 'badge.user': 'ADDED'
             }
         };
@@ -2318,6 +2366,22 @@
         const $ = id => document.getElementById(id);
         const normalize = str => (str || '').trim().toLowerCase();
         const getPetName = p => typeof p === 'string' ? p : p.name;
+		
+		// Formatuj datę do czytelnego formatu (z godziną jeśli != 00:00)
+		function formatDate(isoString) {
+			if (!isoString) return null;
+			const date = new Date(isoString);
+			const dateStr = date.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+			
+			// Pokaż godzinę tylko jeśli nie jest 00:00
+			const hours = date.getHours();
+			const minutes = date.getMinutes();
+			if (hours === 0 && minutes === 0) {
+				return dateStr;
+			}
+			const timeStr = date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+			return `${dateStr}, ${timeStr}`;
+		}
         
 		function initTheme() {
 			if (currentTheme === 'light') {
@@ -2772,49 +2836,56 @@
             } else counter?.remove();
         }
         
-        async function saveFormation() {
-            if (!isOnline) { showToast(t('common.noConnection'), true); return; }
-            
-            const name = $('add-name').value.trim();
-            if (!name) { showToast(t('add.enterName'), true); return; }
-            
-            const my = getFieldValues('add-my', 8);
-            const enemy = getFieldValues('add-enemy', 8);
-            const myPet = $('add-myPet').value.trim();
-            const enemyPet = $('add-enemyPet').value.trim();
-            
-            if (!my.filter(h => h).length && !enemy.filter(h => h).length) { showToast(t('add.addAtLeastOne'), true); return; }
-            
-            const allHeroNames = heroes.map(h => h.name.toLowerCase());
-            const invalidHeroes = [...my, ...enemy].filter(h => h && !allHeroNames.includes(h.toLowerCase()));
-            if (invalidHeroes.length) { showToast(`${t('add.unknownHeroes')}: ${invalidHeroes.slice(0, 3).join(', ')}`, true); return; }
-            
-            const allPetNames = pets.map(p => getPetName(p).toLowerCase());
-            const invalidPets = [myPet, enemyPet].filter(p => p && !allPetNames.includes(p.toLowerCase()));
-            if (invalidPets.length) { showToast(`${t('add.unknownPets')}: ${invalidPets.join(', ')}`, true); return; }
-            
-            const newId = allFormations.length ? Math.max(...allFormations.map(f => f.id)) + 1 : 1;
-            
-            try {
-                await formationsRef.child(String(newId)).set({
-                    id: newId, name, my, myPet, enemy, enemyPet,
-                    comment: $('add-comment').value.trim(),
-                    isBase: false, dateAdded: new Date().toISOString()
-                });
-                showToast(`${t('add.saved')} #${newId}!`);
-                clearAddForm();
-            } catch (e) { showToast(`${t('common.error')}: ${e.message}`, true); }
-        }
+		async function saveFormation() {
+			if (!isOnline) { showToast(t('common.noConnection'), true); return; }
+			
+			const name = $('add-name').value.trim();
+			if (!name) { showToast(t('add.enterName'), true); return; }
+			
+			const my = getFieldValues('add-my', 8);
+			const enemy = getFieldValues('add-enemy', 8);
+			const myPet = $('add-myPet').value.trim();
+			const enemyPet = $('add-enemyPet').value.trim();
+			
+			if (!my.filter(h => h).length && !enemy.filter(h => h).length) { showToast(t('add.addAtLeastOne'), true); return; }
+			
+			const allHeroNames = heroes.map(h => h.name.toLowerCase());
+			const invalidHeroes = [...my, ...enemy].filter(h => h && !allHeroNames.includes(h.toLowerCase()));
+			if (invalidHeroes.length) { showToast(`${t('add.unknownHeroes')}: ${invalidHeroes.slice(0, 3).join(', ')}`, true); return; }
+			
+			const allPetNames = pets.map(p => getPetName(p).toLowerCase());
+			const invalidPets = [myPet, enemyPet].filter(p => p && !allPetNames.includes(p.toLowerCase()));
+			if (invalidPets.length) { showToast(`${t('add.unknownPets')}: ${invalidPets.join(', ')}`, true); return; }
+			
+			const newId = allFormations.length ? Math.max(...allFormations.map(f => f.id)) + 1 : 1;
+			
+			// Checkbox isBase - tylko admin może oznaczyć jako bazową
+			const isBase = isAdmin && $('add-isBase')?.checked || false;
+			
+			try {
+				await formationsRef.child(String(newId)).set({
+					id: newId, name, my, myPet, enemy, enemyPet,
+					comment: $('add-comment').value.trim(),
+					isBase: isBase,
+					dateAdded: new Date().toISOString()
+				});
+				showToast(`${t('add.saved')} #${newId}${isBase ? ' (BAZA)' : ''}!`);
+				clearAddForm();
+			} catch (e) { showToast(`${t('common.error')}: ${e.message}`, true); }
+		}
         
-        function clearAddForm() {
-            $('add-name').value = '';
-            $('add-comment').value = '';
-            for (let i = 1; i <= 8; i++) {
-                [$(`add-my${i}`), $(`add-enemy${i}`)].forEach(el => { if (el) { el.value = ''; setValidation(el, null); } });
-            }
-            [$('add-myPet'), $('add-enemyPet')].forEach(el => { if (el) { el.value = ''; setValidation(el, null); } });
-            updateAddFormTagsSelection();
-        }
+		function clearAddForm() {
+			$('add-name').value = '';
+			$('add-comment').value = '';
+			for (let i = 1; i <= 8; i++) {
+				[$(`add-my${i}`), $(`add-enemy${i}`)].forEach(el => { if (el) { el.value = ''; setValidation(el, null); } });
+			}
+			[$('add-myPet'), $('add-enemyPet')].forEach(el => { if (el) { el.value = ''; setValidation(el, null); } });
+			// Reset checkbox
+			const isBaseCheckbox = $('add-isBase');
+			if (isBaseCheckbox) isBaseCheckbox.checked = false;
+			updateAddFormTagsSelection();
+		}
         
         // =====================================================
         // QUICK SELECT MODAL
@@ -2909,20 +2980,21 @@
 			// Sortowanie
 			formations = sortFormations(formations);
 			
-			$('database-list').innerHTML = formations.length ? formations.map(f => `
-                <div class="db-item" onclick="showFormation(${f.id})">
-                    <div class="db-item-info">
-                        <div class="db-item-header"><span class="db-item-id">#${f.id}</span><span class="badge ${f.isBase ? 'base-badge' : 'user-badge'}">${t(f.isBase ? 'badge.base' : 'badge.user')}</span></div>
-                        <div class="db-item-name">${f.name}</div>
-                        <div class="db-item-details"><div>⚔️ ${f.my.filter(h => h).join(', ') || '—'} + ${f.myPet || '—'}</div><div>👹 ${f.enemy.filter(h => h).join(', ') || '—'} + ${f.enemyPet || '—'}</div></div>
-                    </div>
-					<div class="db-item-actions">
-						<button class="btn btn-small ${isFavorite(f.id) ? 'btn-favorite-active' : ''}" onclick="toggleFavorite(${f.id}, event)">${isFavorite(f.id) ? '⭐' : '☆'}</button>
-						<button class="btn btn-small" onclick="event.stopPropagation(); showFormation(${f.id})">👁️</button>
-						${isAdmin ? `<button class="btn btn-small btn-admin" onclick="event.stopPropagation(); openEditModal(${f.id})">✏️</button>` : ''}
-						${isAdmin ? `<button class="btn btn-small btn-danger" onclick="event.stopPropagation(); deleteFormation(${f.id})">🗑️</button>` : ''}
-					</div>
-                </div>`).join('') : `<div class="empty-state"><p>${t('database.noFormations')}</p></div>`;
+		$('database-list').innerHTML = formations.length ? formations.map(f => `
+			<div class="db-item" onclick="showFormation(${f.id})">
+				<div class="db-item-info">
+					<div class="db-item-header"><span class="db-item-id">#${f.id}</span><span class="badge ${f.isBase ? 'base-badge' : 'user-badge'}">${t(f.isBase ? 'badge.base' : 'badge.user')}</span></div>
+					<div class="db-item-name">${f.name}</div>
+					<div class="db-item-details"><div>⚔️ ${f.my.filter(h => h).join(', ') || '—'} + ${f.myPet || '—'}</div><div>👹 ${f.enemy.filter(h => h).join(', ') || '—'} + ${f.enemyPet || '—'}</div></div>
+				</div>
+				<div class="db-item-date">${formatDate(f.dateAdded) ? `📅 ${formatDate(f.dateAdded)}` : ''}</div>
+				<div class="db-item-actions">
+					<button class="btn btn-small ${isFavorite(f.id) ? 'btn-favorite-active' : ''}" onclick="toggleFavorite(${f.id}, event)">${isFavorite(f.id) ? '⭐' : '☆'}</button>
+					<button class="btn btn-small" onclick="event.stopPropagation(); showFormation(${f.id})">👁️</button>
+					${isAdmin ? `<button class="btn btn-small btn-admin" onclick="event.stopPropagation(); openEditModal(${f.id})">✏️</button>` : ''}
+					${isAdmin ? `<button class="btn btn-small btn-danger" onclick="event.stopPropagation(); deleteFormation(${f.id})">🗑️</button>` : ''}
+				</div>
+			</div>`).join('') : `<div class="empty-state"><p>${t('database.noFormations')}</p></div>`;
         }
         
         // =====================================================
@@ -2968,16 +3040,20 @@
             
             const isFav = isFavorite(id);
             
-            $('formation-display').innerHTML = `
-                <div class="formation-preview">
-                    <div class="preview-header">
-                        <div class="preview-title"><span class="preview-id">#${f.id}</span>${f.name}<span class="formation-type-badge ${f.isBase ? 'base' : 'user'}">${t(f.isBase ? 'badge.base' : 'badge.user')}</span></div>
-                        <div class="preview-actions">
+			$('formation-display').innerHTML = `
+				<div class="formation-preview">
+					<div class="preview-header">
+						<div class="preview-title"><span class="preview-id">#${f.id}</span>${f.name}<span class="formation-type-badge ${f.isBase ? 'base' : 'user'}">${t(f.isBase ? 'badge.base' : 'badge.user')}</span></div>
+						<div class="preview-actions">
 							${isAdmin ? `<button class="btn btn-small btn-admin" onclick="openEditModal(${id})">✏️</button>` : ''}
 							<button class="btn btn-small ${isFav ? 'btn-favorite-active' : 'btn-secondary'}" onclick="toggleFavoritePreview(${id})">${isFav ? '⭐' : '☆'}</button>
 						</div>
-                    </div>
-                    <div class="battle-section enemy">
+					</div>
+					<div class="preview-meta">
+						${formatDate(f.dateAdded) ? `<span class="preview-meta-item">📅 ${t('preview.added')}: ${formatDate(f.dateAdded)}</span>` : ''}
+						${formatDate(f.lastEdited) ? `<span class="preview-meta-item">✏️ ${t('preview.edited')}: ${formatDate(f.lastEdited)}</span>` : ''}
+					</div>
+					<div class="battle-section enemy">
                         <div class="battle-title enemy-title"><span class="title-icon">👹</span>${t('preview.enemy')}</div>
                         <div style="text-align:center">${renderBattlePet(f.enemyPet)}</div>
                         ${renderBattleGrid(f.enemy, true)}
@@ -3028,6 +3104,10 @@
 			$('edit-name').value = f.name || '';
 			$('edit-comment').value = f.comment || '';
 			
+			// Checkbox isBase
+			const isBaseCheckbox = $('edit-isBase');
+			if (isBaseCheckbox) isBaseCheckbox.checked = f.isBase || false;
+			
 			// Twój skład
 			for (let i = 1; i <= 8; i++) {
 				const el = $(`edit-my${i}`);
@@ -3072,9 +3152,8 @@
 			const enemyPet = $('edit-enemyPet').value.trim();
 			const comment = $('edit-comment').value.trim();
 			
-			// Pobierz oryginalną formację (żeby zachować isBase i datę)
-			const original = allFormations.find(x => x.id === editingFormationId);
-			if (!original) return;
+			// Checkbox isBase
+			const isBase = $('edit-isBase')?.checked || false;
 			
 			try {
 				await formationsRef.child(String(editingFormationId)).update({
@@ -3084,16 +3163,19 @@
 					enemy,
 					enemyPet,
 					comment,
+					isBase,
 					lastEdited: new Date().toISOString()
 				});
 				
-				showToast(`✅ Zaktualizowano formację #${editingFormationId}`);
+				showToast(`✅ Zaktualizowano formację #${editingFormationId}${isBase ? ' (BAZA)' : ''}`);
 				closeEditModal();
 				
 				// Odśwież podgląd jeśli jest otwarty
 				if ($('lookup-id').value == editingFormationId) {
 					showFormation(editingFormationId);
 				}
+				// Odśwież listę w bazie danych
+				filterDatabase();
 			} catch (e) {
 				showToast(`${t('common.error')}: ${e.message}`, true);
 			}
@@ -3154,28 +3236,34 @@
             } catch (e) { showToast('❌ ' + t('common.error') + ': ' + e.message, true); }
         }
         
-        function enableAdminMode() {
-            isAdmin = true;
-            $('admin-badge').style.display = 'inline';
-            $('nav-admin').classList.add('show');
-            $('nav-settings').classList.add('show');
-            $('nav-war').classList.add('show');
-            renderHeroesList();
-            renderPetsList();
-            filterDatabase();
-        }
+		function enableAdminMode() {
+			isAdmin = true;
+			$('admin-badge').style.display = 'inline';
+			$('nav-admin').classList.add('show');
+			$('nav-settings').classList.add('show');
+			$('nav-war').classList.add('show');
+			// Pokaż opcję "formacja bazowa" w formularzu dodawania
+			const baseOption = $('add-base-option');
+			if (baseOption) baseOption.style.display = 'block';
+			renderHeroesList();
+			renderPetsList();
+			filterDatabase();
+		}
         
-        function adminLogout() {
-            isAdmin = false;
-            localStorage.removeItem('souls_admin');
-            $('admin-badge').style.display = 'none';
-            $('nav-admin').classList.remove('show');
-            $('nav-settings').classList.remove('show');
-            $('nav-war').classList.remove('show');
-            switchTab('search');
-            filterDatabase();
-            showToast('🚪 ' + t('admin.loggedOut'));
-        }
+		function adminLogout() {
+			isAdmin = false;
+			localStorage.removeItem('souls_admin');
+			$('admin-badge').style.display = 'none';
+			$('nav-admin').classList.remove('show');
+			$('nav-settings').classList.remove('show');
+			$('nav-war').classList.remove('show');
+			// Ukryj opcję "formacja bazowa" w formularzu dodawania
+			const baseOption = $('add-base-option');
+			if (baseOption) baseOption.style.display = 'none';
+			switchTab('search');
+			filterDatabase();
+			showToast('🚪 ' + t('admin.loggedOut'));
+		}
         
         function renderHeroesList() {
             $('heroes-count').textContent = heroes.length;
@@ -3906,27 +3994,6 @@
 			$('war-preview-content').innerHTML = html;
 		}
         
-        async function initializeBaseData() {
-            if (!isOnline) { showToast(t('common.noConnection'), true); return; }
-            if (!confirm(t('admin.confirmLoadBase'))) return;
-            showToast(t('admin.loadingBase'));
-            
-            const baseFormations = [
-                {id:1,name:"Tobi 18-10-2025 W1",my:["Lupico","","","Richelle","Leovalt","Paopao","Solina",""],myPet:"Silbren",enemy:["Taros","","","","Solina","Roze","Nebula","Lena"],enemyPet:"Romanelle",isBase:true},
-                {id:2,name:"Tobi 18-10-2025 W2",my:["","","Nox","Dmitri","","Roze","Scarlet","Muerte"],myPet:"Hamm",enemy:["Paopao","","","Elara","Benzel","Lupico","Ulion",""],enemyPet:"Silbren",isBase:true},
-                {id:3,name:"Tobi 18-10-2025 W3",my:["","Nuel","","LuLu","Elara","","Akmon","Oneric"],myPet:"Banavi",enemy:["Nuel","","","Richelle","Lilith","Leovalt","Scarlet",""],enemyPet:"Mystet",isBase:true}
-            ];
-            
-            try {
-                for (const f of baseFormations) await formationsRef.child(String(f.id)).set(f);
-                showToast(`✅ ${t('admin.loadedBase').replace('formacji', baseFormations.length)}`);
-            } catch (e) { showToast(`${t('common.error')}: ${e.message}`, true); }
-        }
-        
-        // =====================================================
-        // AUTOCOMPLETE
-        // =====================================================
-        
         function setupAutocomplete() {
             document.querySelectorAll('input[data-type]').forEach(input => {
                 const list = $('list-' + input.id);
@@ -3994,7 +4061,6 @@
         // =====================================================
         // INICJALIZACJA
         // =====================================================
-        
 			document.addEventListener('DOMContentLoaded', () => {
 				initTheme();
 				setupAutocomplete();
