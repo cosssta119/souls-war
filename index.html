@@ -1153,6 +1153,26 @@
 
         #tab-add input[type="text"] { padding: 8px 10px; font-size: 0.85rem; }
         #tab-add .autocomplete-wrapper label { font-size: 0.7rem; margin-bottom: 2px; }
+		
+		/* Modal edycji */
+		#edit-modal .modal-content {
+			max-width: 500px;
+		}
+		#edit-modal .form-row {
+			gap: 5px;
+			margin-bottom: 5px;
+		}
+		#edit-modal .autocomplete-wrapper {
+			margin-bottom: 5px;
+		}
+		#edit-modal input[type="text"] {
+			padding: 8px 10px;
+			font-size: 0.85rem;
+		}
+		#edit-modal .add-form-section h3 {
+			font-size: 0.75rem;
+			margin-bottom: 8px;
+		}
         
         /* Stats */
         .stats-bar { display: flex; justify-content: space-around; padding: 10px; background: var(--bg-input); border-radius: 8px; margin-bottom: 15px; }
@@ -1993,6 +2013,72 @@
         <button class="nav-btn admin-only" id="nav-admin" onclick="switchTab('admin')"><span class="icon">👑</span><span>Admin</span></button>
     </nav>
     
+	<!-- Modal edycji formacji -->
+	<div class="modal hidden" id="edit-modal">
+		<div class="modal-content" style="max-width: 500px; max-height: 90vh; overflow-y: auto;">
+			<h2>✏️ <span data-i18n="edit.title">Edytuj formację</span> #<span id="edit-id"></span></h2>
+			
+			<div class="autocomplete-wrapper" style="margin: 15px 0;">
+				<label data-i18n="add.nameLabel">Nazwa formacji</label>
+				<input type="text" id="edit-name">
+			</div>
+			
+			<div class="add-form-section">
+				<h3>⚔️ <span data-i18n="add.yourTeam">Twój skład</span></h3>
+				<div class="form-row">
+					<div class="autocomplete-wrapper"><label>Poz 1</label><input type="text" id="edit-my1" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-my1"></div></div>
+					<div class="autocomplete-wrapper"><label>Poz 2</label><input type="text" id="edit-my2" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-my2"></div></div>
+					<div class="autocomplete-wrapper"><label>Poz 3</label><input type="text" id="edit-my3" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-my3"></div></div>
+				</div>
+				<div class="form-row">
+					<div class="autocomplete-wrapper"><label>Poz 4</label><input type="text" id="edit-my4" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-my4"></div></div>
+					<div class="autocomplete-wrapper"><label>Poz 5</label><input type="text" id="edit-my5" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-my5"></div></div>
+				</div>
+				<div class="form-row">
+					<div class="autocomplete-wrapper"><label>Poz 6</label><input type="text" id="edit-my6" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-my6"></div></div>
+					<div class="autocomplete-wrapper"><label>Poz 7</label><input type="text" id="edit-my7" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-my7"></div></div>
+					<div class="autocomplete-wrapper"><label>Poz 8</label><input type="text" id="edit-my8" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-my8"></div></div>
+				</div>
+				<div class="autocomplete-wrapper" style="max-width: 150px; margin: 8px auto;">
+					<label>🐾 Pet</label>
+					<input type="text" id="edit-myPet" data-type="pet" autocomplete="off">
+					<div class="autocomplete-list" id="list-edit-myPet"></div>
+				</div>
+			</div>
+			
+			<div class="add-form-section" style="margin-top: 15px;">
+				<h3>👹 <span data-i18n="add.enemyTeam">Skład przeciwnika</span></h3>
+				<div class="form-row">
+					<div class="autocomplete-wrapper"><label>Poz 1</label><input type="text" id="edit-enemy1" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-enemy1"></div></div>
+					<div class="autocomplete-wrapper"><label>Poz 2</label><input type="text" id="edit-enemy2" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-enemy2"></div></div>
+					<div class="autocomplete-wrapper"><label>Poz 3</label><input type="text" id="edit-enemy3" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-enemy3"></div></div>
+				</div>
+				<div class="form-row">
+					<div class="autocomplete-wrapper"><label>Poz 4</label><input type="text" id="edit-enemy4" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-enemy4"></div></div>
+					<div class="autocomplete-wrapper"><label>Poz 5</label><input type="text" id="edit-enemy5" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-enemy5"></div></div>
+				</div>
+				<div class="form-row">
+					<div class="autocomplete-wrapper"><label>Poz 6</label><input type="text" id="edit-enemy6" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-enemy6"></div></div>
+					<div class="autocomplete-wrapper"><label>Poz 7</label><input type="text" id="edit-enemy7" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-enemy7"></div></div>
+					<div class="autocomplete-wrapper"><label>Poz 8</label><input type="text" id="edit-enemy8" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-edit-enemy8"></div></div>
+				</div>
+				<div class="autocomplete-wrapper" style="max-width: 150px; margin: 8px auto;">
+					<label>🐾 Pet</label>
+					<input type="text" id="edit-enemyPet" data-type="pet" autocomplete="off">
+					<div class="autocomplete-list" id="list-edit-enemyPet"></div>
+				</div>
+			</div>
+			
+			<div class="autocomplete-wrapper" style="margin: 15px 0;">
+				<label>💬 <span data-i18n="add.commentLabel">Komentarz</span></label>
+				<input type="text" id="edit-comment">
+			</div>
+			
+			<button class="btn btn-success" onclick="saveEditFormation()">💾 <span data-i18n="edit.saveBtn">ZAPISZ ZMIANY</span></button>
+			<button class="btn btn-secondary" onclick="closeEditModal()" style="margin-top: 8px;"><span data-i18n="common.cancel">Anuluj</span></button>
+		</div>
+	</div>
+	
     <div class="toast" id="toast"></div>
 
     <div class="quick-select-modal hidden" id="quick-select-modal">
@@ -2033,7 +2119,7 @@
         let favorites = JSON.parse(localStorage.getItem('souls_favorites') || '[]');
         let currentLang = localStorage.getItem('souls_lang') || 'pl';
         let currentDbFilter = 'all';
-        let quickSelectTarget = null, activeAddField = null, activeSearchField = null;
+        let quickSelectTarget = null, activeAddField = null, activeSearchField = null, editingFormationId = null;
 		let currentTheme = localStorage.getItem('souls_theme') || 'dark';
         
         let heroes = [
@@ -2104,6 +2190,7 @@
                 'common.cannotDeleteBase': 'Nie możesz usunąć formacji bazowej!', 'common.confirmDelete': 'Usunąć formację',
                 'common.addedToFavorites': 'Dodano do ulubionych ⭐', 'common.removedFromFavorites': 'Usunięto z ulubionych',
 				'common.adminRequired': 'Tylko admin może usuwać formacje!',
+				'edit.title': 'Edytuj formację', 'edit.saveBtn': 'ZAPISZ ZMIANY',
                 'badge.base': 'BAZA', 'badge.user': 'DODANA'
             },
             en: {
@@ -2147,6 +2234,7 @@
                 'common.cannotDeleteBase': 'Cannot delete base formation!', 'common.confirmDelete': 'Delete formation',
                 'common.addedToFavorites': 'Added to favorites ⭐', 'common.removedFromFavorites': 'Removed from favorites',
 				'common.adminRequired': 'Only admin can delete formations!',
+				'edit.title': 'Edit formation', 'edit.saveBtn': 'SAVE CHANGES',
                 'badge.base': 'BASE', 'badge.user': 'ADDED'
             }
         };
@@ -2718,6 +2806,7 @@
 					<div class="db-item-actions">
 						<button class="btn btn-small ${isFavorite(f.id) ? 'btn-favorite-active' : ''}" onclick="toggleFavorite(${f.id}, event)">${isFavorite(f.id) ? '⭐' : '☆'}</button>
 						<button class="btn btn-small" onclick="event.stopPropagation(); showFormation(${f.id})">👁️</button>
+						${isAdmin ? `<button class="btn btn-small btn-admin" onclick="event.stopPropagation(); openEditModal(${f.id})">✏️</button>` : ''}
 						${isAdmin ? `<button class="btn btn-small btn-danger" onclick="event.stopPropagation(); deleteFormation(${f.id})">🗑️</button>` : ''}
 					</div>
                 </div>`).join('') : `<div class="empty-state"><p>${t('database.noFormations')}</p></div>`;
@@ -2770,7 +2859,10 @@
                 <div class="formation-preview">
                     <div class="preview-header">
                         <div class="preview-title"><span class="preview-id">#${f.id}</span>${f.name}<span class="formation-type-badge ${f.isBase ? 'base' : 'user'}">${t(f.isBase ? 'badge.base' : 'badge.user')}</span></div>
-                        <div class="preview-actions"><button class="btn btn-small ${isFav ? 'btn-favorite-active' : 'btn-secondary'}" onclick="toggleFavoritePreview(${id})">${isFav ? '⭐' : '☆'}</button></div>
+                        <div class="preview-actions">
+							${isAdmin ? `<button class="btn btn-small btn-admin" onclick="openEditModal(${id})">✏️</button>` : ''}
+							<button class="btn btn-small ${isFav ? 'btn-favorite-active' : 'btn-secondary'}" onclick="toggleFavoritePreview(${id})">${isFav ? '⭐' : '☆'}</button>
+						</div>
                     </div>
                     <div class="battle-section enemy">
                         <div class="battle-title enemy-title"><span class="title-icon">👹</span>${t('preview.enemy')}</div>
@@ -2807,10 +2899,96 @@
                 `<div class="battle-pet empty"><span class="pet-icon">🐾</span><span>${t('preview.noPet')}</span></div>`;
         }
         
+		// =====================================================
+		// EDYCJA FORMACJI
+		// =====================================================
+		function openEditModal(id) {
+			if (!isAdmin) { showToast(t('common.adminRequired') || 'Tylko admin może edytować!', true); return; }
+			
+			const f = allFormations.find(x => x.id === id);
+			if (!f) { showToast(t('preview.notFound'), true); return; }
+			
+			editingFormationId = id;
+			
+			// Wypełnij formularz danymi
+			$('edit-id').textContent = id;
+			$('edit-name').value = f.name || '';
+			$('edit-comment').value = f.comment || '';
+			
+			// Twój skład
+			for (let i = 1; i <= 8; i++) {
+				const el = $(`edit-my${i}`);
+				if (el) el.value = f.my[i - 1] || '';
+			}
+			$('edit-myPet').value = f.myPet || '';
+			
+			// Skład przeciwnika
+			for (let i = 1; i <= 8; i++) {
+				const el = $(`edit-enemy${i}`);
+				if (el) el.value = f.enemy[i - 1] || '';
+			}
+			$('edit-enemyPet').value = f.enemyPet || '';
+			
+			$('edit-modal').classList.remove('hidden');
+		}
+
+		function closeEditModal() {
+			$('edit-modal').classList.add('hidden');
+			editingFormationId = null;
+		}
+
+		async function saveEditFormation() {
+			if (!isAdmin || !editingFormationId) return;
+			if (!isOnline) { showToast(t('common.noConnection'), true); return; }
+			
+			const name = $('edit-name').value.trim();
+			if (!name) { showToast(t('add.enterName'), true); return; }
+			
+			// Pobierz dane z formularza
+			const my = [];
+			for (let i = 1; i <= 8; i++) {
+				my.push($(`edit-my${i}`)?.value.trim() || '');
+			}
+			
+			const enemy = [];
+			for (let i = 1; i <= 8; i++) {
+				enemy.push($(`edit-enemy${i}`)?.value.trim() || '');
+			}
+			
+			const myPet = $('edit-myPet').value.trim();
+			const enemyPet = $('edit-enemyPet').value.trim();
+			const comment = $('edit-comment').value.trim();
+			
+			// Pobierz oryginalną formację (żeby zachować isBase i datę)
+			const original = allFormations.find(x => x.id === editingFormationId);
+			if (!original) return;
+			
+			try {
+				await formationsRef.child(String(editingFormationId)).update({
+					name,
+					my,
+					myPet,
+					enemy,
+					enemyPet,
+					comment,
+					lastEdited: new Date().toISOString()
+				});
+				
+				showToast(`✅ Zaktualizowano formację #${editingFormationId}`);
+				closeEditModal();
+				
+				// Odśwież podgląd jeśli jest otwarty
+				if ($('lookup-id').value == editingFormationId) {
+					showFormation(editingFormationId);
+				}
+			} catch (e) {
+				showToast(`${t('common.error')}: ${e.message}`, true);
+			}
+		}
+		
         // =====================================================
         // USUWANIE
         // =====================================================
-        
 		async function deleteFormation(id) {
 			const f = allFormations.find(x => x.id === id);
 			if (!f) return;
@@ -2839,7 +3017,7 @@
         function headerClick() {
             headerClickCount++;
             clearTimeout(headerClickTimer);
-            if (headerClickCount >= 8) {
+            if (headerClickCount >= 5) {
                 headerClickCount = 0;
                 isAdmin ? showToast(t('admin.alreadyLogged')) : $('admin-modal').classList.remove('hidden');
             } else headerClickTimer = setTimeout(() => headerClickCount = 0, 2000);
@@ -3572,18 +3750,19 @@
             document.querySelectorAll('input[data-type]').forEach(input => {
                 const list = $('list-' + input.id);
                 const type = input.dataset.type;
-                
-                // Dla pól war-* tworzymy dynamiczną listę autocomplete
-                const isWarField = input.id.startsWith('war-');
+
+				// Dla pól war-* i edit-* używamy standardowej listy autocomplete
+				const isWarField = input.id.startsWith('war-');
+				const isEditField = input.id.startsWith('edit-') && !['edit-name', 'edit-comment', 'edit-id'].includes(input.id);
                 let dynamicList = null;
                 
-                if (isWarField) {
-                    dynamicList = document.createElement('div');
-                    dynamicList.className = 'autocomplete-list';
-                    dynamicList.id = 'list-' + input.id;
-                    input.parentNode.style.position = 'relative';
-                    input.parentNode.appendChild(dynamicList);
-                }
+				if (isWarField && !list) {
+					dynamicList = document.createElement('div');
+					dynamicList.className = 'autocomplete-list';
+					dynamicList.id = 'list-' + input.id;
+					input.parentNode.style.position = 'relative';
+					input.parentNode.appendChild(dynamicList);
+				}
                 
                 const targetList = list || dynamicList;
                 if (!targetList) return;
@@ -3654,8 +3833,14 @@
             
             $('lookup-id').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lookupById(); } });
             
-            $('quick-select-modal').addEventListener('click', e => { if (e.target === $('quick-select-modal')) closeQuickSelect(); });
-            document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('quick-select-modal').classList.contains('hidden')) closeQuickSelect(); });
+			$('quick-select-modal').addEventListener('click', e => { if (e.target === $('quick-select-modal')) closeQuickSelect(); });
+			$('edit-modal')?.addEventListener('click', e => { if (e.target === $('edit-modal')) closeEditModal(); });
+			document.addEventListener('keydown', e => { 
+				if (e.key === 'Escape') {
+					if (!$('quick-select-modal').classList.contains('hidden')) closeQuickSelect();
+					if (!$('edit-modal').classList.contains('hidden')) closeEditModal();
+				}
+			});
             
             const tabAdd = $('tab-add');
             if (tabAdd) {
