@@ -3119,55 +3119,123 @@
         // =====================================================
         // IMPORT / EKSPORT
         // =====================================================
+		function exportToCSV() {
+			const headers = [
+				'Lp', 'Nazwa',
+				'moja1', 'moja2', 'moja3', 'moja4', 'moja5', 'moja6', 'moja7', 'moja8', 'mojPet',
+				'enemy1', 'enemy2', 'enemy3', 'enemy4', 'enemy5', 'enemy6', 'enemy7', 'enemy8', 'enemyPet',
+				'Komentarz', 'CzyBazowa'
+			];
+			
+			const escapeCSV = (val) => {
+				const str = String(val || '');
+				// Jeśli zawiera przecinek, średnik, cudzysłów lub nową linię - owijamy w cudzysłowy
+				if (str.includes(';') || str.includes(',') || str.includes('"') || str.includes('\n')) {
+					return `"${str.replace(/"/g, '""')}"`;
+				}
+				return str;
+			};
+			
+			const rows = allFormations.map(f => {
+				// Upewnij się że my i enemy mają 8 elementów
+				const myArr = f.my || [];
+				const enemyArr = f.enemy || [];
+				while (myArr.length < 8) myArr.push('');
+				while (enemyArr.length < 8) enemyArr.push('');
+				
+				return [
+					f.id,
+					escapeCSV(f.name),
+					...myArr.map(h => escapeCSV(h)),
+					escapeCSV(f.myPet),
+					...enemyArr.map(h => escapeCSV(h)),
+					escapeCSV(f.enemyPet),
+					escapeCSV(f.comment),
+					f.isBase ? '1' : '0'
+				].join(';');
+			});
+			
+			const blob = new Blob(['\ufeff' + [headers.join(';'), ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
+			const a = document.createElement('a');
+			a.href = URL.createObjectURL(blob);
+			a.download = `TABELA_${new Date().toISOString().slice(0,10)}.csv`;
+			a.click();
+			showToast(`${t('settings.exported')} ${allFormations.length} ${t('status.formations')}`);
+		}
         
-        function exportToCSV() {
-            const headers = ['Lp','Nazwa','moja1','moja2','moja3','moja4','moja5','moja6','moja7','moja8','mojPet','enemy1','enemy2','enemy3','enemy4','enemy5','enemy6','enemy7','enemy8','enemyPet'];
-            const rows = allFormations.map(f => [f.id, `"${f.name || ''}"`, ...f.my.map(h => `"${h || ''}"`), `"${f.myPet || ''}"`, ...f.enemy.map(h => `"${h || ''}"`), `"${f.enemyPet || ''}"`].join(';'));
-            const blob = new Blob(['\ufeff' + [headers.join(';'), ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `TABELA_${new Date().toISOString().slice(0,10)}.csv`;
-            a.click();
-            showToast(`${t('settings.exported')} ${allFormations.length} ${t('status.formations')}`);
-        }
-        
-        async function importFromCSV(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            if (!isOnline) { showToast(t('common.noConnection'), true); return; }
-            
-            const reader = new FileReader();
-            reader.onload = async e => {
-                try {
-                    const lines = e.target.result.split('\n').filter(l => l.trim());
-                    const sep = lines[0].includes(';') ? ';' : ',';
-                    let imported = 0, maxId = allFormations.length ? Math.max(...allFormations.map(f => f.id)) : 0;
-                    const existingIds = allFormations.map(f => f.id);
-                    
-                    for (let i = 1; i < lines.length; i++) {
-                        const vals = parseCSVLine(lines[i], sep);
-                        if (vals.length < 20) continue;
-                        const startIdx = vals[0].match(/^\d+$/) ? 1 : 0;
-                        
-                        while (existingIds.includes(++maxId));
-                        existingIds.push(maxId);
-                        
-                        await formationsRef.child(String(maxId)).set({
-                            id: maxId, name: cleanVal(vals[startIdx]),
-                            my: vals.slice(startIdx + 1, startIdx + 9).map(cleanVal),
-                            myPet: cleanVal(vals[startIdx + 9]),
-                            enemy: vals.slice(startIdx + 10, startIdx + 18).map(cleanVal),
-                            enemyPet: cleanVal(vals[startIdx + 18]),
-                            isBase: false, dateAdded: new Date().toISOString()
-                        });
-                        imported++;
-                    }
-                    showToast(`${t('settings.imported')} ${imported} ${t('status.formations')}!`);
-                } catch (e) { showToast(`${t('common.error')}: ${e.message}`, true); }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        }
+		async function importFromCSV(event) {
+			const file = event.target.files[0];
+			if (!file) return;
+			if (!isOnline) { showToast(t('common.noConnection'), true); return; }
+			
+			const reader = new FileReader();
+			reader.onload = async e => {
+				try {
+					const lines = e.target.result.split('\n').filter(l => l.trim());
+					if (lines.length < 2) { showToast('Plik jest pusty lub ma tylko nagłówki', true); return; }
+					
+					const sep = lines[0].includes(';') ? ';' : ',';
+					const headers = parseCSVLine(lines[0], sep).map(h => h.toLowerCase().trim());
+					
+					// Sprawdź czy mamy nowy format (z komentarzem) czy stary
+					const hasComment = headers.includes('komentarz') || headers.length >= 22;
+					
+					let imported = 0, skipped = 0;
+					let maxId = allFormations.length ? Math.max(...allFormations.map(f => f.id)) : 0;
+					const existingIds = allFormations.map(f => f.id);
+					
+					for (let i = 1; i < lines.length; i++) {
+						const vals = parseCSVLine(lines[i], sep);
+						if (vals.length < 20) { skipped++; continue; }
+						
+						// Określ czy pierwsza kolumna to ID
+						const startIdx = vals[0].match(/^\d+$/) ? 1 : 0;
+						
+						// Generuj nowe unikalne ID
+						while (existingIds.includes(++maxId));
+						existingIds.push(maxId);
+						
+						// Parsuj pola
+						const myHeroes = vals.slice(startIdx + 1, startIdx + 9).map(cleanVal);
+						const myPet = cleanVal(vals[startIdx + 9]);
+						const enemyHeroes = vals.slice(startIdx + 10, startIdx + 18).map(cleanVal);
+						const enemyPet = cleanVal(vals[startIdx + 18]);
+						
+						// Komentarz i isBase (jeśli dostępne)
+						let comment = '';
+						let isBase = false;
+						
+						if (hasComment && vals.length >= startIdx + 21) {
+							comment = cleanVal(vals[startIdx + 19]);
+							isBase = cleanVal(vals[startIdx + 20]) === '1';
+						}
+						
+						await formationsRef.child(String(maxId)).set({
+							id: maxId,
+							name: cleanVal(vals[startIdx]) || `Import #${maxId}`,
+							my: myHeroes,
+							myPet: myPet,
+							enemy: enemyHeroes,
+							enemyPet: enemyPet,
+							comment: comment,
+							isBase: isBase,
+							dateAdded: new Date().toISOString()
+						});
+						imported++;
+					}
+					
+					let msg = `${t('settings.imported')} ${imported} ${t('status.formations')}!`;
+					if (skipped > 0) msg += ` (${skipped} pominięto)`;
+					showToast(msg);
+					
+				} catch (e) { 
+					console.error('Import error:', e);
+					showToast(`${t('common.error')}: ${e.message}`, true); 
+				}
+			};
+			reader.readAsText(file);
+			event.target.value = '';
+		}
         
         function parseCSVLine(line, sep = ';') {
             const result = [];
