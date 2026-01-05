@@ -2248,6 +2248,10 @@
 		let currentTheme = localStorage.getItem('souls_theme') || 'dark';
 		let isGuildAuthenticated = false;
 
+		// ========== KONFIGURACJA ZABEZPIECZEŃ ==========
+		const GUILD_PASSWORD_ENABLED = true; // Zmień na true aby włączyć hasło na wejście
+		// ===============================================
+
 		// Hashe haseł (SHA-256)
 		const GUILD_PASSWORD_HASH = '249dc54f04e8c635d90121519b23214d62bf91c4f28edc27ec8c989bc897de70';
 		const ADMIN_PASSWORD_HASH = '73e27fdb26c47415340900ae682ca124348f26663db2f797fb7cee6232126ac5';
@@ -2402,6 +2406,12 @@
 		
 		// Sprawdź czy użytkownik ma dostęp do gildii
 		async function checkGuildAccess() {
+			// Jeśli hasło wyłączone - zawsze przepuść
+			if (!GUILD_PASSWORD_ENABLED) {
+				isGuildAuthenticated = true;
+				return true;
+			}
+			
 			const savedHash = localStorage.getItem('souls_guild_access');
 			if (savedHash === GUILD_PASSWORD_HASH) {
 				isGuildAuthenticated = true;
@@ -4232,3 +4242,5 @@
     </script>
 </body>
 </html>
+
+
