@@ -1707,6 +1707,15 @@
 	</script>
 </head>
 <body>
+	<div class="modal" id="guild-password-modal">
+		<div class="modal-content">
+			<h2>🔐 <span data-i18n="guild.title">Strona gildii</span></h2>
+			<p style="text-align: center; color: var(--text-muted); margin-bottom: 20px; font-size: 0.85rem;" data-i18n="guild.enterPassword">Wpisz hasło gildii aby wejść</p>
+			<input type="password" id="guild-password" data-i18n-placeholder="guild.passwordPlaceholder" placeholder="Hasło gildii..." style="margin-bottom: 10px;">
+			<button class="btn" onclick="tryGuildLogin()" data-i18n="guild.enter">WEJDŹ</button>
+			<p id="guild-error" style="color: #ef5350; text-align: center; margin-top: 10px; font-size: 0.8rem; display: none;"></p>
+		</div>
+	</div>
     <div class="loading-overlay" id="loading">
         <div class="spinner"></div>
         <div style="color: var(--accent-gold);" data-i18n="loading">Ładowanie danych...</div>
@@ -2237,6 +2246,11 @@
 		let currentDbSort = 'id-asc';
         let quickSelectTarget = null, activeAddField = null, activeSearchField = null, editingFormationId = null;
 		let currentTheme = localStorage.getItem('souls_theme') || 'dark';
+		let isGuildAuthenticated = false;
+
+		// Hashe haseł (SHA-256)
+		const GUILD_PASSWORD_HASH = '249dc54f04e8c635d90121519b23214d62bf91c4f28edc27ec8c989bc897de70';
+		const ADMIN_PASSWORD_HASH = '73e27fdb26c47415340900ae682ca124348f26663db2f797fb7cee6232126ac5';
         
         let heroes = [
             {name:"Dmitri",race:"Dark"},{name:"Roze",race:"Dark"},{name:"Nebula",race:"Dark"},{name:"Zeke",race:"Dark"},
@@ -2308,6 +2322,11 @@
 				'common.adminRequired': 'Tylko admin może usuwać formacje!', 'database.sortLabel': 'Sortuj:',
 				'edit.title': 'Edytuj formację', 'edit.saveBtn': 'ZAPISZ ZMIANY', 'add.markAsBase': 'Oznacz jako formację BAZOWĄ',
 				'add.baseHint': 'Formacje bazowe są oznaczone jako "BAZA".', 'preview.added': 'Dodano', 'preview.edited': 'Edytowano',
+				'guild.title': 'Strona gildii',
+				'guild.enterPassword': 'Wpisz hasło gildii aby wejść',
+				'guild.passwordPlaceholder': 'Hasło gildii...',
+				'guild.enter': 'WEJDŹ',
+				'guild.wrongPassword': 'Nieprawidłowe hasło!',
                 'badge.base': 'BAZA', 'badge.user': 'DODANA'
             },
             en: {
@@ -2353,6 +2372,11 @@
 				'common.adminRequired': 'Only admin can delete formations!', 'database.sortLabel': 'Sort:',
 				'edit.title': 'Edit formation', 'edit.saveBtn': 'SAVE CHANGES', 'add.markAsBase': 'Mark as BASE formation',
 				'add.baseHint': 'Base formations are marked as "BASE".', 'preview.added': 'Added', 'preview.edited': 'Edited',
+				'guild.title': 'Guild page',
+				'guild.enterPassword': 'Enter guild password to access',
+				'guild.passwordPlaceholder': 'Guild password...',
+				'guild.enter': 'ENTER',
+				'guild.wrongPassword': 'Wrong password!',
                 'badge.base': 'BASE', 'badge.user': 'ADDED'
             }
         };
@@ -2367,6 +2391,57 @@
         const normalize = str => (str || '').trim().toLowerCase();
         const getPetName = p => typeof p === 'string' ? p : p.name;
 		
+		// Hashowanie SHA-256
+		async function hashPassword(password) {
+			const encoder = new TextEncoder();
+			const data = encoder.encode(password);
+			const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+			const hashArray = Array.from(new Uint8Array(hashBuffer));
+			return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+		}
+		
+		// Sprawdź czy użytkownik ma dostęp do gildii
+		async function checkGuildAccess() {
+			const savedHash = localStorage.getItem('souls_guild_access');
+			if (savedHash === GUILD_PASSWORD_HASH) {
+				isGuildAuthenticated = true;
+				$('guild-password-modal').classList.add('hidden');
+				return true;
+			}
+			$('guild-password-modal').classList.remove('hidden');
+			$('loading').classList.add('hidden');
+			return false;
+		}
+
+		// Próba logowania do gildii
+		async function tryGuildLogin() {
+			const password = $('guild-password').value;
+			if (!password) {
+				showGuildError(t('guild.wrongPassword'));
+				return;
+			}
+			
+			const hash = await hashPassword(password);
+			
+			if (hash === GUILD_PASSWORD_HASH) {
+				localStorage.setItem('souls_guild_access', hash);
+				isGuildAuthenticated = true;
+				$('guild-password-modal').classList.add('hidden');
+				$('loading').classList.remove('hidden');
+				location.reload();
+			} else {
+				showGuildError(t('guild.wrongPassword'));
+				$('guild-password').value = '';
+			}
+		}
+
+		function showGuildError(msg) {
+			const err = $('guild-error');
+			err.textContent = msg;
+			err.style.display = 'block';
+			setTimeout(() => err.style.display = 'none', 3000);
+		}
+				
 		// Formatuj datę do czytelnego formatu (z godziną jeśli != 00:00)
 		function formatDate(isoString) {
 			if (!isoString) return null;
@@ -2560,21 +2635,21 @@
         const RACE_ORDER = ['Dark', 'Light', 'Human', 'Fire', 'Elf', 'Undead'];
         const RACE_EMOJI = { Dark: '🌑', Light: '☀️', Human: '👤', Fire: '🔥', Elf: '🌿', Undead: '💀' };
         
-        function buildTagsHTML(raceGroups, petsData, clickHandler, petClickHandler, showCounts = false) {
-            let html = `<div class="quick-tags-expand-all"><button class="expand-all-btn" onclick="toggleAllTags(this.closest('.search-form-tags, .add-form-tags'))">▲ ${t('quickTags.collapseAll')}</button></div>`;
-            
-            RACE_ORDER.forEach(race => {
-                if (raceGroups[race]?.length) {
-                    html += `<div class="quick-tags-section"><div class="quick-tags-header expanded" onclick="toggleQuickTagSection(this)"><span class="toggle-icon">▶</span>${RACE_EMOJI[race]} ${race} (${raceGroups[race].length})</div><div class="quick-tags-content show"><div class="quick-tags">${raceGroups[race].map(h => `<span class="quick-tag tag-${race.toLowerCase()}" onclick="${clickHandler}('${h.name || h}')"${showCounts && h.count ? ` title="${h.count}x"` : ''}>${h.name || h}</span>`).join('')}</div></div></div>`;
-                }
-            });
-            
-            if (petsData?.length) {
-                html += `<div class="quick-tags-section"><div class="quick-tags-header expanded" onclick="toggleQuickTagSection(this)"><span class="toggle-icon">▶</span>🐾 ${t('quickTags.pets')} (${petsData.length})</div><div class="quick-tags-content show"><div class="quick-tags">${petsData.map(p => `<span class="quick-tag tag-pet" onclick="${petClickHandler}('${p.name || p}')"${showCounts && p.count ? ` title="${p.count}x"` : ''}>${p.name || p}</span>`).join('')}</div></div></div>`;
-            }
-            
-            return html;
-        }
+		function buildTagsHTML(raceGroups, petsData, clickHandler, petClickHandler, showCounts = false) {
+			let html = `<div class="quick-tags-expand-all"><button class="expand-all-btn" onclick="toggleAllTags(this.closest('.search-form-tags, .add-form-tags'))">▼ ${t('quickTags.expandAll')}</button></div>`;
+			
+			RACE_ORDER.forEach(race => {
+				if (raceGroups[race]?.length) {
+					html += `<div class="quick-tags-section"><div class="quick-tags-header" onclick="toggleQuickTagSection(this)"><span class="toggle-icon">▶</span>${RACE_EMOJI[race]} ${race} (${raceGroups[race].length})</div><div class="quick-tags-content"><div class="quick-tags">${raceGroups[race].map(h => `<span class="quick-tag tag-${race.toLowerCase()}" onclick="${clickHandler}('${h.name || h}')"${showCounts && h.count ? ` title="${h.count}x"` : ''}>${h.name || h}</span>`).join('')}</div></div></div>`;
+				}
+			});
+			
+			if (petsData?.length) {
+				html += `<div class="quick-tags-section"><div class="quick-tags-header" onclick="toggleQuickTagSection(this)"><span class="toggle-icon">▶</span>🐾 ${t('quickTags.pets')} (${petsData.length})</div><div class="quick-tags-content"><div class="quick-tags">${petsData.map(p => `<span class="quick-tag tag-pet" onclick="${petClickHandler}('${p.name || p}')"${showCounts && p.count ? ` title="${p.count}x"` : ''}>${p.name || p}</span>`).join('')}</div></div></div>`;
+			}
+			
+			return html;
+		}
         
         function generateQuickTags() {
             if (!allFormations.length) return;
@@ -3237,18 +3312,26 @@
             $('admin-password').value = '';
         }
         
-        async function tryAdminLogin() {
-            try {
-                const correct = (await db.ref('config/adminPassword').once('value')).val();
-                if ($('admin-password').value === correct) {
-                    isAdmin = true;
-                    localStorage.setItem('souls_admin', 'true');
-                    closeAdminModal();
-                    enableAdminMode();
-                    showToast('🔓 ' + t('admin.loggedIn'));
-                } else showToast('❌ ' + t('admin.wrongPassword'), true);
-            } catch (e) { showToast('❌ ' + t('common.error') + ': ' + e.message, true); }
-        }
+		async function tryAdminLogin() {
+			const password = $('admin-password').value;
+			if (!password) {
+				showToast('❌ ' + t('admin.wrongPassword'), true);
+				return;
+			}
+			
+			const hash = await hashPassword(password);
+			
+			if (hash === ADMIN_PASSWORD_HASH) {
+				isAdmin = true;
+				localStorage.setItem('souls_admin', hash);
+				closeAdminModal();
+				enableAdminMode();
+				showToast('🔓 ' + t('admin.loggedIn'));
+			} else {
+				showToast('❌ ' + t('admin.wrongPassword'), true);
+				$('admin-password').value = '';
+			}
+		}
         
 		function enableAdminMode() {
 			isAdmin = true;
@@ -4075,10 +4158,17 @@
         // =====================================================
         // INICJALIZACJA
         // =====================================================
-			document.addEventListener('DOMContentLoaded', () => {
-				initTheme();
-				setupAutocomplete();
-            if (localStorage.getItem('souls_admin') === 'true') enableAdminMode();
+		document.addEventListener('DOMContentLoaded', async () => {
+			// Listener dla Enter przy haśle gildii
+			$('guild-password')?.addEventListener('keydown', e => { if (e.key === 'Enter') tryGuildLogin(); });
+			
+			// Sprawdź hasło gildii PRZED wszystkim
+			const hasAccess = await checkGuildAccess();
+			if (!hasAccess) return;
+			
+			initTheme();
+			setupAutocomplete();
+            if (localStorage.getItem('souls_admin') === ADMIN_PASSWORD_HASH) enableAdminMode();
             applyTranslations();
             
             document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
@@ -4142,4 +4232,3 @@
     </script>
 </body>
 </html>
-
