@@ -1668,6 +1668,16 @@
 			padding: 0 10px;
 			align-self: center;
 		}
+		
+		.db-item.has-excluded {
+			opacity: 0.5;
+			border-color: rgba(244, 67, 54, 0.3);
+		}
+
+		.db-item.has-excluded:hover {
+			opacity: 0.7;
+		}
+		
         /* Info box */
         .info-box {
             background: var(--bg-input);
@@ -2360,6 +2370,202 @@
 			background: linear-gradient(135deg, #e65100, #bf360c) !important;
 		}
 		
+		/* ========== WYKLUCZANIE BOHATERÓW ========== */
+
+		.excluded-section {
+			margin: 0 0 15px 0;
+			background: linear-gradient(135deg, rgba(244, 67, 54, 0.05), rgba(244, 67, 54, 0.02));
+			border: 1px solid rgba(244, 67, 54, 0.2);
+			border-radius: 12px;
+			overflow: hidden;
+		}
+
+		.excluded-section.visible {
+			display: block !important;
+		}
+
+		.excluded-header {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 12px 15px;
+			cursor: pointer;
+			transition: all 0.2s;
+			user-select: none;
+		}
+
+		.excluded-header:hover {
+			background: rgba(244, 67, 54, 0.05);
+		}
+
+		.excluded-toggle-icon {
+			font-size: 0.7rem;
+			transition: transform 0.2s;
+			color: var(--text-muted);
+		}
+
+		.excluded-toggle-icon.expanded {
+			transform: rotate(90deg);
+		}
+
+		.excluded-count {
+			font-size: 0.8rem;
+			color: #f44336;
+			font-weight: 600;
+		}
+
+		.excluded-content {
+			display: none;
+			padding: 0 15px 15px;
+		}
+
+		.excluded-content.show {
+			display: block;
+			animation: slideDown 0.2s ease;
+		}
+
+		.excluded-chips {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+			margin-bottom: 12px;
+			min-height: 36px;
+			padding: 10px;
+			background: rgba(0, 0, 0, 0.2);
+			border-radius: 8px;
+		}
+
+		.excluded-empty {
+			color: var(--text-muted);
+			font-size: 0.8rem;
+			font-style: italic;
+			width: 100%;
+			text-align: center;
+		}
+
+		.excluded-chip {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			padding: 6px 10px;
+			background: linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.1));
+			border: 1px solid #f44336;
+			border-radius: 20px;
+			font-size: 0.8rem;
+			color: #ff6b6b;
+			animation: fadeIn 0.2s ease;
+		}
+
+		.excluded-chip-remove {
+			background: none;
+			border: none;
+			color: #f44336;
+			cursor: pointer;
+			font-size: 0.9rem;
+			padding: 0;
+			line-height: 1;
+			opacity: 0.7;
+			transition: all 0.2s;
+		}
+
+		.excluded-chip-remove:hover {
+			opacity: 1;
+			transform: scale(1.2);
+		}
+
+		.excluded-add {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+		}
+
+		.excluded-add input {
+			border-color: rgba(244, 67, 54, 0.3);
+		}
+
+		.excluded-add input:focus {
+			border-color: #f44336;
+			box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.2);
+		}
+
+		.excluded-hint {
+			font-size: 0.7rem;
+			color: var(--text-muted);
+			margin-top: 10px;
+			text-align: center;
+		}
+
+		.excluded-checkbox-label {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			font-size: 0.8rem;
+			color: var(--text-muted);
+			margin-top: 10px;
+			cursor: pointer;
+			padding: 8px 10px;
+			background: rgba(0, 0, 0, 0.15);
+			border-radius: 8px;
+			transition: all 0.2s;
+		}
+
+		.excluded-checkbox-label:hover {
+			background: rgba(0, 0, 0, 0.25);
+			color: var(--text-light);
+		}
+
+		.excluded-checkbox-label input {
+			width: 16px;
+			height: 16px;
+			accent-color: #f44336;
+			cursor: pointer;
+		}
+
+		/* Wyniki z wykluczonymi - gdy pokazujemy */
+		.result-card.has-excluded {
+			opacity: 0.5;
+			border-color: #f44336;
+			position: relative;
+		}
+
+		.result-card.has-excluded::before {
+			content: '🚫';
+			position: absolute;
+			top: 8px;
+			right: 40px;
+			font-size: 1rem;
+		}
+
+		.result-card.has-excluded:hover {
+			opacity: 0.8;
+		}
+
+		.result-excluded-heroes {
+			font-size: 0.7rem;
+			color: #f44336;
+			margin-top: 5px;
+			padding-top: 5px;
+			border-top: 1px dashed rgba(244, 67, 54, 0.3);
+		}
+
+		/* Light theme */
+		[data-theme="light"] .excluded-section {
+			background: linear-gradient(135deg, rgba(244, 67, 54, 0.08), rgba(244, 67, 54, 0.02));
+			border-color: rgba(244, 67, 54, 0.25);
+		}
+
+		[data-theme="light"] .excluded-chips {
+			background: rgba(0, 0, 0, 0.05);
+		}
+
+		[data-theme="light"] .excluded-chip {
+			background: linear-gradient(135deg, rgba(244, 67, 54, 0.15), rgba(244, 67, 54, 0.08));
+		}
+
+		[data-theme="light"] .excluded-checkbox-label {
+			background: rgba(0, 0, 0, 0.05);
+		}
+		
         .match-info {
             margin-top: 10px;
             padding: 8px;
@@ -2448,7 +2654,35 @@
 			</div>
 		</div>
     </header>
-    
+	
+	<!-- Globalna sekcja wykluczonych bohaterów -->
+	<div class="excluded-section" id="excluded-section" style="display: none;">
+		<div class="excluded-header" onclick="toggleExcludedSection()">
+			<span class="excluded-toggle-icon" id="excluded-toggle-icon">▶</span>
+			<span>🚫 <span data-i18n="exclude.title">Wyklucz bohaterów</span></span>
+			<span class="excluded-count" id="excluded-count">(0)</span>
+		</div>
+		<div class="excluded-content" id="excluded-content">
+			<div class="excluded-chips" id="excluded-chips">
+				<div class="excluded-empty" id="excluded-empty" data-i18n="exclude.empty">Brak wykluczonych</div>
+			</div>
+			<div class="excluded-add">
+				<div class="autocomplete-wrapper" style="margin-bottom: 0; flex: 1;">
+					<input type="text" id="excluded-input" data-type="hero" data-i18n-placeholder="exclude.addPlaceholder" placeholder="Dodaj bohatera..." autocomplete="off">
+					<div class="autocomplete-list" id="list-excluded-input"></div>
+				</div>
+				<button class="btn btn-small btn-secondary" onclick="clearExcludedHeroes()" title="Wyczyść wszystkich">🗑️</button>
+			</div>
+			<div class="excluded-hint">
+				<span data-i18n="exclude.hint">💡 Ctrl+klik na tag = wyklucz</span>
+			</div>
+			<label class="excluded-checkbox-label">
+				<input type="checkbox" id="exclude-hide-results" checked onchange="onExcludeSettingChange()">
+				<span data-i18n="exclude.hideResults">Ukryj formacje z wykluczonymi</span>
+			</label>
+		</div>
+	</div>
+	
     <!-- Tab: Wyszukiwarka -->
     <div id="tab-search" class="tab-content active">
         <div class="section">
@@ -2981,6 +3215,8 @@
 		let isGuildAuthenticated = false;
 		let searchHistory = JSON.parse(localStorage.getItem('souls_search_history') || '[]');
 		let selectedForCompare = [];
+		let excludedHeroes = JSON.parse(localStorage.getItem('souls_excluded_heroes') || '[]');
+		let hideExcludedResults = localStorage.getItem('souls_hide_excluded') !== 'false'; // domyślnie true
 
 		// ========== KONFIGURACJA ZABEZPIECZEŃ ==========
 		const GUILD_PASSWORD_ENABLED = true; // Zmień na true aby włączyć hasło na wejście
@@ -3081,6 +3317,12 @@
 				'compare.match': 'Zgodne (ta sama pozycja)',
 				'compare.moved': 'Inna pozycja',
 				'compare.unique': 'Tylko w tym składzie',
+				'exclude.title': 'Wyklucz bohaterów',
+				'exclude.empty': 'Brak wykluczonych',
+				'exclude.addPlaceholder': 'Dodaj bohatera...',
+				'exclude.hint': '💡 Ctrl+klik na tag = wyklucz',
+				'exclude.hideResults': 'Ukryj formacje z wykluczonymi',
+				'exclude.has': 'Zajęci',
                 'badge.base': 'BAZA', 'badge.user': 'DODANA'
             },
             en: {
@@ -3147,6 +3389,12 @@
 				'compare.match': 'Match (same position)',
 				'compare.moved': 'Different position',
 				'compare.unique': 'Only in this formation',
+				'exclude.title': 'Exclude heroes',
+				'exclude.empty': 'No excluded heroes',
+				'exclude.addPlaceholder': 'Add hero...',
+				'exclude.hint': '💡 Ctrl+click on tag = exclude',
+				'exclude.hideResults': 'Hide formations with excluded',
+				'exclude.has': 'Excluded',
                 'badge.base': 'BASE', 'badge.user': 'ADDED'
             }
         };
@@ -3368,12 +3616,25 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
         
-        function switchTab(name) {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelector(`.nav-btn[onclick="switchTab('${name}')"]`)?.classList.add('active');
-            $(`tab-${name}`)?.classList.add('active');
-        }
+		function switchTab(name) {
+			document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+			document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+			document.querySelector(`.nav-btn[onclick="switchTab('${name}')"]`)?.classList.add('active');
+			$(`tab-${name}`)?.classList.add('active');
+			
+			// Pokaż/ukryj sekcję wykluczonych na wybranych zakładkach
+			const excludedSection = $('excluded-section');
+			if (excludedSection) {
+				const showOnTabs = ['search', 'database', 'view'];
+				if (showOnTabs.includes(name)) {
+					excludedSection.classList.add('visible');
+					excludedSection.style.display = 'block';
+				} else {
+					excludedSection.classList.remove('visible');
+					excludedSection.style.display = 'none';
+				}
+			}
+		}
         
         // =====================================================
         // TŁUMACZENIA
@@ -3410,7 +3671,7 @@
 			
 			RACE_ORDER.forEach(race => {
 				if (raceGroups[race]?.length) {
-					html += `<div class="quick-tags-section"><div class="quick-tags-header" onclick="toggleQuickTagSection(this)"><span class="toggle-icon">▶</span>${RACE_EMOJI[race]} ${race} (${raceGroups[race].length})</div><div class="quick-tags-content"><div class="quick-tags">${raceGroups[race].map(h => `<span class="quick-tag tag-${race.toLowerCase()}" onclick="${clickHandler}('${h.name || h}')"${showCounts && h.count ? ` title="${h.count}x"` : ''}>${h.name || h}</span>`).join('')}</div></div></div>`;
+					html += `<div class="quick-tags-section"><div class="quick-tags-header" onclick="toggleQuickTagSection(this)"><span class="toggle-icon">▶</span>${RACE_EMOJI[race]} ${race} (${raceGroups[race].length})</div><div class="quick-tags-content"><div class="quick-tags">${raceGroups[race].map(h => `<span class="quick-tag tag-${race.toLowerCase()}" onclick="${clickHandler}('${h.name || h}', event)"${showCounts && h.count ? ` title="${h.count}x"` : ''}>${h.name || h}</span>`).join('')}</div></div></div>`;
 				}
 			});
 			
@@ -3478,7 +3739,13 @@
         // =====================================================
         // WYSZUKIWARKA
         // =====================================================
-		function addToSearch(heroName) {
+		function addToSearch(heroName, event) {
+			// Ctrl+klik = dodaj do wykluczonych
+			if (event && event.ctrlKey) {
+				addExcludedHero(heroName);
+				return;
+			}
+			
 			// Sprawdź czy już jest - jeśli tak, usuń (toggle)
 			for (let i = 1; i <= 8; i++) {
 				const input = $(`search-pos${i}`);
@@ -3576,6 +3843,163 @@
             displayResults(results, searchHeroes);
         }
         
+		// =====================================================
+		// WYKLUCZANIE BOHATERÓW
+		// =====================================================
+
+		function toggleExcludedSection() {
+			const content = $('excluded-content');
+			const icon = $('excluded-toggle-icon');
+			
+			content.classList.toggle('show');
+			icon.classList.toggle('expanded');
+		}
+
+		function renderExcludedHeroes() {
+			const container = $('excluded-chips');
+			const countEl = $('excluded-count');
+			const emptyEl = $('excluded-empty');
+			
+			countEl.textContent = `(${excludedHeroes.length})`;
+			
+			if (excludedHeroes.length === 0) {
+				container.innerHTML = `<div class="excluded-empty" data-i18n="exclude.empty">${t('exclude.empty')}</div>`;
+				return;
+			}
+			
+			container.innerHTML = excludedHeroes.map(hero => `
+				<div class="excluded-chip">
+					<span>${hero}</span>
+					<button class="excluded-chip-remove" onclick="removeExcludedHero('${hero}')" title="${t('common.delete')}">✕</button>
+				</div>
+			`).join('');
+		}
+
+		function addExcludedHero(name) {
+			if (!name) return;
+			
+			const hero = heroes.find(h => h.name.toLowerCase() === name.toLowerCase());
+			const properName = hero ? hero.name : name;
+			
+			if (excludedHeroes.some(h => h.toLowerCase() === properName.toLowerCase())) {
+				showToast(currentLang === 'pl' ? 'Bohater już wykluczony!' : 'Hero already excluded!', true);
+				return;
+			}
+			
+			excludedHeroes.push(properName);
+			localStorage.setItem('souls_excluded_heroes', JSON.stringify(excludedHeroes));
+			
+			renderExcludedHeroes();
+			showToast(`🚫 ${currentLang === 'pl' ? 'Wykluczono' : 'Excluded'}: ${properName}`);
+			
+			const input = $('excluded-input');
+			if (input) input.value = '';
+			
+			// Odśwież bazę danych
+			filterDatabase();
+		}
+
+		function removeExcludedHero(name) {
+			excludedHeroes = excludedHeroes.filter(h => h.toLowerCase() !== name.toLowerCase());
+			localStorage.setItem('souls_excluded_heroes', JSON.stringify(excludedHeroes));
+			
+			renderExcludedHeroes();
+			showToast(`✅ ${currentLang === 'pl' ? 'Usunięto z wykluczonych' : 'Removed from excluded'}: ${name}`);
+			
+			// Odśwież bazę danych
+			filterDatabase();
+		}
+
+		function clearExcludedHeroes() {
+			if (excludedHeroes.length === 0) return;
+			
+			if (!confirm(currentLang === 'pl' ? 'Wyczyścić wszystkich wykluczonych?' : 'Clear all excluded heroes?')) return;
+			
+			excludedHeroes = [];
+			localStorage.setItem('souls_excluded_heroes', JSON.stringify(excludedHeroes));
+			
+			renderExcludedHeroes();
+			showToast(currentLang === 'pl' ? '🗑️ Wyczyszczono wykluczonych' : '🗑️ Cleared excluded');
+			
+			// Odśwież bazę danych
+			filterDatabase();
+		}
+
+		function onExcludeSettingChange() {
+			hideExcludedResults = $('exclude-hide-results').checked;
+			localStorage.setItem('souls_hide_excluded', hideExcludedResults);
+			
+			// Odśwież aktywną zakładkę
+			filterDatabase();
+		}
+
+		function isFormationExcluded(formation) {
+			if (excludedHeroes.length === 0) return { excluded: false, heroes: [] };
+			
+			const myHeroes = formation.my.filter(h => h).map(h => h.toLowerCase());
+			const excludedInFormation = excludedHeroes.filter(ex => 
+				myHeroes.includes(ex.toLowerCase())
+			);
+			
+			return {
+				excluded: excludedInFormation.length > 0,
+				heroes: excludedInFormation
+			};
+		}
+
+		function setupExcludedAutocomplete() {
+			const input = $('excluded-input');
+			const list = $('list-excluded-input');
+			
+			if (!input || !list) return;
+			
+			input.addEventListener('input', () => {
+				const val = input.value.toLowerCase();
+				if (val.length < 1) { 
+					list.classList.remove('show'); 
+					return; 
+				}
+				
+				// Filtruj bohaterów (bez już wykluczonych)
+				const filtered = heroes
+					.filter(h => h.name.toLowerCase().startsWith(val))
+					.filter(h => !excludedHeroes.some(ex => ex.toLowerCase() === h.name.toLowerCase()))
+					.slice(0, 6);
+				
+				if (!filtered.length) { 
+					list.classList.remove('show'); 
+					return; 
+				}
+				
+				list.innerHTML = filtered.map(h => 
+					`<div class="autocomplete-item race-${h.race.toLowerCase()}" data-value="${h.name}">${h.name} <span class="race">(${h.race})</span></div>`
+				).join('');
+				
+				list.classList.add('show');
+				
+				list.querySelectorAll('.autocomplete-item').forEach(item => {
+					item.addEventListener('click', () => {
+						addExcludedHero(item.dataset.value);
+						list.classList.remove('show');
+					});
+				});
+			});
+			
+			input.addEventListener('keydown', e => {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					const val = input.value.trim();
+					if (val) {
+						addExcludedHero(val);
+					}
+				}
+			});
+			
+			input.addEventListener('blur', () => {
+				setTimeout(() => list.classList.remove('show'), 200);
+			});
+		}
+		
 		function displayResults(results, searchHeroes) {
 			// Reset selekcji przy nowym wyszukiwaniu
 			selectedForCompare = [];
@@ -3585,16 +4009,39 @@
 				return;
 			}
 			
-			let html = `<div class="results-header"><h3>${t('search.results')}</h3><span class="results-count">${t('search.found')}: ${results.length}</span></div>`;
+			// Filtruj wyniki według wykluczonych
+			let displayedResults = results;
+			let hiddenCount = 0;
 			
-			html += results.map(r => {
+			if (hideExcludedResults && excludedHeroes.length > 0) {
+				displayedResults = results.filter(r => !isFormationExcluded(r.formation).excluded);
+				hiddenCount = results.length - displayedResults.length;
+			}
+			
+			let html = `<div class="results-header">
+				<h3>${t('search.results')}</h3>
+				<span class="results-count">${t('search.found')}: ${displayedResults.length}${hiddenCount > 0 ? ` <span style="color:#f44336;">(+${hiddenCount} 🚫)</span>` : ''}</span>
+			</div>`;
+			
+			if (!displayedResults.length) {
+				html += `<div class="empty-state"><p>${t('search.noResults')}</p><p style="font-size:0.8rem;color:var(--text-muted);margin-top:10px;">${currentLang === 'pl' ? `${hiddenCount} ukrytych z powodu wykluczonych bohaterów` : `${hiddenCount} hidden due to excluded heroes`}</p></div>`;
+				$('results-section').innerHTML = html;
+				updateCompareButton();
+				return;
+			}
+			
+			html += displayedResults.map(r => {
 				const f = r.formation;
 				const enemyDisplay = f.enemy.filter(h => h).map(h => r.matchedHeroes.some(mh => normalize(h) === mh || normalize(h).startsWith(mh)) ? `<span class="matched-hero">${h}</span>` : h).join(', ');
 				const petDisplay = r.petMatched ? `<span class="matched-hero">${f.enemyPet}</span>` : (f.enemyPet || '—');
 				const missingHeroes = searchHeroes.filter(sh => !r.matchedHeroes.includes(sh));
 				
+				// Sprawdź wykluczone (dla trybu "pokaż wszystkie")
+				const exclusionCheck = isFormationExcluded(f);
+				const hasExcluded = !hideExcludedResults && exclusionCheck.excluded;
+				
 				return `
-					<div class="result-card" id="result-card-${f.id}">
+					<div class="result-card ${hasExcluded ? 'has-excluded' : ''}" id="result-card-${f.id}">
 						<div class="result-card-checkbox">
 							<input type="checkbox" id="compare-${f.id}" onchange="toggleCompareSelection(${f.id})" title="${t('compare.select')}">
 						</div>
@@ -3606,13 +4053,12 @@
 							<div class="result-name">${f.name}</div>
 							<div class="result-heroes">${t('search.enemy')}: ${enemyDisplay} + ${petDisplay}</div>
 							${missingHeroes.length ? `<div class="result-missing">❌ ${t('search.missing')}: ${missingHeroes.join(', ')}</div>` : ''}
+							${hasExcluded ? `<div class="result-excluded-heroes">🚫 ${t('exclude.has')}: ${exclusionCheck.heroes.join(', ')}</div>` : ''}
 						</div>
 					</div>`;
 			}).join('');
 			
 			$('results-section').innerHTML = html;
-			
-			// Aktualizuj przycisk porównania
 			updateCompareButton();
 		}
         
@@ -4318,25 +4764,45 @@
 			
 			if (searchTerm) formations = formations.filter(f => normalize(f.name).includes(searchTerm));
 			
+			// Filtruj według wykluczonych bohaterów
+			let hiddenCount = 0;
+			if (hideExcludedResults && excludedHeroes.length > 0) {
+				const beforeCount = formations.length;
+				formations = formations.filter(f => !isFormationExcluded(f).excluded);
+				hiddenCount = beforeCount - formations.length;
+			}
+			
 			// Sortowanie
 			formations = sortFormations(formations);
 			
-		$('database-list').innerHTML = formations.length ? formations.map(f => `
-			<div class="db-item" onclick="showFormation(${f.id})">
-				<div class="db-item-info">
-					<div class="db-item-header"><span class="db-item-id">#${f.id}</span><span class="badge ${f.isBase ? 'base-badge' : 'user-badge'}">${t(f.isBase ? 'badge.base' : 'badge.user')}</span></div>
-					<div class="db-item-name">${f.name}</div>
-					<div class="db-item-details"><div>⚔️ ${f.my.filter(h => h).join(', ') || '—'} + ${f.myPet || '—'}</div><div>👹 ${f.enemy.filter(h => h).join(', ') || '—'} + ${f.enemyPet || '—'}</div></div>
-				</div>
-				<div class="db-item-date">${formatDate(f.dateAdded) ? `📅 ${formatDate(f.dateAdded)}` : ''}</div>
-				<div class="db-item-actions">
-					<button class="btn btn-small ${isFavorite(f.id) ? 'btn-favorite-active' : ''}" onclick="toggleFavorite(${f.id}, event)">${isFavorite(f.id) ? '⭐' : '☆'}</button>
-					<button class="btn btn-small" onclick="event.stopPropagation(); showFormation(${f.id})">👁️</button>
-					${isAdmin ? `<button class="btn btn-small btn-admin" onclick="event.stopPropagation(); openEditModal(${f.id})">✏️</button>` : ''}
-					${isAdmin ? `<button class="btn btn-small btn-danger" onclick="event.stopPropagation(); deleteFormation(${f.id})">🗑️</button>` : ''}
-				</div>
-			</div>`).join('') : `<div class="empty-state"><p>${t('database.noFormations')}</p></div>`;
-        }
+			// Pokaż info o ukrytych
+			let headerInfo = '';
+			if (hiddenCount > 0) {
+				headerInfo = `<div style="text-align:center;font-size:0.75rem;color:#f44336;margin-bottom:10px;">🚫 ${hiddenCount} ${currentLang === 'pl' ? 'ukrytych (wykluczone)' : 'hidden (excluded)'}</div>`;
+			}
+			
+			$('database-list').innerHTML = headerInfo + (formations.length ? formations.map(f => {
+				const exclusionCheck = isFormationExcluded(f);
+				const hasExcluded = !hideExcludedResults && exclusionCheck.excluded;
+				
+				return `
+				<div class="db-item ${hasExcluded ? 'has-excluded' : ''}" onclick="showFormation(${f.id})">
+					<div class="db-item-info">
+						<div class="db-item-header"><span class="db-item-id">#${f.id}</span><span class="badge ${f.isBase ? 'base-badge' : 'user-badge'}">${t(f.isBase ? 'badge.base' : 'badge.user')}</span></div>
+						<div class="db-item-name">${f.name}</div>
+						<div class="db-item-details"><div>⚔️ ${f.my.filter(h => h).join(', ') || '—'} + ${f.myPet || '—'}</div><div>👹 ${f.enemy.filter(h => h).join(', ') || '—'} + ${f.enemyPet || '—'}</div></div>
+						${hasExcluded ? `<div style="font-size:0.65rem;color:#f44336;margin-top:3px;">🚫 ${exclusionCheck.heroes.join(', ')}</div>` : ''}
+					</div>
+					<div class="db-item-date">${formatDate(f.dateAdded) ? `📅 ${formatDate(f.dateAdded)}` : ''}</div>
+					<div class="db-item-actions">
+						<button class="btn btn-small ${isFavorite(f.id) ? 'btn-favorite-active' : ''}" onclick="toggleFavorite(${f.id}, event)">${isFavorite(f.id) ? '⭐' : '☆'}</button>
+						<button class="btn btn-small" onclick="event.stopPropagation(); showFormation(${f.id})">👁️</button>
+						${isAdmin ? `<button class="btn btn-small btn-admin" onclick="event.stopPropagation(); openEditModal(${f.id})">✏️</button>` : ''}
+						${isAdmin ? `<button class="btn btn-small btn-danger" onclick="event.stopPropagation(); deleteFormation(${f.id})">🗑️</button>` : ''}
+					</div>
+				</div>`
+			}).join('') : `<div class="empty-state"><p>${t('database.noFormations')}</p></div>`);
+		}
         
         // =====================================================
         // ULUBIONE
@@ -5763,6 +6229,21 @@
 				}
 			});
             
+			// Inicjalizacja wykluczonych
+			renderExcludedHeroes();
+			setupExcludedAutocomplete();
+
+			const excludeCheckbox = $('exclude-hide-results');
+			if (excludeCheckbox) {
+				excludeCheckbox.checked = hideExcludedResults;
+			}
+
+			// Pokaż sekcję wykluczonych na startowej zakładce
+			const excludedSection = $('excluded-section');
+			if (excludedSection) {
+				excludedSection.style.display = 'block';
+			}
+			
 			// Zamykanie modali kliknięciem poza content
 			$('duplicates-modal')?.addEventListener('click', e => {
 				if (e.target === $('duplicates-modal')) closeDuplicatesModal();
