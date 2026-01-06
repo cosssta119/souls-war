@@ -393,7 +393,27 @@
 			color: #6b6560;
 			border-bottom-color: #d4cfc7;
 		}
-        
+		
+		[data-theme="light"] .duplicate-group {
+			background: #f5f0e8;
+		}
+
+		[data-theme="light"] .duplicate-group.identical {
+			background: linear-gradient(135deg, rgba(211, 47, 47, 0.12), rgba(211, 47, 47, 0.05));
+		}
+
+		[data-theme="light"] .duplicate-item {
+			background: rgba(0,0,0,0.05);
+		}
+
+		[data-theme="light"] .duplicate-item:hover {
+			background: rgba(0,0,0,0.1);
+		}
+
+		[data-theme="light"] .duplicate-preview {
+			background: rgba(0,0,0,0.05);
+		}
+		
         body {
             font-family: 'Nunito', sans-serif;
             background: var(--bg-dark);
@@ -567,6 +587,17 @@
         .autocomplete-item:hover { background: rgba(212, 175, 55, 0.2); }
         .autocomplete-item .race { font-size: 0.7rem; color: var(--text-muted); margin-left: 5px; }
 
+		/* Zaznaczony element w autocomplete */
+		.autocomplete-item.selected {
+			background: rgba(212, 175, 55, 0.3) !important;
+			color: var(--accent-gold);
+		}
+
+		[data-theme="light"] .autocomplete-item.selected {
+			background: rgba(153, 101, 21, 0.2) !important;
+			color: #996515;
+		}
+
         /* Kolorowe podpowiedzi autocomplete */
         .autocomplete-item.race-dark { color: var(--race-dark); }
         .autocomplete-item.race-light { color: var(--race-light); }
@@ -644,6 +675,135 @@
 		.search-pet-wrapper input {
 			background: rgba(0, 0, 0, 0.3) !important;
 			border-color: rgba(212, 175, 55, 0.3) !important;
+		}
+		
+		/* Historia wyszukiwań - dropdown */
+		.search-history-wrapper {
+			position: relative;
+		}
+
+		.search-history-dropdown {
+			position: absolute;
+			top: 100%;
+			right: 0;
+			margin-top: 5px;
+			background: var(--bg-card);
+			border: 2px solid var(--accent-gold);
+			border-radius: 12px;
+			min-width: 320px;
+			max-width: 95vw;
+			z-index: 100;
+			box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+			animation: dropdownSlide 0.2s ease;
+		}
+
+		.search-history-dropdown.hidden {
+			display: none;
+		}
+
+		@keyframes dropdownSlide {
+			from { opacity: 0; transform: translateY(-10px); }
+			to { opacity: 1; transform: translateY(0); }
+		}
+
+		.search-history-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 12px 15px;
+			border-bottom: 1px solid var(--border);
+			font-size: 0.8rem;
+			font-weight: 600;
+			color: var(--accent-gold);
+		}
+
+		.search-history-clear {
+			background: none;
+			border: none;
+			cursor: pointer;
+			font-size: 1rem;
+			opacity: 0.6;
+			transition: all 0.2s;
+		}
+
+		.search-history-clear:hover {
+			opacity: 1;
+			transform: scale(1.1);
+		}
+
+		.search-history-list {
+			max-height: 300px;
+			overflow-y: auto;
+		}
+
+		.search-history-item {
+			padding: 12px 15px;
+			cursor: pointer;
+			border-bottom: 1px solid var(--border);
+			transition: all 0.2s;
+		}
+
+		.search-history-item:last-child {
+			border-bottom: none;
+		}
+
+		.search-history-item:hover {
+			background: rgba(212, 175, 55, 0.1);
+		}
+
+		.search-history-item-heroes {
+			font-size: 0.85rem;
+			color: var(--text-light);
+			margin-bottom: 4px;
+		}
+
+		.search-history-item-pet {
+			font-size: 0.75rem;
+			color: var(--accent-gold);
+		}
+
+		.search-history-item-time {
+			font-size: 0.65rem;
+			color: var(--text-muted);
+			margin-top: 4px;
+		}
+
+		.search-history-empty {
+			padding: 20px;
+			text-align: center;
+			color: var(--text-muted);
+			font-size: 0.85rem;
+		}
+
+		.search-history-item-remove {
+			float: right;
+			background: none;
+			border: none;
+			color: var(--text-muted);
+			cursor: pointer;
+			font-size: 0.9rem;
+			padding: 0 5px;
+			opacity: 0;
+			transition: opacity 0.2s;
+		}
+
+		.search-history-item:hover .search-history-item-remove {
+			opacity: 1;
+		}
+
+		.search-history-item-remove:hover {
+			color: #ef5350;
+		}
+
+		/* Light theme */
+		[data-theme="light"] .search-history-dropdown {
+			background: #ffffff;
+			border-color: #c9a227;
+			box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+		}
+
+		[data-theme="light"] .search-history-item:hover {
+			background: rgba(153, 101, 21, 0.1);
 		}
 
         /* Badge z numerem */
@@ -980,6 +1140,221 @@
         }
         .active-field-indicator.show { display: block; }
         
+		/* Skaner duplikatów - MODAL */
+		#duplicates-modal .modal-content {
+			max-width: 95vw !important;
+			width: 1400px !important;
+			max-height: 90vh !important;
+			overflow-y: auto !important;
+		}
+
+		@media (max-width: 768px) {
+			#duplicates-modal .modal-content {
+				width: 98vw !important;
+				max-width: 98vw !important;
+				margin: 10px !important;
+			}
+		}
+		
+		/* Modal podglądu duplikatu - większy */
+		#duplicate-preview-modal .modal-content {
+			max-width: 700px !important;
+			width: 95vw !important;
+		}
+
+		/* Grupa duplikatów - bazowy styl */
+		.duplicate-group {
+			background: var(--bg-input);
+			border-radius: 12px;
+			padding: 15px;
+			margin-bottom: 15px;
+			border-left: 4px solid var(--accent-gold);
+			transition: all 0.3s ease;
+		}
+
+		/* IDENTYCZNE - czerwone wyróżnienie */
+		.duplicate-group.identical {
+			background: linear-gradient(135deg, rgba(211, 47, 47, 0.15), rgba(211, 47, 47, 0.05));
+			border-left: 4px solid #d32f2f;
+			border: 2px solid rgba(211, 47, 47, 0.4);
+			box-shadow: 0 0 20px rgba(211, 47, 47, 0.2), inset 0 0 30px rgba(211, 47, 47, 0.05);
+		}
+
+		.duplicate-group.identical .duplicate-group-header {
+			background: rgba(211, 47, 47, 0.1);
+			margin: -15px -15px 15px -15px;
+			padding: 12px 15px;
+			border-radius: 10px 10px 0 0;
+			border-bottom: 1px solid rgba(211, 47, 47, 0.3);
+		}
+
+		/* PRAWIE IDENTYCZNE - pomarańczowe */
+		.duplicate-group.almostIdentical {
+			background: linear-gradient(135deg, rgba(245, 124, 0, 0.1), rgba(245, 124, 0, 0.02));
+			border-left: 4px solid #f57c00;
+		}
+
+		.duplicate-group-header {
+			font-size: 0.85rem;
+			color: var(--text-muted);
+			margin-bottom: 10px;
+			padding-bottom: 10px;
+			border-bottom: 1px dashed var(--border);
+		}
+
+		.duplicate-group-header strong {
+			color: var(--text-light);
+		}
+
+		.duplicate-item {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 10px 12px;
+			margin: 8px 0;
+			background: rgba(0,0,0,0.2);
+			border-radius: 8px;
+			font-size: 0.85rem;
+			cursor: pointer;
+			transition: all 0.2s ease;
+		}
+
+		.duplicate-item:hover {
+			background: rgba(0,0,0,0.35);
+			transform: translateX(5px);
+		}
+
+		.duplicate-item-info {
+			flex: 1;
+		}
+
+		.duplicate-item-name {
+			color: var(--accent-gold);
+			font-weight: 600;
+		}
+
+		.duplicate-item-id {
+			color: var(--text-muted);
+			font-size: 0.75rem;
+			margin-left: 8px;
+		}
+
+		.duplicate-item-actions {
+			display: flex;
+			gap: 8px;
+		}
+
+		.duplicate-badge {
+			display: inline-block;
+			padding: 2px 8px;
+			border-radius: 10px;
+			font-size: 0.65rem;
+			font-weight: 600;
+		}
+
+		.duplicate-badge.identical { background: #d32f2f; color: white; }
+		
+		.duplicates-summary {
+			background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.02));
+			border: 1px solid var(--accent-gold);
+			border-radius: 12px;
+			padding: 20px;
+			margin-bottom: 25px;
+			text-align: center;
+		}
+
+		.duplicates-empty {
+			text-align: center;
+			padding: 60px 40px;
+			color: var(--text-muted);
+		}
+
+		.duplicates-empty-icon {
+			font-size: 4rem;
+			margin-bottom: 20px;
+		}
+
+		/* Mini podgląd w skanerze */
+		.duplicate-preview {
+			display: none;
+			margin-top: 12px;
+			padding: 12px;
+			background: rgba(0,0,0,0.3);
+			border-radius: 8px;
+			border: 1px solid var(--border);
+		}
+
+		.duplicate-preview.show {
+			display: block;
+			animation: slideDown 0.2s ease;
+		}
+
+		@keyframes slideDown {
+			from { opacity: 0; transform: translateY(-10px); }
+			to { opacity: 1; transform: translateY(0); }
+		}
+
+		.duplicate-preview-row {
+			display: flex;
+			gap: 20px;
+			flex-wrap: wrap;
+		}
+
+		.duplicate-preview-team {
+			flex: 1;
+			min-width: 200px;
+		}
+
+		.duplicate-preview-team h5 {
+			font-size: 0.75rem;
+			color: var(--text-muted);
+			margin-bottom: 8px;
+		}
+
+		.duplicate-preview-heroes {
+			display: flex;
+			gap: 4px;
+			flex-wrap: wrap;
+		}
+
+		.duplicate-preview-heroes img {
+			width: 36px;
+			height: 36px;
+			border-radius: 6px;
+			border: 2px solid var(--border);
+		}
+
+		.duplicate-preview-heroes .pet-icon {
+			border-color: var(--accent-purple);
+		}
+
+		/* Alert duplikatu przy dodawaniu */
+		.duplicate-warning {
+			background: linear-gradient(135deg, rgba(211, 47, 47, 0.2), rgba(211, 47, 47, 0.1));
+			border: 2px solid #d32f2f;
+			border-radius: 12px;
+			padding: 20px;
+			margin: 20px 0;
+			animation: pulseWarning 2s infinite;
+		}
+
+		@keyframes pulseWarning {
+			0%, 100% { box-shadow: 0 0 10px rgba(211, 47, 47, 0.3); }
+			50% { box-shadow: 0 0 25px rgba(211, 47, 47, 0.5); }
+		}
+
+		.duplicate-warning h4 {
+			color: #ff6b6b;
+			margin-bottom: 10px;
+		}
+
+		.duplicate-warning-actions {
+			display: flex;
+			gap: 10px;
+			margin-top: 15px;
+			justify-content: center;
+		}
+
         /* Podgląd formacji */
         .formation-preview {
             background: linear-gradient(180deg, #0a0a0a 0%, #151515 100%);
@@ -1695,6 +2070,13 @@
         .match-info .matched { color: #4caf50; }
         .match-info .missing { color: #ef5350; }
         .match-info .label { color: var(--text-muted); margin-right: 5px; }
+		
+		/* WYMUSZENIE - Modal skanera duplikatów */
+		#duplicates-modal > .modal-content {
+			max-width: 95vw !important;
+			width: 1400px !important;
+			max-height: 90vh !important;
+		}
     </style>
 	
 	<!-- Google Analytics -->
@@ -1730,6 +2112,14 @@
             <button class="btn btn-secondary" onclick="closeAdminModal()" data-i18n="common.cancel">Anuluj</button>
         </div>
     </div>
+
+	<div class="modal hidden" id="duplicates-modal">
+		<div class="modal-content" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
+			<span class="close-btn" onclick="closeDuplicatesModal()">&times;</span>
+			<h2>🔍 <span data-i18n="duplicates.title">Skaner duplikatów</span></h2>
+			<div id="duplicates-results"></div>
+		</div>
+	</div>
 
     <header>
         <h1 onclick="headerClick()">⚔️ SOULS ONLINE ⚔️</h1>
@@ -1795,8 +2185,22 @@
 				</div>
 			</div>
             
-            <button class="btn" onclick="searchFormations()">🔍 <span data-i18n="search.btn">SZUKAJ</span></button>
-            <button class="btn btn-secondary" onclick="clearSearch()" style="margin-top: 8px;">✖ <span data-i18n="search.clear">Wyczyść</span></button>
+			<div style="display: flex; gap: 10px; margin-top: 10px;">
+				<button class="btn" onclick="searchFormations()" style="flex: 1; margin-top: 0;">🔍 <span data-i18n="search.btn">SZUKAJ</span></button>
+				<div class="search-history-wrapper">
+					<button class="btn btn-secondary" onclick="toggleSearchHistory()" style="margin-top: 0; padding: 14px 18px;">📜</button>
+					<div class="search-history-dropdown hidden" id="search-history-dropdown">
+						<div class="search-history-header">
+							<span data-i18n="search.history">Ostatnie wyszukiwania</span>
+							<button class="search-history-clear" onclick="clearSearchHistory()" title="Wyczyść historię">🗑️</button>
+						</div>
+						<div class="search-history-list" id="search-history-list">
+							<div class="search-history-empty" data-i18n="search.historyEmpty">Brak historii</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<button class="btn btn-secondary" onclick="clearSearch()" style="margin-top: 8px;">✖ <span data-i18n="search.clear">Wyczyść</span></button>
         </div>
         
         <div id="results-section">
@@ -2090,6 +2494,15 @@
                 <span data-i18n="admin.modeDesc">Możesz zarządzać bohaterami, petami i usuwać dowolne formacje.</span>
             </div>
             
+			<!-- Sekcja Narzędzia -->
+			<div class="admin-section" style="margin-bottom: 30px;">
+				<h3>🛠️ <span data-i18n="admin.tools">Narzędzia</span></h3>
+				<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+					<button class="btn btn-secondary" onclick="scanDuplicates()">🔍 <span data-i18n="admin.scanDuplicates">Skanuj duplikaty</span></button>
+					<button class="btn btn-danger" onclick="confirmDeleteAllUserFormations()">🗑️ <span data-i18n="admin.deleteAllUser">Usuń wszystkie formacje użytkowników</span></button>
+				</div>
+			</div>
+			
             <h3 style="font-size: 0.85rem; color: var(--accent-purple); margin: 20px 0 10px;">⚔️ <span data-i18n="admin.heroes">Bohaterowie</span> (<span id="heroes-count">0</span>)</h3>
             <div class="entity-list" id="heroes-list"></div>
             <div class="add-entity-form">
@@ -2111,9 +2524,6 @@
                 <input type="text" id="new-pet-name" data-i18n-placeholder="admin.petNamePlaceholder" placeholder="Nazwa peta">
                 <button class="btn btn-success btn-small" onclick="addPet()">➕</button>
             </div>
-            
-            <h3 style="font-size: 0.85rem; color: var(--accent-purple); margin: 25px 0 10px;">📋 <span data-i18n="admin.manageFormations">Zarządzanie formacjami</span></h3>
-            <button class="btn btn-danger" onclick="deleteAllUserFormations()">🗑️ <span data-i18n="admin.deleteAllUser">Usuń wszystkie formacje użytkowników</span></button>
             
             <h3 style="font-size: 0.85rem; color: var(--accent-purple); margin: 25px 0 10px;">🚪 <span data-i18n="admin.session">Sesja</span></h3>
             <button class="btn btn-secondary" onclick="adminLogout()">🚪 <span data-i18n="admin.logout">Wyloguj z trybu Admin</span></button>
@@ -2217,6 +2627,15 @@
             <div id="quick-select-tags"></div>
         </div>
     </div>
+	
+	<!-- Modal podglądu duplikatu -->
+	<div class="modal hidden" id="duplicate-preview-modal">
+		<div class="modal-content" style="max-width: 600px;">
+			<span class="close-btn" onclick="closeDuplicatePreviewModal()">&times;</span>
+			<h3 id="dup-preview-title">Podgląd formacji</h3>
+			<div id="dup-preview-content"></div>
+		</div>
+	</div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -2247,6 +2666,7 @@
         let quickSelectTarget = null, activeAddField = null, activeSearchField = null, editingFormationId = null;
 		let currentTheme = localStorage.getItem('souls_theme') || 'dark';
 		let isGuildAuthenticated = false;
+		let searchHistory = JSON.parse(localStorage.getItem('souls_search_history') || '[]');
 
 		// ========== KONFIGURACJA ZABEZPIECZEŃ ==========
 		const GUILD_PASSWORD_ENABLED = true; // Zmień na true aby włączyć hasło na wejście
@@ -2326,11 +2746,21 @@
 				'common.adminRequired': 'Tylko admin może usuwać formacje!', 'database.sortLabel': 'Sortuj:',
 				'edit.title': 'Edytuj formację', 'edit.saveBtn': 'ZAPISZ ZMIANY', 'add.markAsBase': 'Oznacz jako formację BAZOWĄ',
 				'add.baseHint': 'Formacje bazowe są oznaczone jako "BAZA".', 'preview.added': 'Dodano', 'preview.edited': 'Edytowano',
-				'guild.title': 'Strona gildii',
-				'guild.enterPassword': 'Wpisz hasło gildii aby wejść',
-				'guild.passwordPlaceholder': 'Hasło gildii...',
-				'guild.enter': 'WEJDŹ',
-				'guild.wrongPassword': 'Nieprawidłowe hasło!',
+				'guild.title': 'Strona gildii', 'guild.enterPassword': 'Wpisz hasło gildii aby wejść',
+				'guild.passwordPlaceholder': 'Hasło gildii...', 'guild.enter': 'WEJDŹ', 'guild.wrongPassword': 'Nieprawidłowe hasło!',
+				'admin.tools': 'Narzędzia', 'admin.scanDuplicates': 'Skanuj duplikaty',
+				'duplicates.title': 'Skaner duplikatów', 'duplicates.noDuplicates': 'Brak duplikatów!',
+				'duplicates.allUnique': 'Wszystkie formacje są unikalne.', 'duplicates.found': 'Znaleziono',
+				'duplicates.groups': 'grup', 'duplicates.identical': 'Identyczne', 'duplicates.almostIdentical': 'Prawie identyczne',
+				'duplicates.enemy': 'Przeciwnik', 'duplicates.counter': 'Kontra',
+				'duplicates.confirmDelete': 'Czy na pewno usunąć formację', 'admin.deleteAllConfirm1': 'Czy na pewno chcesz usunąć',
+				'admin.deleteAllConfirm2': 'Wpisz liczbę formacji do usunięcia aby potwierdzić', 'admin.formations': 'formacji',
+				'admin.deleteAllCancelled': 'Anulowano usuwanie', 'admin.deletedAll': 'Usunięto',
+				'admin.noUserFormations': 'Brak formacji użytkowników do usunięcia!', 'duplicates.preview': 'Podgląd',
+				'duplicates.warningTitle': 'Znaleziono identyczną formację!', 'duplicates.warningText': 'Ta kombinacja przeciwnika i kontry już istnieje w bazie:',
+				'duplicates.cancel': 'Anuluj', 'duplicates.saveAnyway': 'Zapisz mimo to',
+				'common.close': 'Zamknij', 'common.delete': 'Usuń', 'database.deleted': 'Usunięto',
+				'search.history': 'Ostatnie wyszukiwania', 'search.historyEmpty': 'Brak historii',
                 'badge.base': 'BAZA', 'badge.user': 'DODANA'
             },
             en: {
@@ -2376,11 +2806,21 @@
 				'common.adminRequired': 'Only admin can delete formations!', 'database.sortLabel': 'Sort:',
 				'edit.title': 'Edit formation', 'edit.saveBtn': 'SAVE CHANGES', 'add.markAsBase': 'Mark as BASE formation',
 				'add.baseHint': 'Base formations are marked as "BASE".', 'preview.added': 'Added', 'preview.edited': 'Edited',
-				'guild.title': 'Guild page',
-				'guild.enterPassword': 'Enter guild password to access',
-				'guild.passwordPlaceholder': 'Guild password...',
-				'guild.enter': 'ENTER',
-				'guild.wrongPassword': 'Wrong password!',
+				'guild.title': 'Guild page', 'guild.enterPassword': 'Enter guild password to access',
+				'guild.passwordPlaceholder': 'Guild password...', 'guild.enter': 'ENTER', 'guild.wrongPassword': 'Wrong password!',
+				'admin.tools': 'Tools', 'admin.scanDuplicates': 'Scan duplicates',
+				'duplicates.title': 'Duplicates scanner', 'duplicates.noDuplicates': 'No duplicates found!',
+				'duplicates.allUnique': 'All formations are unique.', 'duplicates.found': 'Found',
+				'duplicates.groups': 'groups', 'duplicates.identical': 'Identical', 'duplicates.almostIdentical': 'Almost identical',
+				'duplicates.enemy': 'Enemy', 'duplicates.counter': 'Counter',
+				'duplicates.confirmDelete': 'Are you sure you want to delete formation', 'admin.deleteAllConfirm1': 'Are you sure you want to delete',
+				'admin.deleteAllConfirm2': 'Type the number of formations to confirm', 'admin.formations': 'formations',
+				'admin.deleteAllCancelled': 'Deletion cancelled', 'admin.deletedAll': 'Deleted',
+				'admin.noUserFormations': 'No user formations to delete!', 'duplicates.preview': 'Preview',
+				'duplicates.warningTitle': 'Identical formation found!', 'duplicates.warningText': 'This enemy and counter combination already exists:',
+				'duplicates.cancel': 'Cancel', 'duplicates.saveAnyway': 'Save anyway',
+				'common.close': 'Close', 'common.delete': 'Delete', 'database.deleted': 'Deleted',
+				'search.history': 'Ostatnie wyszukiwania','search.historyEmpty': 'Brak historii',
                 'badge.base': 'BASE', 'badge.user': 'ADDED'
             }
         };
@@ -2540,10 +2980,7 @@
             setValidation(input, isValid);
         }
         
-        // =====================================================
         // FIREBASE
-        // =====================================================
-        
         try {
             firebase.initializeApp(firebaseConfig);
             db = firebase.database();
@@ -2578,11 +3015,8 @@
             setOnlineStatus(false);
             $('loading').classList.add('hidden');
         }
-        
-        // =====================================================
+
         // UI
-        // =====================================================
-        
         function setOnlineStatus(online) {
             isOnline = online;
             $('status-dot').className = `status-dot ${online ? 'online' : 'offline'}`;
@@ -2797,6 +3231,8 @@
         }
         
         function searchFormations() {
+			saveSearchToHistory();
+			
             const searchHeroes = getFieldValues('search-pos', 8).filter(v => v).map(normalize);
             const searchPet = normalize($('search-pet').value);
             
@@ -2837,6 +3273,140 @@
             document.querySelectorAll('.quick-tag.selected').forEach(t => t.classList.remove('selected'));
             $('search-counter')?.remove();
         }
+		
+		// HISTORIA WYSZUKIWAŃ
+		function toggleSearchHistory() {
+			const dropdown = $('search-history-dropdown');
+			dropdown.classList.toggle('hidden');
+			
+			if (!dropdown.classList.contains('hidden')) {
+				renderSearchHistory();
+				// Zamknij przy kliknięciu poza
+				setTimeout(() => {
+					document.addEventListener('click', closeSearchHistoryOnClickOutside);
+				}, 10);
+			} else {
+				document.removeEventListener('click', closeSearchHistoryOnClickOutside);
+			}
+		}
+
+		function closeSearchHistoryOnClickOutside(e) {
+			const dropdown = $('search-history-dropdown');
+			const wrapper = e.target.closest('.search-history-wrapper');
+			
+			if (!wrapper && !dropdown.classList.contains('hidden')) {
+				dropdown.classList.add('hidden');
+				document.removeEventListener('click', closeSearchHistoryOnClickOutside);
+			}
+		}
+
+		function saveSearchToHistory() {
+			const heroes = getFieldValues('search-pos', 8).filter(v => v);
+			const pet = $('search-pet').value.trim();
+			
+			// Nie zapisuj pustych wyszukiwań
+			if (!heroes.length && !pet) return;
+			
+			const entry = {
+				heroes: heroes,
+				pet: pet,
+				timestamp: new Date().toISOString()
+			};
+			
+			// Sprawdź czy takie samo wyszukiwanie już istnieje
+			const existingIndex = searchHistory.findIndex(h => 
+				JSON.stringify(h.heroes.sort()) === JSON.stringify(heroes.sort()) && h.pet === pet
+			);
+			
+			// Jeśli istnieje, usuń stare
+			if (existingIndex > -1) {
+				searchHistory.splice(existingIndex, 1);
+			}
+			
+			// Dodaj na początek
+			searchHistory.unshift(entry);
+			
+			// Ogranicz do 10 wpisów
+			if (searchHistory.length > 10) {
+				searchHistory = searchHistory.slice(0, 10);
+			}
+			
+			localStorage.setItem('souls_search_history', JSON.stringify(searchHistory));
+		}
+
+		function renderSearchHistory() {
+			const list = $('search-history-list');
+			
+			if (!searchHistory.length) {
+				list.innerHTML = `<div class="search-history-empty">${t('search.historyEmpty')}</div>`;
+				return;
+			}
+			
+			list.innerHTML = searchHistory.map((entry, idx) => {
+				const heroesText = entry.heroes.length ? entry.heroes.join(', ') : '—';
+				const petText = entry.pet ? `🐾 ${entry.pet}` : '';
+				const timeAgo = getTimeAgo(new Date(entry.timestamp));
+				
+				return `
+					<div class="search-history-item" onclick="loadSearchFromHistory(${idx})">
+						<button class="search-history-item-remove" onclick="event.stopPropagation(); removeSearchHistoryItem(${idx})" title="${t('common.delete')}">✕</button>
+						<div class="search-history-item-heroes">👹 ${heroesText}</div>
+						${petText ? `<div class="search-history-item-pet">${petText}</div>` : ''}
+						<div class="search-history-item-time">🕐 ${timeAgo}</div>
+					</div>
+				`;
+			}).join('');
+		}
+
+		function loadSearchFromHistory(idx) {
+			const entry = searchHistory[idx];
+			if (!entry) return;
+			
+			// Wyczyść wszystkie pola
+			for (let i = 1; i <= 8; i++) {
+				$(`search-pos${i}`).value = '';
+			}
+			$('search-pet').value = '';
+			
+			// Wypełnij bohaterami
+			entry.heroes.forEach((hero, i) => {
+				if (i < 8) {
+					$(`search-pos${i + 1}`).value = hero;
+				}
+			});
+			
+			// Wypełnij peta
+			if (entry.pet) {
+				$('search-pet').value = entry.pet;
+			}
+			
+			// Zamknij dropdown
+			$('search-history-dropdown').classList.add('hidden');
+			document.removeEventListener('click', closeSearchHistoryOnClickOutside);
+			
+			// Aktualizuj UI
+			updateSearchTagsSelection();
+			updateSearchCounter();
+			
+			// Uruchom wyszukiwanie
+			searchFormations();
+		}
+
+		function removeSearchHistoryItem(idx) {
+			searchHistory.splice(idx, 1);
+			localStorage.setItem('souls_search_history', JSON.stringify(searchHistory));
+			renderSearchHistory();
+			showToast(t('common.formationDeleted'));
+		}
+
+		function clearSearchHistory() {
+			if (!confirm(currentLang === 'pl' ? 'Wyczyścić całą historię wyszukiwań?' : 'Clear all search history?')) return;
+			
+			searchHistory = [];
+			localStorage.setItem('souls_search_history', JSON.stringify(searchHistory));
+			renderSearchHistory();
+			showToast(currentLang === 'pl' ? 'Historia wyczyszczona' : 'History cleared');
+		}
         
         // =====================================================
         // FORMULARZ DODAWANIA
@@ -2926,44 +3496,148 @@
 			
 			let name = $('add-name').value.trim();
 			
-			// Jeśli brak nazwy, wygeneruj automatycznie
-			if (!name) {
-				const now = new Date();
-				const dateStr = now.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-				const timeStr = now.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
-				name = `${dateStr} ${timeStr}`;
-			}
-			
 			const my = getFieldValues('add-my', 8);
 			const enemy = getFieldValues('add-enemy', 8);
 			const myPet = $('add-myPet').value.trim();
 			const enemyPet = $('add-enemyPet').value.trim();
 			
-			if (!my.filter(h => h).length && !enemy.filter(h => h).length) { showToast(t('add.addAtLeastOne'), true); return; }
+			if (!my.filter(h => h).length && !enemy.filter(h => h).length) { 
+				showToast(t('add.addAtLeastOne'), true); 
+				return; 
+			}
 			
 			const allHeroNames = heroes.map(h => h.name.toLowerCase());
 			const invalidHeroes = [...my, ...enemy].filter(h => h && !allHeroNames.includes(h.toLowerCase()));
-			if (invalidHeroes.length) { showToast(`${t('add.unknownHeroes')}: ${invalidHeroes.slice(0, 3).join(', ')}`, true); return; }
+			if (invalidHeroes.length) { 
+				showToast(`${t('add.unknownHeroes')}: ${invalidHeroes.slice(0, 3).join(', ')}`, true); 
+				return; 
+			}
 			
 			const allPetNames = pets.map(p => getPetName(p).toLowerCase());
 			const invalidPets = [myPet, enemyPet].filter(p => p && !allPetNames.includes(p.toLowerCase()));
-			if (invalidPets.length) { showToast(`${t('add.unknownPets')}: ${invalidPets.join(', ')}`, true); return; }
+			if (invalidPets.length) { 
+				showToast(`${t('add.unknownPets')}: ${invalidPets.join(', ')}`, true); 
+				return; 
+			}
+			
+			// 🔍 SPRAWDŹ DUPLIKATY
+			const existingDuplicate = checkForExactDuplicate(my, myPet, enemy, enemyPet);
+			if (existingDuplicate) {
+				showDuplicateWarning(existingDuplicate, { name, my, myPet, enemy, enemyPet });
+				return;
+			}
+			
+			// Kontynuuj zapis
+			await performSaveFormation(name, my, myPet, enemy, enemyPet);
+		}
+
+		async function performSaveFormation(name, my, myPet, enemy, enemyPet) {
+			// Auto-nazwa jeśli pusta
+			if (!name) {
+				const now = new Date();
+				name = now.toLocaleString('pl-PL', { 
+					day: '2-digit', 
+					month: '2-digit', 
+					year: 'numeric',
+					hour: '2-digit',
+					minute: '2-digit'
+				}).replace(',', '');
+			}
 			
 			const newId = allFormations.length ? Math.max(...allFormations.map(f => f.id)) + 1 : 1;
-			
-			// Checkbox isBase - tylko admin może oznaczyć jako bazową
 			const isBase = isAdmin && $('add-isBase')?.checked || false;
 			
 			try {
 				await formationsRef.child(String(newId)).set({
-					id: newId, name, my, myPet, enemy, enemyPet,
+					id: newId, 
+					name, 
+					my, 
+					myPet, 
+					enemy, 
+					enemyPet,
 					comment: $('add-comment').value.trim(),
 					isBase: isBase,
 					dateAdded: new Date().toISOString()
 				});
 				showToast(`${t('add.saved')} #${newId}${isBase ? ' (BAZA)' : ''}!`);
 				clearAddForm();
-			} catch (e) { showToast(`${t('common.error')}: ${e.message}`, true); }
+				hideDuplicateWarning();
+			} catch (e) { 
+				showToast(`${t('common.error')}: ${e.message}`, true); 
+			}
+		}
+
+		function showDuplicateWarning(existing, newData) {
+			// Usuń stare ostrzeżenie jeśli istnieje
+			hideDuplicateWarning();
+			
+			const warningHtml = `
+				<div class="duplicate-warning" id="duplicate-warning">
+					<h4>⚠️ ${t('duplicates.warningTitle')}</h4>
+					<p>${t('duplicates.warningText')}</p>
+					<div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin: 10px 0;">
+						<strong>#${existing.id}</strong> - "${existing.name}"
+						${existing.isBase ? '<span style="color: var(--accent-gold);"> 👑 BAZA</span>' : ''}
+					</div>
+					<div class="duplicate-warning-actions">
+						<button class="btn btn-secondary" onclick="hideDuplicateWarning()">
+							❌ ${t('duplicates.cancel')}
+						</button>
+						<button class="btn btn-danger" onclick="forceSaveFormation()">
+							⚠️ ${t('duplicates.saveAnyway')}
+						</button>
+					</div>
+				</div>
+			`;
+			
+			// Zapisz dane do późniejszego użycia
+			window.pendingFormation = newData;
+			
+			// Wstaw ostrzeżenie przed przyciskiem zapisu
+			const saveBtn = document.querySelector('#tab-add .btn-success');
+			if (saveBtn) {
+				saveBtn.insertAdjacentHTML('beforebegin', warningHtml);
+			}
+		}
+
+		function hideDuplicateWarning() {
+			const warning = $('duplicate-warning');
+			if (warning) warning.remove();
+			window.pendingFormation = null;
+		}
+
+		async function forceSaveFormation() {
+			if (!window.pendingFormation) return;
+			
+			const { name, my, myPet, enemy, enemyPet } = window.pendingFormation;
+			await performSaveFormation(name, my, myPet, enemy, enemyPet);
+		}
+		
+		function checkForExactDuplicate(my, myPet, enemy, enemyPet) {
+			const myClean = my.filter(h => h).map(h => h.toLowerCase()).sort();
+			const enemyClean = enemy.filter(h => h).map(h => h.toLowerCase()).sort();
+			const myPetClean = (myPet || '').toLowerCase();
+			const enemyPetClean = (enemyPet || '').toLowerCase();
+			
+			for (const f of allFormations) {
+				const fMyClean = f.my.filter(h => h).map(h => h.toLowerCase()).sort();
+				const fEnemyClean = f.enemy.filter(h => h).map(h => h.toLowerCase()).sort();
+				const fMyPetClean = (f.myPet || '').toLowerCase();
+				const fEnemyPetClean = (f.enemyPet || '').toLowerCase();
+				
+				// Sprawdź czy identyczne
+				const myMatch = myClean.length === fMyClean.length && 
+								myClean.every((h, i) => h === fMyClean[i]);
+				const enemyMatch = enemyClean.length === fEnemyClean.length && 
+								  enemyClean.every((h, i) => h === fEnemyClean[i]);
+				const petsMatch = myPetClean === fMyPetClean && enemyPetClean === fEnemyPetClean;
+				
+				if (myMatch && enemyMatch && petsMatch) {
+					return f; // Znaleziono duplikat
+				}
+			}
+			
+			return null; // Brak duplikatu
 		}
         
 		function clearAddForm() {
@@ -3136,10 +3810,11 @@
 				<div class="formation-preview">
 					<div class="preview-header">
 						<div class="preview-title"><span class="preview-id">#${f.id}</span>${f.name}<span class="formation-type-badge ${f.isBase ? 'base' : 'user'}">${t(f.isBase ? 'badge.base' : 'badge.user')}</span></div>
-						<div class="preview-actions">
-							${isAdmin ? `<button class="btn btn-small btn-admin" onclick="openEditModal(${id})">✏️</button>` : ''}
-							<button class="btn btn-small ${isFav ? 'btn-favorite-active' : 'btn-secondary'}" onclick="toggleFavoritePreview(${id})">${isFav ? '⭐' : '☆'}</button>
-						</div>
+							<div class="preview-actions">
+								<button class="btn btn-small btn-secondary" onclick="copyFormationLink(${id})" title="Kopiuj link">🔗</button>
+								${isAdmin ? `<button class="btn btn-small btn-admin" onclick="openEditModal(${id})">✏️</button>` : ''}
+								<button class="btn btn-small ${isFav ? 'btn-favorite-active' : 'btn-secondary'}" onclick="toggleFavoritePreview(${id})">${isFav ? '⭐' : '☆'}</button>
+							</div>
 					</div>
 					<div class="preview-meta">
 						${formatDate(f.dateAdded) ? `<span class="preview-meta-item">📅 ${t('preview.added')}: ${formatDate(f.dateAdded)}</span>` : ''}
@@ -3295,15 +3970,6 @@
             } catch (e) { showToast(`${t('common.error')}: ${e.message}`, true); }
         }
         
-        async function deleteAllUserFormations() {
-            if (!confirm(t('admin.confirmDeleteAllUser'))) return;
-            try {
-                const userF = allFormations.filter(f => !f.isBase);
-                for (const f of userF) await formationsRef.child(String(f.id)).remove();
-                showToast(`${t('admin.deletedUserFormations')}: ${userF.length}`);
-            } catch (e) { showToast(`${t('common.error')}: ${e.message}`, true); }
-        }
-        
         // =====================================================
         // ADMIN
         // =====================================================
@@ -3423,6 +4089,249 @@
             try { await petsRef.child(name).remove(); showToast(`${t('admin.heroDeleted')}: ${name}`); }
             catch (e) { showToast(`${t('common.error')}: ${e.message}`, true); }
         }
+		
+		// ========== SKANER DUPLIKATÓW ==========
+
+		function scanDuplicates() {
+			const duplicates = findDuplicates();
+			renderDuplicatesModal(duplicates);
+			$('duplicates-modal').classList.remove('hidden');
+		}
+
+		function closeDuplicatesModal() {
+			$('duplicates-modal').classList.add('hidden');
+		}
+
+		function findDuplicates() {
+			const results = {
+				identical: [],      // 5/5 enemy + 5/5 my + oba pety
+				almostIdentical: [] // 5/5 enemy + 5/5 my (pety mogą się różnić)
+			};
+			
+			const formations = allFormations;
+			
+			for (let i = 0; i < formations.length; i++) {
+				for (let j = i + 1; j < formations.length; j++) {
+					const a = formations[i];
+					const b = formations[j];
+					
+					const similarity = compareFormations(a, b);
+					
+					if (similarity.type === 'identical') {
+						addToGroup(results.identical, a, b, similarity);
+					} else if (similarity.type === 'almostIdentical') {
+						addToGroup(results.almostIdentical, a, b, similarity);
+					}
+				}
+			}
+			
+			return results;
+		}
+
+		function compareFormations(a, b) {
+			// Porównaj enemy
+			const enemyA = a.enemy.filter(h => h).map(h => h.toLowerCase()).sort();
+			const enemyB = b.enemy.filter(h => h).map(h => h.toLowerCase()).sort();
+			const enemyMatch = enemyA.length === enemyB.length && enemyA.every((h, i) => h === enemyB[i]);
+			
+			// Porównaj my
+			const myA = a.my.filter(h => h).map(h => h.toLowerCase()).sort();
+			const myB = b.my.filter(h => h).map(h => h.toLowerCase()).sort();
+			const myMatch = myA.length === myB.length && myA.every((h, i) => h === myB[i]);
+			
+			// Porównaj pety
+			const enemyPetSame = (a.enemyPet || '').toLowerCase() === (b.enemyPet || '').toLowerCase();
+			const myPetSame = (a.myPet || '').toLowerCase() === (b.myPet || '').toLowerCase();
+			
+			// Określ typ
+			if (enemyMatch && myMatch) {
+				if (enemyPetSame && myPetSame) {
+					return { type: 'identical' };
+				}
+				return { type: 'almostIdentical' };
+			}
+			
+			return { type: 'none' };
+		}
+
+		function addToGroup(groups, a, b, similarity) {
+			// Szukaj istniejącej grupy zawierającej a lub b
+			let foundGroup = null;
+			for (const group of groups) {
+				if (group.formations.some(f => f.id === a.id || f.id === b.id)) {
+					foundGroup = group;
+					break;
+				}
+			}
+			
+			if (foundGroup) {
+				if (!foundGroup.formations.some(f => f.id === a.id)) foundGroup.formations.push(a);
+				if (!foundGroup.formations.some(f => f.id === b.id)) foundGroup.formations.push(b);
+			} else {
+				groups.push({
+					formations: [a, b],
+					similarity: similarity
+				});
+			}
+		}
+
+		function renderDuplicatesModal(duplicates) {
+			const totalGroups = duplicates.identical.length + duplicates.almostIdentical.length;
+			
+			if (totalGroups === 0) {
+				$('duplicates-results').innerHTML = `
+					<div class="duplicates-empty">
+						<div class="duplicates-empty-icon">✅</div>
+						<h3>${t('duplicates.noDuplicates')}</h3>
+						<p style="color: var(--text-muted);">${t('duplicates.allUnique')}</p>
+					</div>
+				`;
+				return;
+			}
+			
+			let html = `
+				<div class="duplicates-summary">
+					<strong>${t('duplicates.found')}: ${totalGroups} ${t('duplicates.groups')}</strong><br>
+					<span style="font-size: 0.8rem; color: var(--text-muted);">
+						🔴 ${t('duplicates.identical')}: ${duplicates.identical.length} | 
+						🟠 ${t('duplicates.almostIdentical')}: ${duplicates.almostIdentical.length}
+					</span>
+				</div>
+			`;
+			
+			if (duplicates.identical.length > 0) {
+				html += `<h4 style="color: #d32f2f; margin: 20px 0 10px;">🔴 ${t('duplicates.identical')} (100%)</h4>`;
+				html += renderDuplicateGroups(duplicates.identical, 'identical');
+			}
+			
+			if (duplicates.almostIdentical.length > 0) {
+				html += `<h4 style="color: #f57c00; margin: 20px 0 10px;">🟠 ${t('duplicates.almostIdentical')}</h4>`;
+				html += renderDuplicateGroups(duplicates.almostIdentical, 'almostIdentical');
+			}
+			
+			$('duplicates-results').innerHTML = html;
+		}
+
+		function renderDuplicateGroups(groups, type) {
+			return groups.map((group, groupIndex) => {
+				const first = group.formations[0];
+				const enemyList = first.enemy.filter(h => h).join(', ') || '—';
+				const myList = first.my.filter(h => h).join(', ') || '—';
+				
+				return `
+					<div class="duplicate-group ${type}">
+						<div class="duplicate-group-header">
+							<strong>👹 ${t('duplicates.enemy')}:</strong> ${enemyList} ${first.enemyPet ? '+ ' + first.enemyPet : ''}<br>
+							<strong>⚔️ ${t('duplicates.counter')}:</strong> ${myList} ${first.myPet ? '+ ' + first.myPet : ''}
+						</div>
+						${group.formations.map(f => `
+							<div class="duplicate-item">
+								<div class="duplicate-item-info">
+									<span class="duplicate-item-name">${f.name}</span>
+									<span class="duplicate-item-id">#${f.id} ${f.isBase ? '👑 BAZA' : ''}</span>
+								</div>
+								<div class="duplicate-item-actions">
+									<button class="btn btn-small" onclick="openDuplicatePreview(${f.id})" title="${t('duplicates.preview')}">👁️</button>
+									<button class="btn btn-small btn-danger" onclick="deleteDuplicateFormation(${f.id})" title="${t('common.delete')}">🗑️</button>
+								</div>
+							</div>
+						`).join('')}
+					</div>
+				`;
+			}).join('');
+		}
+		
+		function openDuplicatePreview(id) {
+			const f = allFormations.find(x => x.id === id);
+			if (!f) return;
+			
+			$('dup-preview-title').innerHTML = `👁️ #${f.id} - ${f.name} ${f.isBase ? '<span style="color: var(--accent-gold);">👑 BAZA</span>' : ''}`;
+			
+			$('dup-preview-content').innerHTML = `
+				<div class="formation-preview" style="margin-top: 15px;">
+					<div class="battle-section enemy">
+						<div class="battle-title enemy-title"><span class="title-icon">👹</span>${t('preview.enemy')}</div>
+						<div style="text-align:center">${renderBattlePet(f.enemyPet)}</div>
+						${renderBattleGrid(f.enemy, true)}
+					</div>
+					
+					<div class="vs-separator"><span class="vs-badge">VS</span></div>
+					
+					<div class="battle-section player">
+						${renderBattleGrid(f.my, false)}
+						<div style="text-align:center">${renderBattlePet(f.myPet)}</div>
+						<div class="battle-title player-title"><span class="title-icon">⚔️</span>${t('preview.yourTeam')}</div>
+					</div>
+					
+					${f.comment ? `<div class="preview-comment"><span class="comment-icon">💬</span>${f.comment}</div>` : ''}
+				</div>
+				
+				<div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+					<button class="btn btn-secondary" onclick="closeDuplicatePreviewModal()">✖️ ${t('common.close')}</button>
+					<button class="btn btn-danger" onclick="closeDuplicatePreviewModal(); deleteDuplicateFormation(${f.id});">🗑️ ${t('common.delete')}</button>
+				</div>
+			`;
+			
+			$('duplicate-preview-modal').classList.remove('hidden');
+		}
+
+		function closeDuplicatePreviewModal() {
+			$('duplicate-preview-modal').classList.add('hidden');
+		}
+
+		async function deleteDuplicateFormation(id) {
+			const f = allFormations.find(x => x.id === id);
+			if (!f) return;
+			
+			if (!confirm(`${t('duplicates.confirmDelete')} #${id} "${f.name}"?`)) return;
+			
+			try {
+				await formationsRef.child(String(id)).remove();
+				showToast(`🗑️ ${t('database.deleted')} #${id}`);
+				// Odśwież wyniki skanera
+				scanDuplicates();
+			} catch (e) {
+				showToast(`${t('common.error')}: ${e.message}`, true);
+			}
+		}
+
+		// ========== PODWÓJNE POTWIERDZENIE USUWANIA WSZYSTKICH ==========
+
+		function confirmDeleteAllUserFormations() {
+			const userFormations = allFormations.filter(f => !f.isBase);
+			
+			if (userFormations.length === 0) {
+				showToast(t('admin.noUserFormations') || 'Brak formacji użytkowników do usunięcia!');
+				return;
+			}
+			
+			// Pierwsze potwierdzenie
+			if (!confirm(`⚠️ ${t('admin.deleteAllConfirm1')} ${userFormations.length} ${t('admin.formations')}?`)) return;
+			
+			// Drugie potwierdzenie - wpisanie liczby
+			const confirmNumber = prompt(`${t('admin.deleteAllConfirm2')} ${userFormations.length}:`);
+			
+			if (confirmNumber !== String(userFormations.length)) {
+				showToast('❌ ' + t('admin.deleteAllCancelled'), true);
+				return;
+			}
+			
+			// Wykonaj usunięcie
+			deleteAllUserFormationsConfirmed(userFormations);
+		}
+
+		async function deleteAllUserFormationsConfirmed(userFormations) {
+			if (!isOnline) { showToast(t('common.noConnection'), true); return; }
+			
+			try {
+				for (const f of userFormations) {
+					await formationsRef.child(String(f.id)).remove();
+				}
+				showToast(`✅ ${t('admin.deletedAll')} ${userFormations.length} ${t('admin.formations')}!`);
+			} catch (e) {
+				showToast(`${t('common.error')}: ${e.message}`, true);
+			}
+		}
         
         // =====================================================
         // IMPORT / EKSPORT
@@ -4101,16 +5010,15 @@
 			$('war-preview-content').innerHTML = html;
 		}
         
-        function setupAutocomplete() {
-            document.querySelectorAll('input[data-type]').forEach(input => {
-                const list = $('list-' + input.id);
-                const type = input.dataset.type;
+		function setupAutocomplete() {
+			document.querySelectorAll('input[data-type]').forEach(input => {
+				const list = $('list-' + input.id);
+				const type = input.dataset.type;
 
-				// Dla pól war-* i edit-* używamy standardowej listy autocomplete
 				const isWarField = input.id.startsWith('war-');
 				const isEditField = input.id.startsWith('edit-') && !['edit-name', 'edit-comment', 'edit-id'].includes(input.id);
-                let dynamicList = null;
-                
+				let dynamicList = null;
+				
 				if (isWarField && !list) {
 					dynamicList = document.createElement('div');
 					dynamicList.className = 'autocomplete-list';
@@ -4118,52 +5026,129 @@
 					input.parentNode.style.position = 'relative';
 					input.parentNode.appendChild(dynamicList);
 				}
-                
-                const targetList = list || dynamicList;
-                if (!targetList) return;
-                
-                input.addEventListener('input', () => {
-                    if (input.id.startsWith('add-') && !['add-name', 'add-comment'].includes(input.id)) {
-                        validateInput(input);
-                        updateAddFormTagsSelection();
-                    }
-                    if (input.id.startsWith('search-')) updateSearchTagsSelection();
-                    
-                    const val = input.value.toLowerCase();
-                    if (val.length < 1) { targetList.classList.remove('show'); return; }
-                    
-                    const items = type === 'pet' ? pets : heroes;
-                    const filtered = type === 'pet' ? items.filter(p => p.toLowerCase().startsWith(val)).slice(0, 6) :
-                        items.filter(h => h.name.toLowerCase().startsWith(val)).slice(0, 6);
-                    
-                    if (!filtered.length) { targetList.classList.remove('show'); return; }
-                    
-                    targetList.innerHTML = filtered.map(item => type === 'pet' ?
-                        `<div class="autocomplete-item" data-value="${item}">${item}</div>` :
-                        `<div class="autocomplete-item race-${item.race.toLowerCase()}" data-value="${item.name}">${item.name} <span class="race">(${item.race})</span></div>`
-                    ).join('');
-                    
-                    targetList.classList.add('show');
-                    targetList.querySelectorAll('.autocomplete-item').forEach(item => {
-                        item.addEventListener('click', () => {
-                            input.value = item.dataset.value;
-                            targetList.classList.remove('show');
-                            // Walidacja tylko dla pól add-*
-                            if (input.id.startsWith('add-') && !['add-name', 'add-comment'].includes(input.id)) {
-                                setValidation(input, true);
-                            }
-                            updateAddFormTagsSelection();
-                        });
-                    });
-                });
-                
-                input.addEventListener('blur', () => setTimeout(() => {
-                    targetList.classList.remove('show');
-                    if (input.id.startsWith('search-')) updateSearchTagsSelection();
-                    if (input.id.startsWith('add-') && !['add-name', 'add-comment'].includes(input.id)) updateAddFormTagsSelection();
-                }, 200));
-            });
-        }
+				
+				const targetList = list || dynamicList;
+				if (!targetList) return;
+				
+				// Zmienna do śledzenia zaznaczonego elementu
+				let selectedIndex = -1;
+				
+				function updateSelection() {
+					const items = targetList.querySelectorAll('.autocomplete-item');
+					items.forEach((item, idx) => {
+						item.classList.toggle('selected', idx === selectedIndex);
+					});
+					// Scroll do widoczności
+					if (selectedIndex >= 0 && items[selectedIndex]) {
+						items[selectedIndex].scrollIntoView({ block: 'nearest' });
+					}
+				}
+				
+				function selectItem(value) {
+					input.value = value;
+					targetList.classList.remove('show');
+					selectedIndex = -1;
+					if (input.id.startsWith('add-') && !['add-name', 'add-comment'].includes(input.id)) {
+						setValidation(input, true);
+					}
+					updateAddFormTagsSelection();
+					updateSearchTagsSelection();
+				}
+				
+				input.addEventListener('input', () => {
+					selectedIndex = -1; // Reset selection on input
+					
+					if (input.id.startsWith('add-') && !['add-name', 'add-comment'].includes(input.id)) {
+						validateInput(input);
+						updateAddFormTagsSelection();
+					}
+					if (input.id.startsWith('search-')) updateSearchTagsSelection();
+					
+					const val = input.value.toLowerCase();
+					if (val.length < 1) { targetList.classList.remove('show'); return; }
+					
+					const items = type === 'pet' ? pets : heroes;
+					const filtered = type === 'pet' ? items.filter(p => p.toLowerCase().startsWith(val)).slice(0, 6) :
+						items.filter(h => h.name.toLowerCase().startsWith(val)).slice(0, 6);
+					
+					if (!filtered.length) { targetList.classList.remove('show'); return; }
+					
+					targetList.innerHTML = filtered.map(item => type === 'pet' ?
+						`<div class="autocomplete-item" data-value="${item}">${item}</div>` :
+						`<div class="autocomplete-item race-${item.race.toLowerCase()}" data-value="${item.name}">${item.name} <span class="race">(${item.race})</span></div>`
+					).join('');
+					
+					targetList.classList.add('show');
+					
+					// Kliknięcie w element
+					targetList.querySelectorAll('.autocomplete-item').forEach((item, idx) => {
+						item.addEventListener('click', () => selectItem(item.dataset.value));
+						item.addEventListener('mouseenter', () => {
+							selectedIndex = idx;
+							updateSelection();
+						});
+					});
+				});
+				
+				// Obsługa klawiszy
+				input.addEventListener('keydown', e => {
+					const items = targetList.querySelectorAll('.autocomplete-item');
+					const isListVisible = targetList.classList.contains('show') && items.length > 0;
+					
+					if (e.key === 'ArrowDown') {
+						if (isListVisible) {
+							e.preventDefault();
+							selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+							updateSelection();
+						}
+					} else if (e.key === 'ArrowUp') {
+						if (isListVisible) {
+							e.preventDefault();
+							selectedIndex = Math.max(selectedIndex - 1, 0);
+							updateSelection();
+						}
+					} else if (e.key === 'Enter') {
+						if (isListVisible && selectedIndex >= 0 && items[selectedIndex]) {
+							e.preventDefault();
+							e.stopPropagation();
+							selectItem(items[selectedIndex].dataset.value);
+						}
+						// Jeśli nic nie zaznaczone, pozwól na domyślne zachowanie (np. szukaj)
+					} else if (e.key === 'Escape') {
+						targetList.classList.remove('show');
+						selectedIndex = -1;
+					} else if (e.key === 'Tab') {
+						// Tab też wybiera jeśli coś zaznaczone
+						if (isListVisible && selectedIndex >= 0 && items[selectedIndex]) {
+							selectItem(items[selectedIndex].dataset.value);
+						}
+					}
+				});
+				
+				input.addEventListener('blur', () => setTimeout(() => {
+					targetList.classList.remove('show');
+					selectedIndex = -1;
+					if (input.id.startsWith('search-')) updateSearchTagsSelection();
+					if (input.id.startsWith('add-') && !['add-name', 'add-comment'].includes(input.id)) updateAddFormTagsSelection();
+				}, 200));
+			});
+		}
+		
+		function copyFormationLink(id) {
+			const url = `${window.location.origin}${window.location.pathname}?formation=${id}`;
+			navigator.clipboard.writeText(url).then(() => {
+				showToast(currentLang === 'pl' ? '🔗 Link skopiowany!' : '🔗 Link copied!');
+			}).catch(() => {
+				// Fallback dla starszych przeglądarek
+				const input = document.createElement('input');
+				input.value = url;
+				document.body.appendChild(input);
+				input.select();
+				document.execCommand('copy');
+				document.body.removeChild(input);
+				showToast(currentLang === 'pl' ? '🔗 Link skopiowany!' : '🔗 Link copied!');
+			});
+		}
         
         // =====================================================
         // INICJALIZACJA
@@ -4203,6 +5188,33 @@
 				}
 			});
             
+			// Zamykanie modali kliknięciem poza content
+			$('duplicates-modal')?.addEventListener('click', e => {
+				if (e.target === $('duplicates-modal')) closeDuplicatesModal();
+			});
+
+			$('duplicate-preview-modal')?.addEventListener('click', e => {
+				if (e.target === $('duplicate-preview-modal')) closeDuplicatePreviewModal();
+			});
+			
+			// Obsługa linków bezpośrednich ?formation=ID
+			const urlParams = new URLSearchParams(window.location.search);
+			const formationId = urlParams.get('formation');
+			if (formationId) {
+				const id = parseInt(formationId);
+				if (id > 0) {
+					// Poczekaj aż dane się załadują
+					const checkData = setInterval(() => {
+						if (allFormations.length > 0) {
+							clearInterval(checkData);
+							showFormation(id);
+						}
+					}, 100);
+					// Timeout po 5 sekundach
+					setTimeout(() => clearInterval(checkData), 5000);
+				}
+			}
+			
             const tabAdd = $('tab-add');
             if (tabAdd) {
                 tabAdd.addEventListener('focusin', e => {
@@ -4242,5 +5254,3 @@
     </script>
 </body>
 </html>
-
-
