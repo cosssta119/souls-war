@@ -1474,6 +1474,8 @@
         }
         .battle-slot.filled:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); }
 
+
+
         .battle-slot.race-dark { border-color: var(--race-dark); box-shadow: 0 2px 8px rgba(156, 39, 176, 0.2), inset 0 0 20px rgba(156, 39, 176, 0.1); }
         .battle-slot.race-dark .hero-name { color: var(--race-dark); }
         .battle-slot.race-light { border-color: var(--race-light); box-shadow: 0 2px 8px rgba(255, 213, 79, 0.2), inset 0 0 20px rgba(255, 213, 79, 0.1); }
@@ -2060,6 +2062,304 @@
         
         .compact-vs { text-align: center; font-size: 0.7rem; color: var(--accent-gold); margin: 5px 0; }
         
+		/* ========== PORÓWNYWARKA SKŁADÓW ========== */
+
+		/* Checkbox w wynikach - LEWA STRONA */
+		.result-card {
+			position: relative;
+			display: flex;
+			align-items: flex-start;
+			gap: 10px;
+		}
+
+		.result-card-checkbox {
+			flex-shrink: 0;
+			display: flex;
+			align-items: center;
+			padding-top: 5px;
+		}
+
+		.result-card-checkbox input {
+			width: 22px;
+			height: 22px;
+			cursor: pointer;
+			accent-color: var(--accent-gold);
+		}
+
+		.result-card-content {
+			flex: 1;
+			min-width: 0;
+		}
+
+		.result-card.selected-for-compare {
+			border-color: var(--accent-gold);
+			box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+		}
+
+		/* Przycisk porównaj - pomarańczowy */
+		.btn-compare {
+			background: linear-gradient(135deg, #e65100, #bf360c) !important;
+			color: white !important;
+		}
+
+		.btn-compare:hover {
+			box-shadow: 0 0 15px rgba(230, 81, 0, 0.4);
+		}
+
+		.btn-compare:disabled {
+			background: linear-gradient(135deg, #5d4037, #4e342e) !important;
+			opacity: 0.6;
+		}
+
+		.compare-count-badge {
+			background: rgba(255, 255, 255, 0.25);
+			color: white;
+			padding: 2px 8px;
+			border-radius: 10px;
+			font-size: 0.8rem;
+			margin-left: 8px;
+		}
+
+		/* Modal porównania */
+		.compare-modal-content {
+			max-width: 98vw !important;
+			width: 1400px !important;
+			max-height: 90vh !important;
+			overflow-y: auto !important;
+		}
+
+		.compare-grid {
+			display: grid;
+			gap: 15px;
+			margin-top: 20px;
+		}
+
+		.compare-grid.cols-2 {
+			grid-template-columns: repeat(2, 1fr);
+		}
+
+		.compare-grid.cols-3 {
+			grid-template-columns: repeat(3, 1fr);
+		}
+
+		@media (max-width: 1100px) {
+			.compare-grid.cols-3 {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		@media (max-width: 768px) {
+			.compare-grid.cols-2,
+			.compare-grid.cols-3 {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		/* Karta porównania - pełny podgląd */
+		.compare-card {
+			background: var(--bg-card);
+			border-radius: 12px;
+			overflow: hidden;
+			border: 2px solid var(--border);
+		}
+
+		.compare-card-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 12px 15px;
+			background: var(--bg-input);
+			border-bottom: 1px solid var(--border);
+		}
+
+		.compare-card-id {
+			font-family: 'Cinzel', serif;
+			color: var(--accent-gold);
+			font-size: 0.95rem;
+		}
+
+		.compare-card-name {
+			font-size: 0.8rem;
+			color: var(--text-light);
+			max-width: 200px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.compare-card-body {
+			padding: 15px;
+		}
+
+		/* Sloty w porównaniu - podświetlenie różnic */
+		.battle-slot.compare-match {
+			border-color: #4caf50 !important;
+			box-shadow: 0 0 12px rgba(76, 175, 80, 0.5), inset 0 0 15px rgba(76, 175, 80, 0.15) !important;
+		}
+		
+		.battle-slot.compare-moved {
+			border-color: #ff9800 !important;
+			box-shadow: 0 0 12px rgba(255, 152, 0, 0.5), inset 0 0 15px rgba(255, 152, 0, 0.15) !important;
+		}
+		
+		.battle-slot.compare-unique {
+			border-color: #f44336 !important;
+			box-shadow: 0 0 12px rgba(244, 67, 54, 0.5), inset 0 0 15px rgba(244, 67, 54, 0.15) !important;
+		}
+		
+		/* Pet w porównaniu */
+		.battle-pet.compare-match {
+			border-color: #4caf50 !important;
+			background: rgba(76, 175, 80, 0.15) !important;
+		}
+
+		.battle-pet.compare-moved {
+			border-color: #ff9800 !important;
+			background: rgba(255, 152, 0, 0.15) !important;
+		}
+
+		.battle-pet.compare-unique {
+			border-color: #f44336 !important;
+			background: rgba(244, 67, 54, 0.15) !important;
+		}
+
+		/* Legenda */
+		.compare-legend-dot.match {
+			background: rgba(76, 175, 80, 0.3);
+			border-color: #4caf50;
+		}
+
+		.compare-legend-dot.moved {
+			background: rgba(255, 152, 0, 0.3);
+			border-color: #ff9800;
+		}
+
+		.compare-legend-dot.unique {
+			background: rgba(244, 67, 54, 0.3);
+			border-color: #f44336;
+		}
+		
+		.battle-slot.compare-same {
+			/* Bez zmian - standardowy wygląd */
+		}
+
+		.battle-slot.compare-different {
+			animation: pulseDifferent 2s infinite;
+			box-shadow: 0 0 10px rgba(255, 152, 0, 0.5) !important;
+		}
+
+		.battle-slot.compare-missing {
+			background: rgba(244, 67, 54, 0.2) !important;
+			border-color: #f44336 !important;
+			border-style: dashed !important;
+		}
+
+		.battle-slot.compare-missing::after {
+			content: '✗';
+			position: absolute;
+			color: #f44336;
+			font-size: 1.2rem;
+		}
+
+		.battle-slot.compare-extra {
+			background: rgba(76, 175, 80, 0.2) !important;
+			border-color: #4caf50 !important;
+			box-shadow: 0 0 10px rgba(76, 175, 80, 0.3) !important;
+		}
+
+		@keyframes pulseDifferent {
+			0%, 100% { box-shadow: 0 0 5px rgba(255, 152, 0, 0.3); }
+			50% { box-shadow: 0 0 15px rgba(255, 152, 0, 0.6); }
+		}
+
+		/* Pet w porównaniu */
+		.battle-pet.compare-same {
+			/* Bez zmian */
+		}
+
+		.battle-pet.compare-different {
+			border-color: #ff9800 !important;
+			background: rgba(255, 152, 0, 0.15) !important;
+			animation: pulseDifferent 2s infinite;
+		}
+
+		/* Legenda */
+		.compare-legend {
+			display: flex;
+			justify-content: center;
+			gap: 20px;
+			margin-bottom: 20px;
+			padding: 12px 20px;
+			background: var(--bg-input);
+			border-radius: 10px;
+			flex-wrap: wrap;
+		}
+
+		.compare-legend-item {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			font-size: 0.8rem;
+			color: var(--text-light);
+		}
+
+		.compare-legend-dot {
+			width: 16px;
+			height: 16px;
+			border-radius: 4px;
+			border: 2px solid;
+		}
+
+		.compare-legend-dot.same {
+			background: var(--bg-input);
+			border-color: var(--border);
+		}
+
+		.compare-legend-dot.different {
+			background: rgba(255, 152, 0, 0.3);
+			border-color: #ff9800;
+		}
+
+		.compare-legend-dot.missing {
+			background: rgba(244, 67, 54, 0.2);
+			border-color: #f44336;
+			border-style: dashed;
+		}
+
+		.compare-legend-dot.extra {
+			background: rgba(76, 175, 80, 0.2);
+			border-color: #4caf50;
+		}
+
+		/* Komentarz w porównaniu */
+		.compare-comment {
+			margin-top: 10px;
+			padding: 10px 12px;
+			background: rgba(212, 175, 55, 0.05);
+			border-left: 3px solid var(--accent-gold);
+			border-radius: 0 8px 8px 0;
+			font-size: 0.75rem;
+			color: var(--text-muted);
+		}
+
+		/* Light theme */
+		[data-theme="light"] .compare-card {
+			background: #ffffff;
+			border-color: #d4cfc7;
+		}
+
+		[data-theme="light"] .compare-card-header {
+			background: #f0ebe3;
+		}
+
+		[data-theme="light"] .compare-legend {
+			background: #f0ebe3;
+		}
+
+		[data-theme="light"] .btn-compare {
+			background: linear-gradient(135deg, #e65100, #bf360c) !important;
+		}
+		
         .match-info {
             margin-top: 10px;
             padding: 8px;
@@ -2201,6 +2501,10 @@
 				</div>
 			</div>
 			<button class="btn btn-secondary" onclick="clearSearch()" style="margin-top: 8px;">✖ <span data-i18n="search.clear">Wyczyść</span></button>
+			<button class="btn btn-compare" id="compare-btn" onclick="openCompareModal()" style="margin-top: 8px; display: none;">
+				📊 <span data-i18n="compare.btn">Porównaj</span>
+				<span class="compare-count-badge" id="compare-count">0</span>
+			</button>
         </div>
         
         <div id="results-section">
@@ -2613,6 +2917,15 @@
 		</div>
 	</div>
 	
+	<!-- Modal porównania składów -->
+	<div class="modal hidden" id="compare-modal">
+		<div class="modal-content compare-modal-content">
+			<span class="close-btn" onclick="closeCompareModal()">&times;</span>
+			<h2>📊 <span data-i18n="compare.title">Porównanie składów</span></h2>
+			<div id="compare-content"></div>
+		</div>
+	</div>
+	
     <div class="toast" id="toast"></div>
 
     <div class="quick-select-modal hidden" id="quick-select-modal">
@@ -2667,6 +2980,7 @@
 		let currentTheme = localStorage.getItem('souls_theme') || 'dark';
 		let isGuildAuthenticated = false;
 		let searchHistory = JSON.parse(localStorage.getItem('souls_search_history') || '[]');
+		let selectedForCompare = [];
 
 		// ========== KONFIGURACJA ZABEZPIECZEŃ ==========
 		const GUILD_PASSWORD_ENABLED = true; // Zmień na true aby włączyć hasło na wejście
@@ -2761,6 +3075,12 @@
 				'duplicates.cancel': 'Anuluj', 'duplicates.saveAnyway': 'Zapisz mimo to',
 				'common.close': 'Zamknij', 'common.delete': 'Usuń', 'database.deleted': 'Usunięto',
 				'search.history': 'Ostatnie wyszukiwania', 'search.historyEmpty': 'Brak historii',
+				'compare.title': 'Porównanie składów',
+				'compare.btn': 'Porównaj',
+				'compare.select': 'Zaznacz do porównania',
+				'compare.match': 'Zgodne (ta sama pozycja)',
+				'compare.moved': 'Inna pozycja',
+				'compare.unique': 'Tylko w tym składzie',
                 'badge.base': 'BAZA', 'badge.user': 'DODANA'
             },
             en: {
@@ -2821,6 +3141,12 @@
 				'duplicates.cancel': 'Cancel', 'duplicates.saveAnyway': 'Save anyway',
 				'common.close': 'Close', 'common.delete': 'Delete', 'database.deleted': 'Deleted',
 				'search.history': 'Ostatnie wyszukiwania','search.historyEmpty': 'Brak historii',
+				'compare.title': 'Compare formations',
+				'compare.btn': 'Compare',
+				'compare.select': 'Select to compare',
+				'compare.match': 'Match (same position)',
+				'compare.moved': 'Different position',
+				'compare.unique': 'Only in this formation',
                 'badge.base': 'BASE', 'badge.user': 'ADDED'
             }
         };
@@ -3250,21 +3576,45 @@
             displayResults(results, searchHeroes);
         }
         
-        function displayResults(results, searchHeroes) {
-            if (!results.length) {
-                $('results-section').innerHTML = `<div class="empty-state"><p>${t('search.noResults')}</p></div>`;
-                return;
-            }
-            
-            $('results-section').innerHTML = `<div class="results-header"><h3>${t('search.results')}</h3><span class="results-count">${t('search.found')}: ${results.length}</span></div>` +
-                results.map(r => {
-                    const f = r.formation;
-                    const enemyDisplay = f.enemy.filter(h => h).map(h => r.matchedHeroes.some(mh => normalize(h) === mh || normalize(h).startsWith(mh)) ? `<span class="matched-hero">${h}</span>` : h).join(', ');
-                    const petDisplay = r.petMatched ? `<span class="matched-hero">${f.enemyPet}</span>` : (f.enemyPet || '—');
-                    const missingHeroes = searchHeroes.filter(sh => !r.matchedHeroes.includes(sh));
-                    return `<div class="result-card" onclick="showFormation(${f.id})"><div class="result-card-header"><span class="result-id">ID: ${f.id}${f.isBase ? '' : ` <span class="badge user-badge">${t('badge.user')}</span>`}</span><span class="match-score match-${Math.min(r.score, 6)}">${r.score}/${r.maxScore}</span></div><div class="result-name">${f.name}</div><div class="result-heroes">${t('search.enemy')}: ${enemyDisplay} + ${petDisplay}</div>${missingHeroes.length ? `<div class="result-missing">❌ ${t('search.missing')}: ${missingHeroes.join(', ')}</div>` : ''}</div>`;
-                }).join('');
-        }
+		function displayResults(results, searchHeroes) {
+			// Reset selekcji przy nowym wyszukiwaniu
+			selectedForCompare = [];
+			
+			if (!results.length) {
+				$('results-section').innerHTML = `<div class="empty-state"><p>${t('search.noResults')}</p></div>`;
+				return;
+			}
+			
+			let html = `<div class="results-header"><h3>${t('search.results')}</h3><span class="results-count">${t('search.found')}: ${results.length}</span></div>`;
+			
+			html += results.map(r => {
+				const f = r.formation;
+				const enemyDisplay = f.enemy.filter(h => h).map(h => r.matchedHeroes.some(mh => normalize(h) === mh || normalize(h).startsWith(mh)) ? `<span class="matched-hero">${h}</span>` : h).join(', ');
+				const petDisplay = r.petMatched ? `<span class="matched-hero">${f.enemyPet}</span>` : (f.enemyPet || '—');
+				const missingHeroes = searchHeroes.filter(sh => !r.matchedHeroes.includes(sh));
+				
+				return `
+					<div class="result-card" id="result-card-${f.id}">
+						<div class="result-card-checkbox">
+							<input type="checkbox" id="compare-${f.id}" onchange="toggleCompareSelection(${f.id})" title="${t('compare.select')}">
+						</div>
+						<div class="result-card-content" onclick="showFormation(${f.id})">
+							<div class="result-card-header">
+								<span class="result-id">ID: ${f.id}${f.isBase ? '' : ` <span class="badge user-badge">${t('badge.user')}</span>`}</span>
+								<span class="match-score match-${Math.min(r.score, 6)}">${r.score}/${r.maxScore}</span>
+							</div>
+							<div class="result-name">${f.name}</div>
+							<div class="result-heroes">${t('search.enemy')}: ${enemyDisplay} + ${petDisplay}</div>
+							${missingHeroes.length ? `<div class="result-missing">❌ ${t('search.missing')}: ${missingHeroes.join(', ')}</div>` : ''}
+						</div>
+					</div>`;
+			}).join('');
+			
+			$('results-section').innerHTML = html;
+			
+			// Aktualizuj przycisk porównania
+			updateCompareButton();
+		}
         
         function clearSearch() {
             for (let i = 1; i <= 8; i++) $(`search-pos${i}`).value = '';
@@ -3406,6 +3756,231 @@
 			localStorage.setItem('souls_search_history', JSON.stringify(searchHistory));
 			renderSearchHistory();
 			showToast(currentLang === 'pl' ? 'Historia wyczyszczona' : 'History cleared');
+		}
+		
+		// =====================================================
+		// PORÓWNYWARKA SKŁADÓW
+		// =====================================================
+
+		function toggleCompareSelection(id) {
+			const checkbox = $(`compare-${id}`);
+			const card = $(`result-card-${id}`);
+			
+			if (checkbox.checked) {
+				if (selectedForCompare.length >= 3) {
+					checkbox.checked = false;
+					showToast(currentLang === 'pl' ? 'Maksymalnie 3 składy!' : 'Maximum 3 formations!', true);
+					return;
+				}
+				selectedForCompare.push(id);
+				card?.classList.add('selected-for-compare');
+			} else {
+				selectedForCompare = selectedForCompare.filter(x => x !== id);
+				card?.classList.remove('selected-for-compare');
+			}
+			
+			updateCompareButton();
+		}
+
+		function updateCompareButton() {
+			const btn = $('compare-btn');
+			const countBadge = $('compare-count');
+			
+			if (btn) {
+				btn.style.display = selectedForCompare.length >= 2 ? 'block' : 'none';
+			}
+			if (countBadge) {
+				countBadge.textContent = selectedForCompare.length;
+			}
+		}
+
+		function openCompareModal() {
+			if (selectedForCompare.length < 2) {
+				showToast(currentLang === 'pl' ? 'Zaznacz minimum 2 składy!' : 'Select at least 2 formations!', true);
+				return;
+			}
+			
+			const formations = selectedForCompare.map(id => allFormations.find(f => f.id === id)).filter(Boolean);
+			if (formations.length < 2) return;
+			
+			renderCompareModal(formations);
+			$('compare-modal').classList.remove('hidden');
+		}
+
+		function closeCompareModal() {
+			$('compare-modal').classList.add('hidden');
+		}
+
+		function renderCompareModal(formations) {
+			const colsClass = formations.length === 2 ? 'cols-2' : 'cols-3';
+			
+			// Zbierz wszystkich bohaterów z każdego składu
+			const allHeroesPerFormation = formations.map(f => ({
+				enemy: f.enemy.map(h => normalize(h || '')),
+				my: f.my.map(h => normalize(h || '')),
+				enemyFlat: f.enemy.filter(h => h).map(normalize),
+				myFlat: f.my.filter(h => h).map(normalize),
+				enemyPet: normalize(f.enemyPet || ''),
+				myPet: normalize(f.myPet || '')
+			}));
+			
+			let html = `
+				<div class="compare-legend">
+					<div class="compare-legend-item">
+						<span class="compare-legend-dot match"></span>
+						<span>${t('compare.match')}</span>
+					</div>
+					<div class="compare-legend-item">
+						<span class="compare-legend-dot moved"></span>
+						<span>${t('compare.moved')}</span>
+					</div>
+					<div class="compare-legend-item">
+						<span class="compare-legend-dot unique"></span>
+						<span>${t('compare.unique')}</span>
+					</div>
+				</div>
+				<div class="compare-grid ${colsClass}">
+			`;
+			
+			formations.forEach((f, fIdx) => {
+				html += `
+					<div class="compare-card">
+						<div class="compare-card-header">
+							<span class="compare-card-id">#${f.id} ${f.isBase ? '👑' : ''}</span>
+							<span class="compare-card-name" title="${f.name}">${f.name}</span>
+						</div>
+						<div class="compare-card-body">
+							<div class="battle-section enemy">
+								<div class="battle-title enemy-title"><span class="title-icon">👹</span>${t('preview.enemy')}</div>
+								<div style="text-align:center">${renderComparePet(f.enemyPet, 'enemy', fIdx, allHeroesPerFormation)}</div>
+								${renderCompareBattleGrid(f.enemy, true, 'enemy', fIdx, allHeroesPerFormation)}
+							</div>
+							
+							<div class="vs-separator"><span class="vs-badge">VS</span></div>
+							
+							<div class="battle-section player">
+								${renderCompareBattleGrid(f.my, false, 'my', fIdx, allHeroesPerFormation)}
+								<div style="text-align:center">${renderComparePet(f.myPet, 'my', fIdx, allHeroesPerFormation)}</div>
+								<div class="battle-title player-title"><span class="title-icon">⚔️</span>${t('preview.yourTeam')}</div>
+							</div>
+							
+							${f.comment ? `<div class="compare-comment">💬 ${f.comment}</div>` : ''}
+						</div>
+					</div>
+				`;
+			});
+			
+			html += `</div>`;
+			
+			$('compare-content').innerHTML = html;
+		}
+
+		function renderCompareBattleGrid(arr, isEnemy, type, formationIdx, allData) {
+			const slot = (pos) => {
+				const name = arr[pos] || '';
+				
+				if (!name) {
+					return `<div class="battle-slot empty"></div>`;
+				}
+				
+				const normalizedName = normalize(name);
+				const diffClass = getHeroDiffClass(normalizedName, pos, type, formationIdx, allData);
+				
+				const hero = heroes.find(h => h.name.toLowerCase() === name.toLowerCase());
+				const rc = hero ? `race-${hero.race.toLowerCase()}` : '';
+				
+				return `<div class="battle-slot filled ${rc} ${diffClass}"><span class="hero-name">${name}</span></div>`;
+			};
+			
+			if (isEnemy) {
+				return `<div class="battle-grid">
+					<div class="battle-row">${slot(5)}${slot(6)}${slot(7)}</div>
+					<div class="battle-row">${slot(3)}${slot(4)}</div>
+					<div class="battle-row">${slot(0)}${slot(1)}${slot(2)}</div>
+				</div>`;
+			} else {
+				return `<div class="battle-grid">
+					<div class="battle-row">${slot(0)}${slot(1)}${slot(2)}</div>
+					<div class="battle-row">${slot(3)}${slot(4)}</div>
+					<div class="battle-row">${slot(5)}${slot(6)}${slot(7)}</div>
+				</div>`;
+			}
+		}
+
+		function getHeroDiffClass(heroName, position, type, formationIdx, allData) {
+			if (!heroName) return '';
+			
+			// Sprawdź inne formacje
+			let samePositionInAll = true;
+			let existsElsewhere = false;
+			
+			for (let i = 0; i < allData.length; i++) {
+				if (i === formationIdx) continue;
+				
+				const otherPositions = allData[i][type]; // tablica pozycji
+				const otherFlat = allData[i][type + 'Flat']; // płaska lista bohaterów
+				
+				// Czy ten bohater jest na tej samej pozycji w innym składzie?
+				if (otherPositions[position] !== heroName) {
+					samePositionInAll = false;
+				}
+				
+				// Czy ten bohater jest GDZIEKOLWIEK w innym składzie?
+				if (otherFlat.includes(heroName)) {
+					existsElsewhere = true;
+				}
+			}
+			
+			// ZIELONY: ten sam bohater na tej samej pozycji we wszystkich składach
+			if (samePositionInAll) {
+				return 'compare-match';
+			}
+			
+			// POMARAŃCZOWY: bohater istnieje w innym składzie ale na innej pozycji
+			if (existsElsewhere) {
+				return 'compare-moved';
+			}
+			
+			// CZERWONY: bohater jest tylko w tym składzie
+			return 'compare-unique';
+		}
+
+		function renderComparePet(petName, type, formationIdx, allData) {
+			if (!petName) {
+				return `<div class="battle-pet empty"><span class="pet-icon">🐾</span><span>${t('preview.noPet')}</span></div>`;
+			}
+			
+			const normalizedPet = normalize(petName);
+			const petKey = type + 'Pet';
+			
+			// Sprawdź czy pet jest taki sam we wszystkich
+			let sameInAll = true;
+			let existsElsewhere = false;
+			
+			for (let i = 0; i < allData.length; i++) {
+				if (i === formationIdx) continue;
+				
+				const otherPet = allData[i][petKey];
+				
+				if (otherPet !== normalizedPet) {
+					sameInAll = false;
+				}
+				
+				if (otherPet === normalizedPet) {
+					existsElsewhere = true;
+				}
+			}
+			
+			let diffClass = '';
+			if (sameInAll) {
+				diffClass = 'compare-match';
+			} else if (existsElsewhere) {
+				diffClass = 'compare-moved'; // Ten sam pet ale nie wszędzie
+			} else {
+				diffClass = 'compare-unique';
+			}
+			
+			return `<div class="battle-pet filled ${diffClass}"><span class="pet-icon">🐾</span><span>${petName}</span></div>`;
 		}
         
         // =====================================================
@@ -5195,6 +5770,10 @@
 
 			$('duplicate-preview-modal')?.addEventListener('click', e => {
 				if (e.target === $('duplicate-preview-modal')) closeDuplicatePreviewModal();
+			});
+			
+			$('compare-modal')?.addEventListener('click', e => {
+				if (e.target === $('compare-modal')) closeCompareModal();
 			});
 			
 			// Obsługa linków bezpośrednich ?formation=ID
