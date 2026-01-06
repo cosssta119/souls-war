@@ -805,6 +805,157 @@
 		[data-theme="light"] .search-history-item:hover {
 			background: rgba(153, 101, 21, 0.1);
 		}
+		
+		/* Historia wojny - rozszerzenie */
+		.war-history-item-enemies {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+
+		.war-history-enemy {
+			font-size: 0.75rem;
+			color: var(--text-muted);
+			padding: 4px 8px;
+			background: rgba(0, 0, 0, 0.15);
+			border-radius: 6px;
+			border-left: 3px solid var(--accent-red);
+		}
+
+		.war-history-enemy strong {
+			color: #f44336;
+			margin-right: 5px;
+		}
+
+		.war-history-enemy .heroes {
+			color: var(--text-light);
+		}
+
+		.war-history-enemy .pet {
+			color: var(--accent-gold);
+			margin-left: 5px;
+		}
+
+		/* TWÓJ SKŁAD w podglądzie wojny - większy i ładniejszy */
+		.war-your-team-section {
+			padding: 15px;
+			background: linear-gradient(135deg, rgba(46, 125, 50, 0.1), rgba(46, 125, 50, 0.02));
+			border: 2px solid rgba(46, 125, 50, 0.3);
+			border-radius: 12px;
+			margin-top: 10px;
+		}
+
+		.war-your-team-grid {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.war-your-team-row {
+			display: flex;
+			gap: 10px;
+			justify-content: center;
+		}
+
+		.war-your-team-slot {
+			width: 90px;
+			height: 38px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			border-radius: 8px;
+			font-size: 0.8rem;
+			font-weight: 600;
+			border: 2px solid var(--border);
+			background: var(--bg-input);
+			transition: all 0.2s;
+		}
+
+		.war-your-team-slot.empty {
+			opacity: 0.4;
+			border-style: dashed;
+		}
+
+		.war-your-team-slot.filled {
+			background: linear-gradient(135deg, rgba(0,0,0,0.3), rgba(0,0,0,0.1));
+		}
+
+		/* Kolory ras */
+		.war-your-team-slot.race-dark {
+			border-color: var(--race-dark);
+			color: var(--race-dark);
+			background: linear-gradient(135deg, rgba(156, 39, 176, 0.2), rgba(156, 39, 176, 0.05));
+		}
+
+		.war-your-team-slot.race-light {
+			border-color: var(--race-light);
+			color: var(--race-light);
+			background: linear-gradient(135deg, rgba(255, 213, 79, 0.2), rgba(255, 213, 79, 0.05));
+		}
+
+		.war-your-team-slot.race-human {
+			border-color: var(--race-human);
+			color: var(--race-human);
+			background: linear-gradient(135deg, rgba(66, 165, 245, 0.2), rgba(66, 165, 245, 0.05));
+		}
+
+		.war-your-team-slot.race-fire {
+			border-color: var(--race-fire);
+			color: var(--race-fire);
+			background: linear-gradient(135deg, rgba(229, 57, 53, 0.2), rgba(229, 57, 53, 0.05));
+		}
+
+		.war-your-team-slot.race-elf {
+			border-color: var(--race-elf);
+			color: var(--race-elf);
+			background: linear-gradient(135deg, rgba(102, 187, 106, 0.2), rgba(102, 187, 106, 0.05));
+		}
+
+		.war-your-team-slot.race-undead {
+			border-color: var(--race-undead);
+			color: var(--race-undead);
+			background: linear-gradient(135deg, rgba(120, 144, 156, 0.2), rgba(120, 144, 156, 0.05));
+		}
+
+		/* Konflikt w TWÓJ SKŁAD */
+		.war-your-team-slot.conflict {
+			animation: pulseConflict 1.5s infinite;
+			box-shadow: 0 0 12px rgba(255, 87, 34, 0.6) !important;
+			border-color: #ff5722 !important;
+		}
+
+		/* Pet w TWÓJ SKŁAD */
+		.war-your-team-pet {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			padding: 10px 30px;
+			margin-top: 12px;
+			background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.05));
+			border: 2px solid var(--accent-gold);
+			border-radius: 25px;
+			font-size: 0.85rem;
+			color: var(--accent-gold);
+		}
+
+		.war-your-team-pet.empty {
+			opacity: 0.5;
+			border-style: dashed;
+		}
+
+		/* Light theme */
+		[data-theme="light"] .war-your-team-section {
+			background: linear-gradient(135deg, rgba(46, 125, 50, 0.08), rgba(46, 125, 50, 0.02));
+		}
+
+		[data-theme="light"] .war-your-team-slot.filled {
+			background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.5));
+		}
+
+		[data-theme="light"] .war-history-enemy {
+			background: rgba(0, 0, 0, 0.05);
+		}
 
         /* Badge z numerem */
         .label-badge { display: flex; justify-content: center; margin-bottom: 5px; }
@@ -1987,6 +2138,489 @@
 			opacity: 1;
 		}
 		
+		/* ========== ULEPSZONY PODGLĄD PLANERA WOJNY ========== */
+
+		/* Podsumowanie kombinacji na górze */
+		.war-preview-summary {
+			background: linear-gradient(135deg, var(--bg-card), var(--bg-input));
+			border: 2px solid var(--accent-gold);
+			border-radius: 12px;
+			padding: 20px;
+			margin-bottom: 20px;
+		}
+
+		.war-preview-summary-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 15px;
+		}
+
+		.war-preview-summary-title {
+			font-family: 'Cinzel', serif;
+			color: var(--accent-gold);
+			font-size: 1.1rem;
+		}
+
+		.war-preview-summary-badges {
+			display: flex;
+			gap: 10px;
+		}
+
+		.war-preview-total-badge {
+			padding: 6px 14px;
+			border-radius: 20px;
+			font-size: 0.85rem;
+			font-weight: 600;
+		}
+
+		.war-preview-total-badge.perfect {
+			background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+			color: #4caf50;
+			border: 1px solid #4caf50;
+		}
+
+		.war-preview-total-badge.good {
+			background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1));
+			color: #ffc107;
+			border: 1px solid #ffc107;
+		}
+
+		.war-preview-total-badge.bad {
+			background: linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.1));
+			color: #f44336;
+			border: 1px solid #f44336;
+		}
+
+		.war-preview-stats {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 15px;
+			margin-bottom: 15px;
+		}
+
+		.war-preview-stat {
+			text-align: center;
+			padding: 12px;
+			background: rgba(0, 0, 0, 0.2);
+			border-radius: 8px;
+		}
+
+		.war-preview-stat-value {
+			font-size: 1.4rem;
+			font-weight: 700;
+			color: var(--accent-gold);
+			display: block;
+		}
+
+		.war-preview-stat-value.green { color: #4caf50; }
+		.war-preview-stat-value.orange { color: #ff9800; }
+		.war-preview-stat-value.red { color: #f44336; }
+
+		.war-preview-stat-label {
+			font-size: 0.7rem;
+			color: var(--text-muted);
+			text-transform: uppercase;
+			letter-spacing: 1px;
+		}
+
+		.war-preview-per-battle {
+			display: flex;
+			justify-content: center;
+			gap: 20px;
+			padding-top: 12px;
+			border-top: 1px solid var(--border);
+		}
+
+		.war-preview-battle-score {
+			font-size: 0.8rem;
+			color: var(--text-muted);
+		}
+
+		.war-preview-battle-score strong {
+			color: var(--text-light);
+		}
+
+		/* Legenda kolorów */
+		.war-preview-legend {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+			gap: 15px;
+			padding: 12px 20px;
+			background: var(--bg-input);
+			border-radius: 10px;
+			margin-bottom: 20px;
+		}
+
+		.war-legend-item {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			font-size: 0.75rem;
+			color: var(--text-muted);
+		}
+
+		.war-legend-dot {
+			width: 14px;
+			height: 14px;
+			border-radius: 4px;
+			border: 2px solid;
+		}
+
+		.war-legend-dot.matched {
+			background: rgba(76, 175, 80, 0.3);
+			border-color: #4caf50;
+		}
+
+		.war-legend-dot.missing {
+			background: rgba(244, 67, 54, 0.3);
+			border-color: #f44336;
+		}
+
+		.war-legend-dot.extra {
+			background: rgba(255, 152, 0, 0.3);
+			border-color: #ff9800;
+		}
+
+		.war-legend-dot.conflict {
+			background: rgba(255, 87, 34, 0.3);
+			border-color: #ff5722;
+			animation: pulseConflict 1.5s infinite;
+		}
+
+		@keyframes pulseConflict {
+			0%, 100% { box-shadow: 0 0 0 0 rgba(255, 87, 34, 0.4); }
+			50% { box-shadow: 0 0 0 4px rgba(255, 87, 34, 0); }
+		}
+
+		/* Karta porównania walki */
+		.war-compare-card {
+			background: var(--bg-card);
+			border: 2px solid var(--border);
+			border-radius: 12px;
+			margin-bottom: 20px;
+			overflow: hidden;
+		}
+
+		.war-compare-card.has-missing {
+			border-color: rgba(244, 67, 54, 0.3);
+		}
+
+		.war-compare-card.perfect-match {
+			border-color: rgba(76, 175, 80, 0.4);
+		}
+
+		.war-compare-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 12px 15px;
+			background: var(--bg-input);
+			border-bottom: 1px solid var(--border);
+		}
+
+		.war-compare-title {
+			font-family: 'Cinzel', serif;
+			color: var(--accent-gold);
+			font-size: 1rem;
+		}
+
+		.war-compare-id {
+			font-size: 0.75rem;
+			color: var(--text-muted);
+		}
+
+		.war-compare-score {
+			padding: 4px 12px;
+			border-radius: 12px;
+			font-size: 0.8rem;
+			font-weight: 600;
+		}
+
+		.war-compare-score.high {
+			background: rgba(76, 175, 80, 0.2);
+			color: #4caf50;
+		}
+
+		.war-compare-score.medium {
+			background: rgba(255, 193, 7, 0.2);
+			color: #ffc107;
+		}
+
+		.war-compare-score.low {
+			background: rgba(244, 67, 54, 0.2);
+			color: #f44336;
+		}
+
+		/* Sekcja porównania: szukany vs baza */
+		.war-compare-body {
+			padding: 15px;
+		}
+
+		.war-compare-grid {
+			display: grid;
+			grid-template-columns: 1fr auto 1fr;
+			gap: 10px;
+			align-items: start;
+		}
+
+		@media (max-width: 600px) {
+			.war-compare-grid {
+				grid-template-columns: 1fr;
+			}
+			.war-compare-vs {
+				transform: rotate(90deg);
+				margin: 10px 0;
+			}
+		}
+
+		.war-compare-side {
+			padding: 10px;
+			background: rgba(0, 0, 0, 0.15);
+			border-radius: 10px;
+		}
+
+		.war-compare-side-title {
+			text-align: center;
+			font-size: 0.75rem;
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 1px;
+			margin-bottom: 10px;
+			padding-bottom: 8px;
+			border-bottom: 1px solid var(--border);
+		}
+
+		.war-compare-side-title.searched {
+			color: #42a5f5;
+		}
+
+		.war-compare-side-title.database {
+			color: var(--accent-gold);
+		}
+
+		.war-compare-vs {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 1.2rem;
+			color: var(--text-muted);
+			padding: 20px 5px;
+		}
+
+		/* Sloty w porównaniu - kolory */
+		.compact-slot.war-matched {
+			border-color: #4caf50 !important;
+			box-shadow: 0 0 8px rgba(76, 175, 80, 0.4), inset 0 0 10px rgba(76, 175, 80, 0.15) !important;
+			color: #4caf50 !important;
+		}
+
+		.compact-slot.war-missing {
+			border-color: #f44336 !important;
+			border-style: dashed !important;
+			background: rgba(244, 67, 54, 0.1) !important;
+			color: #f44336 !important;
+			opacity: 0.7;
+		}
+
+		.compact-slot.war-extra {
+			border-color: #ff9800 !important;
+			box-shadow: 0 0 8px rgba(255, 152, 0, 0.4) !important;
+			color: #ff9800 !important;
+		}
+
+		.compact-slot.war-conflict {
+			border-color: #ff5722 !important;
+			box-shadow: 0 0 10px rgba(255, 87, 34, 0.5) !important;
+			animation: pulseConflict 1.5s infinite;
+		}
+
+		.compact-pet.war-matched {
+			border-color: #4caf50 !important;
+			background: rgba(76, 175, 80, 0.15) !important;
+			color: #4caf50 !important;
+		}
+
+		.compact-pet.war-missing {
+			border-color: #f44336 !important;
+			border-style: dashed !important;
+			background: rgba(244, 67, 54, 0.1) !important;
+			color: #f44336 !important;
+		}
+
+		.compact-pet.war-extra {
+			border-color: #ff9800 !important;
+			background: rgba(255, 152, 0, 0.15) !important;
+			color: #ff9800 !important;
+		}
+
+		/* Separator TWÓJ SKŁAD */
+		.war-your-team-separator {
+			text-align: center;
+			margin: 15px 0;
+			position: relative;
+		}
+
+		.war-your-team-separator::before {
+			content: '';
+			position: absolute;
+			left: 0;
+			right: 0;
+			top: 50%;
+			height: 1px;
+			background: linear-gradient(to right, transparent, var(--border), transparent);
+		}
+
+		.war-your-team-badge {
+			display: inline-block;
+			padding: 6px 20px;
+			background: var(--bg-card);
+			border: 2px solid var(--accent-green);
+			border-radius: 20px;
+			font-size: 0.8rem;
+			font-weight: 600;
+			color: var(--accent-green);
+			position: relative;
+		}
+
+		/* Sekcja komentarza */
+		.war-comment-section {
+			margin-top: 15px;
+			padding: 12px 15px;
+			background: linear-gradient(135deg, rgba(212, 175, 55, 0.08), rgba(212, 175, 55, 0.02));
+			border-left: 4px solid var(--accent-gold);
+			border-radius: 0 8px 8px 0;
+		}
+
+		.war-comment-label {
+			font-size: 0.7rem;
+			text-transform: uppercase;
+			color: var(--accent-gold);
+			letter-spacing: 1px;
+			margin-bottom: 5px;
+		}
+
+		.war-comment-text {
+			font-size: 0.85rem;
+			color: var(--text-light);
+			line-height: 1.4;
+		}
+
+		.war-comment-empty {
+			font-style: italic;
+			color: var(--text-muted);
+			font-size: 0.8rem;
+		}
+
+		/* Podsumowanie dopasowania */
+		.war-match-summary {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 8px;
+			margin-top: 15px;
+			padding: 12px;
+			background: rgba(0, 0, 0, 0.2);
+			border-radius: 8px;
+			font-size: 0.75rem;
+		}
+
+		.war-match-item {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.war-match-item-icon {
+			font-size: 0.9rem;
+		}
+
+		.war-match-item-list {
+			color: var(--text-light);
+			word-break: break-word;
+		}
+
+		.war-match-item.matched .war-match-item-list { color: #4caf50; }
+		.war-match-item.missing .war-match-item-list { color: #f44336; }
+		.war-match-item.extra .war-match-item-list { color: #ff9800; }
+
+		/* Przyciski akcji */
+		.war-card-actions {
+			display: flex;
+			gap: 8px;
+			margin-top: 15px;
+			padding-top: 15px;
+			border-top: 1px solid var(--border);
+		}
+
+		.war-card-actions .btn {
+			flex: 1;
+			font-size: 0.75rem;
+			padding: 8px 12px;
+		}
+
+		/* Podsumowanie konfliktów na dole */
+		.war-conflicts-box {
+			margin-top: 20px;
+			padding: 15px;
+			border-radius: 12px;
+		}
+
+		.war-conflicts-box.has-conflicts {
+			background: linear-gradient(135deg, rgba(255, 87, 34, 0.1), rgba(255, 87, 34, 0.02));
+			border: 2px solid rgba(255, 87, 34, 0.3);
+		}
+
+		.war-conflicts-box.no-conflicts {
+			background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.02));
+			border: 2px solid rgba(76, 175, 80, 0.3);
+		}
+
+		.war-conflicts-title {
+			font-size: 0.9rem;
+			margin-bottom: 10px;
+		}
+
+		.war-conflicts-title.bad { color: #ff5722; }
+		.war-conflicts-title.good { color: #4caf50; }
+
+		.war-conflict-item {
+			display: inline-block;
+			padding: 4px 10px;
+			margin: 3px;
+			background: rgba(255, 87, 34, 0.2);
+			border-radius: 15px;
+			font-size: 0.8rem;
+			color: #ff5722;
+		}
+
+		.war-conflict-item .battles {
+			font-size: 0.7rem;
+			color: var(--text-muted);
+		}
+
+		/* Light theme */
+		[data-theme="light"] .war-preview-summary {
+			background: linear-gradient(135deg, #ffffff, #f8f5f0);
+		}
+
+		[data-theme="light"] .war-compare-card {
+			background: #ffffff;
+		}
+
+		[data-theme="light"] .war-compare-side {
+			background: rgba(0, 0, 0, 0.03);
+		}
+
+		[data-theme="light"] .war-preview-legend {
+			background: #f0ebe3;
+		}
+
+		[data-theme="light"] .war-preview-stat {
+			background: rgba(0, 0, 0, 0.04);
+		}
+		
+		
 		#tab-search .btn {
 			position: relative;
 			overflow: hidden;
@@ -2974,7 +3608,18 @@
 			<button class="btn btn-success" onclick="findWarFormations()" style="margin-top: 15px;">🎯 ZNAJDŹ OPTYMALNE SKŁADY</button>
 			<div style="display: flex; gap: 10px; margin-top: 8px;">
 				<button class="btn btn-secondary" onclick="clearWarPlanner()" style="flex: 1;">✖ Wyczyść</button>
-				<button class="btn btn-secondary" onclick="loadWarPlanner()" style="flex: 1;" id="load-war-btn">📂 Wczytaj ostatnie</button>
+				<div class="search-history-wrapper" style="flex: 1;">
+					<button class="btn btn-secondary" onclick="toggleWarHistory()" style="width: 100%;">📜 Historia</button>
+					<div class="search-history-dropdown hidden" id="war-history-dropdown">
+						<div class="search-history-header">
+							<span data-i18n="war.history">Historia planera</span>
+							<button class="search-history-clear" onclick="clearWarHistory()" title="Wyczyść historię">🗑️</button>
+						</div>
+						<div class="search-history-list" id="war-history-list">
+							<div class="search-history-empty" data-i18n="search.historyEmpty">Brak historii</div>
+						</div>
+					</div>
+				</div>
 			</div>
 			<div id="war-autosave-info" style="text-align: center; font-size: 0.7rem; color: var(--text-muted); margin-top: 8px;"></div>
         </div>
@@ -3214,6 +3859,7 @@
 		let currentTheme = localStorage.getItem('souls_theme') || 'dark';
 		let isGuildAuthenticated = false;
 		let searchHistory = JSON.parse(localStorage.getItem('souls_search_history') || '[]');
+		let warSearchHistory = JSON.parse(localStorage.getItem('souls_war_history') || '[]');
 		let selectedForCompare = [];
 		let excludedHeroes = JSON.parse(localStorage.getItem('souls_excluded_heroes') || '[]');
 		let hideExcludedResults = localStorage.getItem('souls_hide_excluded') !== 'false'; // domyślnie true
@@ -3310,7 +3956,7 @@
 				'duplicates.warningTitle': 'Znaleziono identyczną formację!', 'duplicates.warningText': 'Ta kombinacja przeciwnika i kontry już istnieje w bazie:',
 				'duplicates.cancel': 'Anuluj', 'duplicates.saveAnyway': 'Zapisz mimo to',
 				'common.close': 'Zamknij', 'common.delete': 'Usuń', 'database.deleted': 'Usunięto',
-				'search.history': 'Ostatnie wyszukiwania', 'search.historyEmpty': 'Brak historii',
+				'search.history': 'Ostatnie wyszukiwania', 'search.historyEmpty': 'Brak historii', 'war.history': 'Historia planera',
 				'compare.title': 'Porównanie składów',
 				'compare.btn': 'Porównaj',
 				'compare.select': 'Zaznacz do porównania',
@@ -3323,6 +3969,32 @@
 				'exclude.hint': '💡 Ctrl+klik na tag = wyklucz',
 				'exclude.hideResults': 'Ukryj formacje z wykluczonymi',
 				'exclude.has': 'Zajęci',
+				'war.combinationSummary': 'Podsumowanie kombinacji',
+				'war.totalMatch': 'Dopasowanie',
+				'war.heroesMatched': 'Trafień',
+				'war.conflicts': 'Konflikty',
+				'war.noConflicts': 'Brak konfliktów',
+				'war.conflictsCount': 'konfliktów',
+				'war.battle': 'Walka',
+				'war.match': 'trafień',
+				'war.searchedEnemy': 'Szukany wróg',
+				'war.databaseEnemy': 'Wróg z bazy',
+				'war.yourTeam': 'TWÓJ SKŁAD',
+				'war.comment': 'Komentarz',
+				'war.noComment': 'Brak komentarza',
+				'war.fullPreview': 'Pełny podgląd',
+				'war.copyTeam': 'Kopiuj skład',
+				'war.conflictsTitle': 'Konflikty bohaterów',
+				'war.battles': 'walki',
+				'war.conflictsHint': 'Ci bohaterowie są użyci w więcej niż jednej walce. Musisz wybrać alternatywne formacje.',
+				'war.noConflictsTitle': 'Brak konfliktów!',
+				'war.noConflictsDesc': 'Żaden bohater nie powtarza się między składami. Ta kombinacja jest gotowa do użycia.',
+				'war.legendMatched': 'Trafione',
+				'war.legendMissing': 'Brakuje',
+				'war.legendExtra': 'Dodatkowe w bazie',
+				'war.legendConflict': 'Konflikt (użyty wielokrotnie)',
+				'war.selectCombo': 'Wybierz kombinację z planera wojny',
+				'war.history': 'Historia planera',
                 'badge.base': 'BAZA', 'badge.user': 'DODANA'
             },
             en: {
@@ -3382,7 +4054,7 @@
 				'duplicates.warningTitle': 'Identical formation found!', 'duplicates.warningText': 'This enemy and counter combination already exists:',
 				'duplicates.cancel': 'Cancel', 'duplicates.saveAnyway': 'Save anyway',
 				'common.close': 'Close', 'common.delete': 'Delete', 'database.deleted': 'Deleted',
-				'search.history': 'Ostatnie wyszukiwania','search.historyEmpty': 'Brak historii',
+				'search.history': 'Ostatnie wyszukiwania','search.historyEmpty': 'Brak historii', 'war.history': 'Planner history',
 				'compare.title': 'Compare formations',
 				'compare.btn': 'Compare',
 				'compare.select': 'Select to compare',
@@ -3395,6 +4067,32 @@
 				'exclude.hint': '💡 Ctrl+click on tag = exclude',
 				'exclude.hideResults': 'Hide formations with excluded',
 				'exclude.has': 'Excluded',
+				'war.combinationSummary': 'Combination summary',
+				'war.totalMatch': 'Match',
+				'war.heroesMatched': 'Hits',
+				'war.conflicts': 'Conflicts',
+				'war.noConflicts': 'No conflicts',
+				'war.conflictsCount': 'conflicts',
+				'war.battle': 'Battle',
+				'war.match': 'match',
+				'war.searchedEnemy': 'Searched enemy',
+				'war.databaseEnemy': 'Database enemy',
+				'war.yourTeam': 'YOUR TEAM',
+				'war.comment': 'Comment',
+				'war.noComment': 'No comment',
+				'war.fullPreview': 'Full preview',
+				'war.copyTeam': 'Copy team',
+				'war.conflictsTitle': 'Hero conflicts',
+				'war.battles': 'battles',
+				'war.conflictsHint': 'These heroes are used in more than one battle. You need to choose alternative formations.',
+				'war.noConflictsTitle': 'No conflicts!',
+				'war.noConflictsDesc': 'No hero is repeated between teams. This combination is ready to use.',
+				'war.legendMatched': 'Matched',
+				'war.legendMissing': 'Missing',
+				'war.legendExtra': 'Extra in database',
+				'war.legendConflict': 'Conflict (used multiple times)',
+				'war.selectCombo': 'Select a combination from war planner',
+				'war.history': 'Planner history',
                 'badge.base': 'BASE', 'badge.user': 'ADDED'
             }
         };
@@ -4201,6 +4899,167 @@
 			searchHistory = [];
 			localStorage.setItem('souls_search_history', JSON.stringify(searchHistory));
 			renderSearchHistory();
+			showToast(currentLang === 'pl' ? 'Historia wyczyszczona' : 'History cleared');
+		}
+		
+		// =====================================================
+		// HISTORIA PLANERA WOJNY
+		// =====================================================
+
+		function toggleWarHistory() {
+			const dropdown = $('war-history-dropdown');
+			dropdown.classList.toggle('hidden');
+			
+			if (!dropdown.classList.contains('hidden')) {
+				renderWarHistory();
+				setTimeout(() => {
+					document.addEventListener('click', closeWarHistoryOnClickOutside);
+				}, 10);
+			} else {
+				document.removeEventListener('click', closeWarHistoryOnClickOutside);
+			}
+		}
+
+		function closeWarHistoryOnClickOutside(e) {
+			const dropdown = $('war-history-dropdown');
+			const wrapper = e.target.closest('.search-history-wrapper');
+			
+			if (!wrapper && !dropdown.classList.contains('hidden')) {
+				dropdown.classList.add('hidden');
+				document.removeEventListener('click', closeWarHistoryOnClickOutside);
+			}
+		}
+
+		function saveWarToHistory() {
+			const enemies = [];
+			let hasAnyData = false;
+			
+			for (let e = 1; e <= 3; e++) {
+				const enemy = { heroes: [], pet: '' };
+				for (let h = 1; h <= 8; h++) {
+					const val = $(`war-e${e}-h${h}`)?.value.trim() || '';
+					enemy.heroes.push(val); // Zachowaj pozycję (nawet puste)
+					if (val) hasAnyData = true;
+				}
+				enemy.pet = $(`war-e${e}-pet`)?.value.trim() || '';
+				if (enemy.pet) hasAnyData = true;
+				enemies.push(enemy);
+			}
+			
+			if (!hasAnyData) return;
+			
+			const entry = {
+				enemies: enemies,
+				timestamp: new Date().toISOString()
+			};
+			
+			// Sprawdź czy takie samo wyszukiwanie już istnieje
+			const existingIndex = warSearchHistory.findIndex(h => {
+				return JSON.stringify(h.enemies) === JSON.stringify(enemies);
+			});
+			
+			if (existingIndex > -1) {
+				warSearchHistory.splice(existingIndex, 1);
+			}
+			
+			warSearchHistory.unshift(entry);
+			
+			// Limit do 15 wpisów
+			if (warSearchHistory.length > 15) {
+				warSearchHistory = warSearchHistory.slice(0, 15);
+			}
+			
+			localStorage.setItem('souls_war_history', JSON.stringify(warSearchHistory));
+		}
+
+		function renderWarHistory() {
+			const list = $('war-history-list');
+			
+			if (!warSearchHistory.length) {
+				list.innerHTML = `<div class="search-history-empty">${t('search.historyEmpty')}</div>`;
+				return;
+			}
+			
+			list.innerHTML = warSearchHistory.map((entry, idx) => {
+				const timeAgo = getTimeAgo(new Date(entry.timestamp));
+				
+				// Generuj podgląd 3 składów
+				const enemiesHtml = entry.enemies.map((enemy, eIdx) => {
+					const heroesText = enemy.heroes.filter(h => h).slice(0, 3).join(', ');
+					const moreCount = enemy.heroes.filter(h => h).length - 3;
+					const petText = enemy.pet ? `+ 🐾${enemy.pet}` : '';
+					
+					if (!heroesText && !enemy.pet) return '';
+					
+					return `
+						<div class="war-history-enemy">
+							<strong>W${eIdx + 1}:</strong>
+							<span class="heroes">${heroesText || '—'}${moreCount > 0 ? ` +${moreCount}` : ''}</span>
+							${petText ? `<span class="pet">${petText}</span>` : ''}
+						</div>
+					`;
+				}).filter(h => h).join('');
+				
+				if (!enemiesHtml) return '';
+				
+				return `
+					<div class="search-history-item" onclick="loadWarFromHistory(${idx})">
+						<button class="search-history-item-remove" onclick="event.stopPropagation(); removeWarHistoryItem(${idx})" title="${t('common.delete')}">✕</button>
+						<div class="war-history-item-enemies">
+							${enemiesHtml}
+						</div>
+						<div class="search-history-item-time">🕐 ${timeAgo}</div>
+					</div>
+				`;
+			}).filter(h => h).join('');
+			
+			if (!list.innerHTML.trim()) {
+				list.innerHTML = `<div class="search-history-empty">${t('search.historyEmpty')}</div>`;
+			}
+		}
+
+		function loadWarFromHistory(idx) {
+			const entry = warSearchHistory[idx];
+			if (!entry) return;
+			
+			// Wypełnij wszystkie pola
+			for (let e = 1; e <= 3; e++) {
+				const enemy = entry.enemies[e - 1];
+				if (!enemy) continue;
+				
+				for (let h = 1; h <= 8; h++) {
+					const el = $(`war-e${e}-h${h}`);
+					if (el) el.value = enemy.heroes[h - 1] || '';
+				}
+				
+				const petEl = $(`war-e${e}-pet`);
+				if (petEl) petEl.value = enemy.pet || '';
+			}
+			
+			// Zamknij dropdown
+			$('war-history-dropdown').classList.add('hidden');
+			document.removeEventListener('click', closeWarHistoryOnClickOutside);
+			
+			// Aktualizuj info
+			updateWarAutosaveInfo();
+			
+			const timeAgo = getTimeAgo(new Date(entry.timestamp));
+			showToast(`📜 ${currentLang === 'pl' ? 'Wczytano z historii' : 'Loaded from history'} (${timeAgo})`);
+		}
+
+		function removeWarHistoryItem(idx) {
+			warSearchHistory.splice(idx, 1);
+			localStorage.setItem('souls_war_history', JSON.stringify(warSearchHistory));
+			renderWarHistory();
+			showToast(t('common.formationDeleted'));
+		}
+
+		function clearWarHistory() {
+			if (!confirm(currentLang === 'pl' ? 'Wyczyścić całą historię planera?' : 'Clear all planner history?')) return;
+			
+			warSearchHistory = [];
+			localStorage.setItem('souls_war_history', JSON.stringify(warSearchHistory));
+			renderWarHistory();
 			showToast(currentLang === 'pl' ? 'Historia wyczyszczona' : 'History cleared');
 		}
 		
@@ -5513,16 +6372,26 @@
         // =====================================================
         // PLANER WOJNY - 3 SKŁADY
         // =====================================================
-        
-        function getWarEnemyTeam(enemyNum) {
-            const heroes = [];
-            for (let i = 1; i <= 8; i++) {
-                const val = $(`war-e${enemyNum}-h${i}`)?.value.trim();
-                if (val) heroes.push(normalize(val));
-            }
-            const pet = $(`war-e${enemyNum}-pet`)?.value.trim();
-            return { heroes, pet: pet ? normalize(pet) : null };
-        }
+		function getWarEnemyTeam(enemyNum) {
+			// Zachowaj pełną tablicę 8 pozycji (z pustymi stringami)
+			const heroesRaw = [];
+			const heroesNorm = [];
+			
+			for (let i = 1; i <= 8; i++) {
+				const val = $(`war-e${enemyNum}-h${i}`)?.value.trim() || '';
+				heroesRaw.push(val); // Oryginalna nazwa z pozycją
+				if (val) heroesNorm.push(normalize(val)); // Do matchowania
+			}
+			
+			const petRaw = $(`war-e${enemyNum}-pet`)?.value.trim() || '';
+			
+			return { 
+				heroes: heroesNorm,      // Do matchowania (bez pustych, lowercase)
+				heroesRaw: heroesRaw,    // Do wyświetlania (z pozycjami, oryginalne nazwy)
+				pet: petRaw ? normalize(petRaw) : null,  // Do matchowania
+				petRaw: petRaw           // Do wyświetlania
+			};
+		}
         
         function findMatchingFormations(enemyTeam, minMatch = 1) {
             const results = [];
@@ -5582,6 +6451,8 @@
         }
         
         function findWarFormations() {
+			// Zapisz do historii
+			saveWarToHistory();
             const enemy1 = getWarEnemyTeam(1);
             const enemy2 = getWarEnemyTeam(2);
             const enemy3 = getWarEnemyTeam(3);
@@ -5789,37 +6660,6 @@
 			}
 		}
 
-		function loadWarPlanner() {
-			const saved = localStorage.getItem('souls_war_planner');
-			if (!saved) {
-				showToast('Brak zapisanych składów', true);
-				return;
-			}
-			
-			try {
-				const data = JSON.parse(saved);
-				
-				for (let e = 1; e <= 3; e++) {
-					const enemy = data.enemies[e - 1];
-					if (!enemy) continue;
-					
-					for (let h = 1; h <= 8; h++) {
-						const el = $(`war-e${e}-h${h}`);
-						if (el) el.value = enemy.heroes[h - 1] || '';
-					}
-					const petEl = $(`war-e${e}-pet`);
-					if (petEl) petEl.value = enemy.pet || '';
-				}
-				
-				const savedDate = new Date(data.savedAt);
-				const timeAgo = getTimeAgo(savedDate);
-				showToast(`✅ Wczytano składy (${timeAgo})`);
-				updateWarAutosaveInfo();
-			} catch (e) {
-				showToast('Błąd wczytywania danych', true);
-			}
-		}
-
 		function updateWarAutosaveInfo() {
 			const info = $('war-autosave-info');
 			if (!info) return;
@@ -5958,7 +6798,7 @@
 		function renderWarPreview() {
 			const combo = window.currentWarCombo;
 			if (!combo) {
-				$('war-preview-content').innerHTML = `<div class="empty-state"><p>Wybierz kombinację z planera wojny</p></div>`;
+				$('war-preview-content').innerHTML = `<div class="empty-state"><p>${t('war.selectCombo')}</p></div>`;
 				return;
 			}
 			
@@ -5978,77 +6818,418 @@
 				if (indices.length > 1) conflictHeroes.add(hero);
 			});
 			
-			let html = `<div class="war-preview-grid">`;
+			// Oblicz statystyki globalne
+			const totalScore = combo.formations.reduce((sum, m) => sum + m.score, 0);
+			const maxPossibleScore = combo.formations.reduce((sum, m) => sum + m.maxScore, 0);
+			const totalPercent = maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : 0;
+			const totalConflicts = combo.conflicts || 0;
 			
+			const percentClass = totalPercent >= 80 ? 'green' : totalPercent >= 50 ? 'orange' : 'red';
+			const conflictBadgeClass = totalConflicts === 0 ? 'perfect' : totalConflicts <= 2 ? 'good' : 'bad';
+			const conflictBadgeText = totalConflicts === 0 
+				? `✓ ${t('war.noConflicts')}` 
+				: `${totalConflicts} ${t('war.conflictsCount')}`;
+			
+			let html = `
+				<!-- Podsumowanie kombinacji -->
+				<div class="war-preview-summary">
+					<div class="war-preview-summary-header">
+						<span class="war-preview-summary-title">📊 ${t('war.combinationSummary')}</span>
+						<div class="war-preview-summary-badges">
+							<span class="war-preview-total-badge ${conflictBadgeClass}">${conflictBadgeText}</span>
+						</div>
+					</div>
+					<div class="war-preview-stats">
+						<div class="war-preview-stat">
+							<span class="war-preview-stat-value ${percentClass}">${totalPercent}%</span>
+							<span class="war-preview-stat-label">${t('war.totalMatch')}</span>
+						</div>
+						<div class="war-preview-stat">
+							<span class="war-preview-stat-value">${totalScore}/${maxPossibleScore}</span>
+							<span class="war-preview-stat-label">${t('war.heroesMatched')}</span>
+						</div>
+						<div class="war-preview-stat">
+							<span class="war-preview-stat-value ${totalConflicts === 0 ? 'green' : 'red'}">${totalConflicts}</span>
+							<span class="war-preview-stat-label">${t('war.conflicts')}</span>
+						</div>
+					</div>
+					<div class="war-preview-per-battle">
+						${combo.formations.map((m, i) => `
+							<span class="war-preview-battle-score">
+								<strong>${t('war.battle')} ${i + 1}:</strong> ${m.score}/${m.maxScore}
+							</span>
+						`).join('')}
+					</div>
+				</div>
+				
+				<!-- Legenda kolorów -->
+				<div class="war-preview-legend">
+					<div class="war-legend-item">
+						<span class="war-legend-dot matched"></span>
+						<span>${t('war.legendMatched')}</span>
+					</div>
+					<div class="war-legend-item">
+						<span class="war-legend-dot missing"></span>
+						<span>${t('war.legendMissing')}</span>
+					</div>
+					<div class="war-legend-item">
+						<span class="war-legend-dot extra"></span>
+						<span>${t('war.legendExtra')}</span>
+					</div>
+					<div class="war-legend-item">
+						<span class="war-legend-dot conflict"></span>
+						<span>${t('war.legendConflict')}</span>
+					</div>
+				</div>
+			`;
+			
+			// Karty porównania dla każdej walki
 			combo.formations.forEach((match, idx) => {
 				const f = match.formation;
-				const searchedEnemy = combo.enemies[idx]; // to co user wpisał
+				const searchedEnemy = combo.enemies[idx];
 				
-				// Porównaj: które z wpisanych przez usera są w bazie
-				const enemyHeroesInDb = f.enemy.filter(h => h).map(normalize);
-				const searchedHeroesNorm = searchedEnemy.heroes;
-				const matchedHeroes = searchedHeroesNorm.filter(sh => 
-					enemyHeroesInDb.some(eh => eh === sh || eh.startsWith(sh) || sh.startsWith(eh))
-				);
-				const missingHeroes = searchedHeroesNorm.filter(sh => !matchedHeroes.includes(sh));
+				// Analiza dopasowania
+				const analysis = analyzeWarMatch(searchedEnemy, f);
+				
+				const scorePercent = match.maxScore > 0 ? Math.round((match.score / match.maxScore) * 100) : 0;
+				const scoreClass = scorePercent >= 80 ? 'high' : scorePercent >= 50 ? 'medium' : 'low';
+				const cardClass = analysis.missing.length === 0 ? 'perfect-match' : 'has-missing';
 				
 				html += `
-				<div class="war-preview-card">
-					<h3>⚔️ Walka ${idx + 1} <span style="font-size:0.7rem;color:var(--text-muted);">#${f.id}</span></h3>
-					
-					<div class="compact-battle-section enemy">
-						<div class="compact-battle-title enemy">👹 WRÓG (z bazy)</div>
-						<div style="text-align:center">
-							<div class="compact-pet ${f.enemyPet ? 'filled' : 'empty'}">🐾 ${f.enemyPet || '—'}</div>
+					<div class="war-compare-card ${cardClass}">
+						<div class="war-compare-header">
+							<div>
+								<span class="war-compare-title">⚔️ ${t('war.battle')} ${idx + 1}</span>
+								<span class="war-compare-id">#${f.id} ${f.isBase ? '👑' : ''}</span>
+							</div>
+							<span class="war-compare-score ${scoreClass}">${scorePercent}% ${t('war.match')}</span>
 						</div>
-						<div class="compact-grid">
-							${renderCompactGridFromArray(f.enemy, matchedHeroes, false, null, true)}
+						
+						<div class="war-compare-body">
+							<!-- Porównanie: Szukany vs Baza -->
+							<div class="war-compare-grid">
+								<div class="war-compare-side">
+									<div class="war-compare-side-title searched">🔍 ${t('war.searchedEnemy')}</div>
+									<div style="text-align:center">
+										${renderWarPetComparison(searchedEnemy.petRaw, f.enemyPet, 'searched')}
+									</div>
+									<div class="compact-grid">
+										${renderWarSearchedGrid(searchedEnemy.heroesRaw, analysis)}
+									</div>
+								</div>
+								
+								<div class="war-compare-vs">➜</div>
+								
+								<div class="war-compare-side">
+									<div class="war-compare-side-title database">📚 ${t('war.databaseEnemy')}</div>
+									<div style="text-align:center">
+										${renderWarPetComparison(f.enemyPet, searchedEnemy.pet, 'database')}
+									</div>
+									<div class="compact-grid">
+										${renderWarDatabaseGrid(f.enemy, analysis)}
+									</div>
+								</div>
+							</div>
+							
+							<!-- Separator - Twój skład -->
+							<div class="war-your-team-separator">
+								<span class="war-your-team-badge">⚔️ ${t('war.yourTeam')}</span>
+							</div>
+
+							<!-- Twój skład z konfliktami - ładniejszy -->
+							<div class="war-your-team-section">
+								${renderWarMyTeamGrid(f.my, conflictHeroes)}
+								<div style="text-align: center;">
+									${renderWarMyTeamPet(f.myPet)}
+								</div>
+							</div>
+							
+							<!-- Podsumowanie dopasowania -->
+							<div class="war-match-summary">
+								<div class="war-match-item matched">
+									<span class="war-match-item-icon">✅</span>
+									<span class="war-match-item-list">${analysis.matched.length ? analysis.matched.join(', ') : '—'}</span>
+								</div>
+								<div class="war-match-item missing">
+									<span class="war-match-item-icon">❌</span>
+									<span class="war-match-item-list">${analysis.missing.length ? analysis.missing.join(', ') : '—'}</span>
+								</div>
+								<div class="war-match-item extra">
+									<span class="war-match-item-icon">➕</span>
+									<span class="war-match-item-list">${analysis.extra.length ? analysis.extra.join(', ') : '—'}</span>
+								</div>
+							</div>
+							
+							<!-- Komentarz -->
+							${f.comment ? `
+								<div class="war-comment-section">
+									<div class="war-comment-label">💬 ${t('war.comment')}</div>
+									<div class="war-comment-text">${f.comment}</div>
+								</div>
+							` : `
+								<div class="war-comment-section">
+									<div class="war-comment-empty">💬 ${t('war.noComment')}</div>
+								</div>
+							`}
+							
+							<!-- Przyciski akcji -->
+							<div class="war-card-actions">
+								<button class="btn btn-small btn-secondary" onclick="showFormation(${f.id})">
+									👁️ ${t('war.fullPreview')}
+								</button>
+								<button class="btn btn-small btn-secondary" onclick="copyFormationTeam(${f.id})">
+									📋 ${t('war.copyTeam')}
+								</button>
+								<button class="btn btn-small ${isFavorite(f.id) ? 'btn-favorite-active' : 'btn-secondary'}" onclick="toggleFavoriteFromWar(${f.id}, this)">
+									${isFavorite(f.id) ? '⭐' : '☆'}
+								</button>
+							</div>
 						</div>
 					</div>
-					
-					<div class="compact-vs">⚔️ VS ⚔️</div>
-					
-					<div class="compact-battle-section player">
-						<div class="compact-battle-title player">⚔️ TWÓJ SKŁAD</div>
-						<div class="compact-grid">
-							${renderCompactGridFromArray(f.my, [], true, conflictHeroes, false)}
-						</div>
-						<div style="text-align:center">
-							<div class="compact-pet ${f.myPet ? 'filled' : 'empty'}">🐾 ${f.myPet || '—'}</div>
-						</div>
-					</div>
-					
-					<div class="match-info">
-						<div><span class="label">🔍 Szukano:</span> ${searchedHeroesNorm.map(h => h.charAt(0).toUpperCase() + h.slice(1)).join(', ') || '—'}</div>
-						<div><span class="label">✅ Trafione:</span> <span class="matched">${matchedHeroes.length ? matchedHeroes.map(h => h.charAt(0).toUpperCase() + h.slice(1)).join(', ') : '—'}</span></div>
-						<div><span class="label">❌ Nie znaleziono:</span> <span class="missing">${missingHeroes.length ? missingHeroes.map(h => h.charAt(0).toUpperCase() + h.slice(1)).join(', ') : '—'}</span></div>
-						<div style="margin-top:5px;"><span class="label">💬</span> ${f.comment || 'Brak komentarza'}</div>
-					</div>
-				</div>`;
+				`;
 			});
 			
-			html += `</div>`;
-			
-			// Podsumowanie konfliktów
+			// Podsumowanie konfliktów na dole
 			if (conflictHeroes.size > 0) {
 				const conflictList = [];
 				Object.entries(allMyHeroes).forEach(([hero, indices]) => {
 					if (indices.length > 1) {
-						conflictList.push(`<strong style="color:#ff5722;">${hero.charAt(0).toUpperCase() + hero.slice(1)}</strong> (walki ${indices.map(i => i + 1).join(', ')})`);
+						conflictList.push({
+							hero: hero.charAt(0).toUpperCase() + hero.slice(1),
+							battles: indices.map(i => i + 1)
+						});
 					}
 				});
-				html += `<div class="section" style="margin-top:15px;border-color:#ff5722;">
-					<h3 style="color:#ff5722;font-size:0.9rem;">⚠️ Konflikty bohaterów</h3>
-					<p style="font-size:0.8rem;color:var(--text-muted);margin-top:10px;">${conflictList.join('<br>')}</p>
-				</div>`;
+				
+				html += `
+					<div class="war-conflicts-box has-conflicts">
+						<h3 class="war-conflicts-title bad">⚠️ ${t('war.conflictsTitle')}</h3>
+						<div>
+							${conflictList.map(c => `
+								<span class="war-conflict-item">
+									${c.hero} <span class="battles">(${t('war.battles')} ${c.battles.join(', ')})</span>
+								</span>
+							`).join('')}
+						</div>
+						<p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px;">
+							${t('war.conflictsHint')}
+						</p>
+					</div>
+				`;
 			} else {
-				html += `<div class="section" style="margin-top:15px;border-color:var(--accent-green);">
-					<h3 style="color:var(--accent-green);font-size:0.9rem;">✅ Brak konfliktów!</h3>
-					<p style="font-size:0.8rem;color:var(--text-muted);margin-top:10px;">Żaden bohater nie powtarza się między składami.</p>
-				</div>`;
+				html += `
+					<div class="war-conflicts-box no-conflicts">
+						<h3 class="war-conflicts-title good">✅ ${t('war.noConflictsTitle')}</h3>
+						<p style="font-size: 0.8rem; color: var(--text-muted);">
+							${t('war.noConflictsDesc')}
+						</p>
+					</div>
+				`;
 			}
 			
 			$('war-preview-content').innerHTML = html;
+		}
+
+		// Analiza dopasowania między szukanym a bazą
+		function analyzeWarMatch(searched, formation) {
+			const searchedHeroes = searched.heroesRaw.filter(h => h); // Oryginalne nazwy
+			const searchedHeroesNorm = searchedHeroes.map(normalize);
+			const dbHeroes = formation.enemy.filter(h => h);
+			const dbHeroesNorm = dbHeroes.map(normalize);
+			
+			const matched = [];
+			const missing = [];
+			const extra = [];
+			
+			// Znajdź trafione i brakujące
+			searchedHeroes.forEach(sh => {
+				const normSh = normalize(sh);
+				const found = dbHeroesNorm.some(dh => dh === normSh || dh.startsWith(normSh) || normSh.startsWith(dh));
+				if (found) {
+					matched.push(sh); // Oryginalna nazwa
+				} else {
+					missing.push(sh);
+				}
+			});
+			
+			// Znajdź dodatkowe w bazie
+			dbHeroes.forEach(dh => {
+				const normDh = normalize(dh);
+				const found = searchedHeroesNorm.some(sh => normDh === sh || normDh.startsWith(sh) || sh.startsWith(normDh));
+				if (!found) {
+					extra.push(dh); // Oryginalna nazwa z bazy
+				}
+			});
+			
+			// Pet
+			const searchedPet = searched.petRaw || '';
+			const dbPet = formation.enemyPet || '';
+			const petMatched = searchedPet && dbPet && 
+				(normalize(searchedPet) === normalize(dbPet) || 
+				 normalize(searchedPet).startsWith(normalize(dbPet)) || 
+				 normalize(dbPet).startsWith(normalize(searchedPet)));
+			
+			return {
+				matched,
+				missing,
+				extra,
+				searchedHeroesNorm,
+				dbHeroesNorm,
+				petMatched,
+				searchedPet,
+				dbPet
+			};
+		}
+
+		// Renderuj siatkę szukanego wroga - z zachowaniem pozycji
+		function renderWarSearchedGrid(heroesRaw, analysis) {
+			const slot = (idx) => {
+				const name = heroesRaw[idx] || '';
+				if (!name) return `<div class="compact-slot empty">—</div>`;
+				
+				const isMatched = analysis.matched.some(m => normalize(m) === normalize(name));
+				const isMissing = analysis.missing.some(m => normalize(m) === normalize(name));
+				
+				const hero = heroes.find(h => h.name.toLowerCase() === name.toLowerCase());
+				const race = hero?.race?.toLowerCase() || '';
+				
+				let classes = 'compact-slot filled';
+				if (race) classes += ` race-${race}`;
+				if (isMatched) classes += ' war-matched';
+				if (isMissing) classes += ' war-missing';
+				
+				// Kapitalizuj nazwę (pierwsza duża)
+				const displayName = hero ? hero.name : (name.charAt(0).toUpperCase() + name.slice(1).toLowerCase());
+				
+				return `<div class="${classes}">${displayName}</div>`;
+			};
+			
+			return `
+				<div class="compact-row">${slot(5)}${slot(6)}${slot(7)}</div>
+				<div class="compact-row">${slot(3)}${slot(4)}</div>
+				<div class="compact-row">${slot(0)}${slot(1)}${slot(2)}</div>
+			`;
+		}
+
+		// Renderuj siatkę wroga z bazy
+		function renderWarDatabaseGrid(heroesArr, analysis) {
+			const slot = (idx) => {
+				const name = heroesArr[idx] || '';
+				if (!name) return `<div class="compact-slot empty">—</div>`;
+				
+				const normName = normalize(name);
+				const isMatched = analysis.searchedHeroesNorm.some(sh => normName === sh || normName.startsWith(sh) || sh.startsWith(normName));
+				const isExtra = analysis.extra.some(e => normalize(e) === normName);
+				
+				const hero = heroes.find(h => h.name.toLowerCase() === name.toLowerCase());
+				const race = hero?.race?.toLowerCase() || '';
+				
+				let classes = 'compact-slot filled';
+				if (race) classes += ` race-${race}`;
+				if (isMatched) classes += ' war-matched';
+				if (isExtra) classes += ' war-extra';
+				
+				return `<div class="${classes}">${name}</div>`;
+			};
+			
+			return `
+				<div class="compact-row">${slot(5)}${slot(6)}${slot(7)}</div>
+				<div class="compact-row">${slot(3)}${slot(4)}</div>
+				<div class="compact-row">${slot(0)}${slot(1)}${slot(2)}</div>
+			`;
+		}
+
+		// Renderuj siatkę "Twój skład" - większa i z kolorami ras
+		function renderWarMyTeamGrid(heroesArr, conflictSet) {
+			const slot = (idx) => {
+				const name = heroesArr[idx] || '';
+				if (!name) return `<div class="war-your-team-slot empty">—</div>`;
+				
+				const normName = normalize(name);
+				const isConflict = conflictSet.has(normName);
+				
+				const hero = heroes.find(h => h.name.toLowerCase() === name.toLowerCase());
+				const race = hero?.race?.toLowerCase() || '';
+				
+				let classes = 'war-your-team-slot filled';
+				if (race) classes += ` race-${race}`;
+				if (isConflict) classes += ' conflict';
+				
+				return `<div class="${classes}">${name}</div>`;
+			};
+			
+			return `
+				<div class="war-your-team-grid">
+					<div class="war-your-team-row">${slot(0)}${slot(1)}${slot(2)}</div>
+					<div class="war-your-team-row">${slot(3)}${slot(4)}</div>
+					<div class="war-your-team-row">${slot(5)}${slot(6)}${slot(7)}</div>
+				</div>
+			`;
+		}
+
+		// Renderuj pet dla "Twój skład"
+		function renderWarMyTeamPet(petName) {
+			if (!petName) {
+				return `<div class="war-your-team-pet empty">🐾 —</div>`;
+			}
+			return `<div class="war-your-team-pet">🐾 ${petName}</div>`;
+		}
+
+		// Renderuj porównanie petów - z oryginalnymi nazwami
+		function renderWarPetComparison(petName, otherPet, side) {
+			if (!petName) {
+				return `<div class="compact-pet empty">🐾 —</div>`;
+			}
+			
+			const normPet = normalize(petName);
+			const normOther = normalize(otherPet || '');
+			
+			// Znajdź prawidłową nazwę peta
+			const petData = pets.find(p => p.toLowerCase() === normPet);
+			const displayName = petData || (petName.charAt(0).toUpperCase() + petName.slice(1).toLowerCase());
+			
+			let petClass = 'filled';
+			if (side === 'searched') {
+				if (normOther && (normPet === normOther || normPet.startsWith(normOther) || normOther.startsWith(normPet))) {
+					petClass += ' war-matched';
+				} else if (normPet && !normOther) {
+					petClass += ' war-missing';
+				}
+			} else {
+				if (normOther && (normPet === normOther || normPet.startsWith(normOther) || normOther.startsWith(normPet))) {
+					petClass += ' war-matched';
+				} else if (normPet && !normOther) {
+					petClass += ' war-extra';
+				}
+			}
+			
+			return `<div class="compact-pet ${petClass}">🐾 ${displayName}</div>`;
+		}
+
+		// Kopiuj skład do schowka
+		function copyFormationTeam(id) {
+			const formation = allFormations.find(f => f.id === id);
+			if (!formation) return;
+			
+			const myHeroes = formation.my.filter(h => h).join(', ');
+			const pet = formation.myPet ? ` + ${formation.myPet}` : '';
+			const text = `${myHeroes}${pet}`;
+			
+			navigator.clipboard.writeText(text).then(() => {
+				showToast(currentLang === 'pl' ? '📋 Skład skopiowany!' : '📋 Team copied!');
+			}).catch(() => {
+				showToast(currentLang === 'pl' ? '❌ Błąd kopiowania' : '❌ Copy failed', true);
+			});
+		}
+
+		// Toggle ulubione z podglądu wojny
+		function toggleFavoriteFromWar(id, btn) {
+			toggleFavorite(id, event);
+			if (btn) {
+				const isFav = isFavorite(id);
+				btn.innerHTML = isFav ? '⭐' : '☆';
+				btn.className = `btn btn-small ${isFav ? 'btn-favorite-active' : 'btn-secondary'}`;
+			}
 		}
         
 		function setupAutocomplete() {
