@@ -3760,12 +3760,6 @@
 				</div>
 			</div>
 			<button class="btn btn-secondary" onclick="clearSearch()" style="margin-top: 8px;">✖ <span data-i18n="search.clear">Wyczyść</span></button>
-			<div class="search-options">
-				<label class="search-option-label">
-					<input type="checkbox" id="search-in-comments">
-					<span>💬 <span data-i18n="search.searchInComments">Szukaj też w komentarzach</span></span>
-				</label>
-			</div>
 			<button class="btn btn-compare" id="compare-btn" onclick="openCompareModal()" style="margin-top: 8px; display: none;">
 				📊 <span data-i18n="compare.btn">Porównaj</span>
 				<span class="compare-count-badge" id="compare-count">0</span>
@@ -4956,39 +4950,26 @@
             });
         }
         
-        function searchFormations() {
+		function searchFormations() {
 			saveSearchToHistory();
 			
-            const searchHeroes = getFieldValues('search-pos', 8).filter(v => v).map(normalize);
-            const searchPet = normalize($('search-pet').value);
-            const searchInComments = $('search-in-comments')?.checked || false;
-            
-            if (!searchHeroes.length && !searchPet) { showToast(t('search.enterAtLeastOne'), true); return; }
-            
-            const results = allFormations.map(f => {
-                const enemyHeroes = f.enemy.filter(h => h).map(normalize);
-                const enemyPet = normalize(f.enemyPet);
-                const matchedHeroes = searchHeroes.filter(sh => enemyHeroes.some(eh => eh === sh || eh.startsWith(sh)));
-                const petMatched = searchPet && (enemyPet === searchPet || enemyPet.startsWith(searchPet));
-                let score = matchedHeroes.length + (petMatched ? 1 : 0);
-                
-                // Dodatkowe wyszukiwanie w komentarzach
-                let commentMatched = false;
-                if (searchInComments && f.comment) {
-                    const commentLower = f.comment.toLowerCase();
-                    const anySearchTermInComment = searchHeroes.some(sh => commentLower.includes(sh)) || 
-                        (searchPet && commentLower.includes(searchPet));
-                    if (anySearchTermInComment) {
-                        commentMatched = true;
-                        score = Math.max(score, 0.5); // Daj wynik 0.5 jeśli tylko komentarz
-                    }
-                }
-                
-                return score > 0 ? { formation: f, matchedHeroes, petMatched, commentMatched, score, maxScore: searchHeroes.length + (searchPet ? 1 : 0) } : null;
-            }).filter(Boolean).sort((a, b) => b.score - a.score);
-            
-            displayResults(results, searchHeroes);
-        }
+			const searchHeroes = getFieldValues('search-pos', 8).filter(v => v).map(normalize);
+			const searchPet = normalize($('search-pet').value);
+			
+			if (!searchHeroes.length && !searchPet) { showToast(t('search.enterAtLeastOne'), true); return; }
+			
+			const results = allFormations.map(f => {
+				const enemyHeroes = f.enemy.filter(h => h).map(normalize);
+				const enemyPet = normalize(f.enemyPet);
+				const matchedHeroes = searchHeroes.filter(sh => enemyHeroes.some(eh => eh === sh || eh.startsWith(sh)));
+				const petMatched = searchPet && (enemyPet === searchPet || enemyPet.startsWith(searchPet));
+				const score = matchedHeroes.length + (petMatched ? 1 : 0);
+				
+				return score > 0 ? { formation: f, matchedHeroes, petMatched, score, maxScore: searchHeroes.length + (searchPet ? 1 : 0) } : null;
+			}).filter(Boolean).sort((a, b) => b.score - a.score);
+			
+			displayResults(results, searchHeroes);
+		}
         
 		// =====================================================
 		// WYKLUCZANIE BOHATERÓW
@@ -5210,9 +5191,6 @@
 						</div>
 					</div>`;
 			}).join('');
-			
-			// Ustaw kontekst nawigacji dla wyników wyszukiwania
-			setNavContext(displayedResults.map(r => r.formation.id));
 			
 			$('results-section').innerHTML = html;
 			updateCompareButton();
@@ -6098,9 +6076,6 @@
 				headerInfo = `<div style="text-align:center;font-size:0.75rem;color:#f44336;margin-bottom:10px;">🚫 ${hiddenCount} ${currentLang === 'pl' ? 'ukrytych (wykluczone)' : 'hidden (excluded)'}</div>`;
 			}
 			
-			// Ustaw kontekst nawigacji dla bazy danych
-			setNavContext(formations.map(f => f.id));
-			
 			$('database-list').innerHTML = headerInfo + (formations.length ? formations.map(f => {
 				const exclusionCheck = isFormationExcluded(f);
 				const hasExcluded = !hideExcludedResults && exclusionCheck.excluded;
@@ -6171,10 +6146,11 @@
 			// Dodaj do ostatnio przeglądanych
 			addToRecentlyViewed(id, f.name);
 			
-			// Aktualizuj indeks nawigacji jeśli ID jest w liście
+			// NAWIGACJA: ZAWSZE cała baza posortowana po ID
+			navFormationIds = allFormations.map(x => x.id).sort((a, b) => a - b);
 			navCurrentIndex = navFormationIds.indexOf(id);
 			
-			// Aktualizuj przyciski nawigacji (bez przebudowywania HTML)
+			// Aktualizuj przyciski nawigacji
 			updateFormationNav(id);
 			
 			const isFav = isFavorite(id);
@@ -6360,25 +6336,22 @@
 		}
 		
 		function updateFormationNav(currentId) {
-			const idx = navFormationIds.indexOf(currentId);
 			const total = navFormationIds.length;
+			const idx = navFormationIds.indexOf(currentId);
 			
 			const prevBtn = $('nav-prev-btn');
 			const nextBtn = $('nav-next-btn');
 			const counter = $('nav-counter');
 			
 			if (prevBtn) {
-				prevBtn.disabled = idx <= 0 || total === 0;
+				prevBtn.disabled = idx <= 0;
 			}
 			if (nextBtn) {
-				nextBtn.disabled = idx >= total - 1 || total === 0;
+				nextBtn.disabled = idx >= total - 1;
 			}
 			if (counter) {
-				if (total > 1 && idx >= 0) {
+				if (total > 0 && idx >= 0) {
 					counter.innerHTML = `<strong>${idx + 1}</strong> / ${total}`;
-				} else if (total > 0) {
-					// ID nie jest w liście nawigacji, ale lista istnieje
-					counter.innerHTML = `<span style="font-size: 0.7rem;">poza listą (${total})</span>`;
 				} else {
 					counter.innerHTML = '';
 				}
@@ -8261,3 +8234,5 @@
     </script>
 </body>
 </html>
+
+
