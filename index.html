@@ -1908,9 +1908,66 @@
         .form-row { display: flex; gap: 6px; margin-bottom: 6px; }
         .form-row .autocomplete-wrapper { flex: 1; margin-bottom: 0; }
 
-        @media (min-width: 768px) {
+		@media (min-width: 768px) {
             .add-formations-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
             .add-form-section { margin-bottom: 0; }
+        }
+
+        /* Przycisk zamiany kolejności sekcji */
+        .section-swap-container {
+            display: flex;
+            justify-content: center;
+            margin: 8px 0;
+            order: 1;
+        }
+
+        .btn-swap-sections {
+            background: var(--bg-input);
+            border: 1px dashed var(--border);
+            color: var(--text-muted);
+            padding: 5px 14px;
+            font-size: 0.7rem;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            opacity: 0.7;
+        }
+
+        .btn-swap-sections:hover {
+            opacity: 1;
+            background: var(--accent-gold);
+            color: var(--bg-dark);
+            border-style: solid;
+        }
+
+        /* Kontener sekcji z obsługą zamiany kolejności */
+        .add-formations-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .add-formations-grid #section-enemy { order: 0; }
+        .add-formations-grid #section-my { order: 2; }
+
+        .add-formations-grid.reversed #section-enemy { order: 2; }
+        .add-formations-grid.reversed #section-my { order: 0; }
+
+        @media (min-width: 768px) {
+            .add-formations-grid { 
+                display: grid; 
+                grid-template-columns: 1fr 1fr; 
+                gap: 20px; 
+            }
+            .add-formations-grid #section-enemy { order: 0; }
+            .add-formations-grid #section-my { order: 1; }
+            .add-formations-grid.reversed #section-enemy { order: 1; }
+            .add-formations-grid.reversed #section-my { order: 0; }
+            .section-swap-container {
+                grid-column: 1 / -1;
+                order: 2;
+                margin-top: 5px;
+            }
         }
 
         #tab-add input[type="text"] { padding: 8px 10px; font-size: 0.85rem; }
@@ -3870,8 +3927,8 @@
                 <input type="text" id="add-name" data-i18n-placeholder="add.namePlaceholder" placeholder="np. Nick 01-01-2026 W1 / Kontra Dark-Undead v1">
             </div>
             
-			<div class="add-formations-grid">    
-				<div class="add-form-section">
+			<div class="add-formations-grid" id="add-form-sections">    
+				<div class="add-form-section" id="section-enemy">
 					<h3>👹 <span data-i18n="add.enemyTeam">Skład przeciwnika</span></h3>
 					<div class="form-row">
 						<div class="autocomplete-wrapper"><label>Poz 1 <span class="quick-pick" onclick="openQuickSelect('add-enemy1', 'Przeciwnik Poz 1')">🏷️</span></label><input type="text" id="add-enemy1" data-type="hero"><div class="autocomplete-list" id="list-add-enemy1"></div></div>
@@ -3894,7 +3951,14 @@
 					</div>
 				</div>
 				
-				<div class="add-form-section">
+				<!-- Przycisk zamiany kolejności -->
+				<div class="section-swap-container">
+					<button type="button" class="btn btn-swap-sections" onclick="swapAddFormSections()" title="Zamień kolejność sekcji">
+						🔄 <span data-i18n="add.swapSections">Zamień kolejność</span>
+					</button>
+				</div>
+				
+				<div class="add-form-section" id="section-my">
 					<h3>⚔️ <span data-i18n="add.yourTeam">Twoja kontra</span></h3>
 					<div class="form-row">
 						<div class="autocomplete-wrapper"><label>Poz 1 <span class="quick-pick" onclick="openQuickSelect('add-my1', 'Twój Poz 1')">🏷️</span></label><input type="text" id="add-my1" data-type="hero"><div class="autocomplete-list" id="list-add-my1"></div></div>
@@ -4253,7 +4317,6 @@
         // =====================================================
         // KONFIGURACJA I ZMIENNE GLOBALNE
         // =====================================================
-        
         const firebaseConfig = {
             apiKey: "AIzaSyAZSC5B3HfX1AxOKFR06ixlFh0cgdwKY7M",
             authDomain: "souls-online-war.firebaseapp.com",
@@ -4341,7 +4404,7 @@
                 'preview.recentlyViewed': 'Ostatnio przeglądane', 'preview.noRecent': 'Brak historii',
                 'search.searchInComments': 'Szukaj też w komentarzach',
                 'add.title': 'Dodaj nową formację', 'add.nameLabel': 'Nazwa formacji', 'add.namePlaceholder': 'np. Nick 01-01-2026 W1 / Kontra Dark-Undead v1',
-                'add.yourTeam': 'Twój skład', 'add.enemyTeam': 'Skład przeciwnika', 'add.commentLabel': 'Komentarz (opcjonalnie)',
+                'add.yourTeam': 'Twój skład', 'add.enemyTeam': 'Skład przeciwnika', 'add.swapSections': 'Zamień kolejność','add.commentLabel': 'Komentarz (opcjonalnie)',
                 'add.commentPlaceholder': 'np. Unikać Death, Silbren u przeciwnika, kolejność speed: xxx > yyy > zzz, Pao runa PR, itp.', 'add.saveBtn': 'ZAPISZ FORMACJĘ',
                 'add.enterName': 'Podaj nazwę formacji!', 'add.addAtLeastOne': 'Dodaj przynajmniej jedną postać!',
                 'add.unknownHeroes': 'Nieznani bohaterowie', 'add.unknownPets': 'Nieznane pety', 'add.saved': 'Zapisano formację',
@@ -4441,7 +4504,7 @@
                 'preview.recentlyViewed': 'Recently viewed', 'preview.noRecent': 'No history',
                 'search.searchInComments': 'Also search in comments',
                 'add.title': 'Add new formation', 'add.nameLabel': 'Formation name', 'add.namePlaceholder': 'e.g. Nick 01-01-2026 W1 / Counter Dark-Undead v1',
-                'add.yourTeam': 'Your team', 'add.enemyTeam': 'Enemy team', 'add.commentLabel': 'Comment (optional)',
+                'add.yourTeam': 'Your team', 'add.enemyTeam': 'Enemy team', 'add.swapSections': 'Swap order', 'add.commentLabel': 'Comment (optional)',
                 'add.commentPlaceholder': 'e.g. Avoid Death, Silbren on enemy, speed order: xxx > yyy > zzz, Pao rune PR, etc.', 'add.saveBtn': 'SAVE FORMATION',
                 'add.enterName': 'Enter formation name!', 'add.addAtLeastOne': 'Add at least one hero!',
                 'add.unknownHeroes': 'Unknown heroes', 'add.unknownPets': 'Unknown pets', 'add.saved': 'Formation saved',
@@ -4679,6 +4742,37 @@
             }
             
             setValidation(input, isValid);
+        }
+		
+		// =====================================================
+        // ZAMIANA KOLEJNOŚCI SEKCJI W FORMULARZU DODAWANIA
+        // =====================================================
+        
+        // Załaduj preferencję przy starcie
+        function loadSectionOrderPreference() {
+            const reversed = localStorage.getItem('addFormSectionsReversed') === 'true';
+            const container = $('add-form-sections');
+            if (container && reversed) {
+                container.classList.add('reversed');
+            }
+        }
+
+        // Zamień kolejność sekcji
+        function swapAddFormSections() {
+            const container = $('add-form-sections');
+            if (!container) return;
+            
+            container.classList.toggle('reversed');
+            
+            // Zapisz preferencję
+            const isReversed = container.classList.contains('reversed');
+            localStorage.setItem('addFormSectionsReversed', isReversed);
+            
+            // Pokaż informację
+            const msg = isReversed 
+                ? (currentLang === 'en' ? 'Order: Your team first' : 'Kolejność: Najpierw twój skład')
+                : (currentLang === 'en' ? 'Order: Enemy first' : 'Kolejność: Najpierw przeciwnik');
+            showToast(msg);
         }
         
         // FIREBASE
@@ -8278,7 +8372,9 @@
 			if (!hasAccess) return;
 			
 			initTheme();
+			loadSectionOrderPreference();
 			setupAutocomplete();
+			
             if (localStorage.getItem('souls_admin') === ADMIN_PASSWORD_HASH) enableAdminMode();
             applyTranslations();
             
