@@ -4969,56 +4969,98 @@
 		}
         
 		// =====================================================
-		// AUTO-PRZESKAKIWANIE I SKRÓTY KLAWISZOWE
+		// AUTO-PRZESKAKIWANIE I SKRÓTY KLAWISZOWE - UNIWERSALNE
 		// =====================================================
 
-		// Kolejność pól w formularzu dodawania
-		const ADD_FORM_FIELDS = {
-			enemy: ['add-enemy1', 'add-enemy2', 'add-enemy3', 'add-enemy4', 'add-enemy5', 'add-enemy6', 'add-enemy7', 'add-enemy8', 'add-enemyPet'],
-			my: ['add-my1', 'add-my2', 'add-my3', 'add-my4', 'add-my5', 'add-my6', 'add-my7', 'add-my8', 'add-myPet']
+		// Konfiguracja pól dla każdej sekcji
+		const FORM_FIELD_CONFIG = {
+			// Wyszukiwarka
+			search: {
+				fields: ['search-pos1', 'search-pos2', 'search-pos3', 'search-pos4', 'search-pos5', 'search-pos6', 'search-pos7', 'search-pos8', 'search-pet'],
+				tabId: 'tab-search'
+			},
+			// Dodawanie - przeciwnik
+			'add-enemy': {
+				fields: ['add-enemy1', 'add-enemy2', 'add-enemy3', 'add-enemy4', 'add-enemy5', 'add-enemy6', 'add-enemy7', 'add-enemy8', 'add-enemyPet'],
+				nextSection: 'add-my',
+				tabId: 'tab-add'
+			},
+			// Dodawanie - twój skład
+			'add-my': {
+				fields: ['add-my1', 'add-my2', 'add-my3', 'add-my4', 'add-my5', 'add-my6', 'add-my7', 'add-my8', 'add-myPet'],
+				tabId: 'tab-add'
+			},
+			// Edycja - przeciwnik
+			'edit-enemy': {
+				fields: ['edit-enemy1', 'edit-enemy2', 'edit-enemy3', 'edit-enemy4', 'edit-enemy5', 'edit-enemy6', 'edit-enemy7', 'edit-enemy8', 'edit-enemyPet'],
+				nextSection: 'edit-my',
+				tabId: 'edit-modal'
+			},
+			// Edycja - twój skład
+			'edit-my': {
+				fields: ['edit-my1', 'edit-my2', 'edit-my3', 'edit-my4', 'edit-my5', 'edit-my6', 'edit-my7', 'edit-my8', 'edit-myPet'],
+				tabId: 'edit-modal'
+			},
+			// Planer wojny - wróg 1
+			'war-e1': {
+				fields: ['war-e1-h1', 'war-e1-h2', 'war-e1-h3', 'war-e1-h4', 'war-e1-h5', 'war-e1-h6', 'war-e1-h7', 'war-e1-h8', 'war-e1-pet'],
+				nextSection: 'war-e2',
+				tabId: 'tab-war'
+			},
+			// Planer wojny - wróg 2
+			'war-e2': {
+				fields: ['war-e2-h1', 'war-e2-h2', 'war-e2-h3', 'war-e2-h4', 'war-e2-h5', 'war-e2-h6', 'war-e2-h7', 'war-e2-h8', 'war-e2-pet'],
+				nextSection: 'war-e3',
+				tabId: 'tab-war'
+			},
+			// Planer wojny - wróg 3
+			'war-e3': {
+				fields: ['war-e3-h1', 'war-e3-h2', 'war-e3-h3', 'war-e3-h4', 'war-e3-h5', 'war-e3-h6', 'war-e3-h7', 'war-e3-h8', 'war-e3-pet'],
+				tabId: 'tab-war'
+			}
 		};
 
-		// Znajdź następne puste pole w sekcji
+		// Określ sekcję na podstawie ID pola
+		function getFieldSection(fieldId) {
+			if (fieldId.startsWith('search-')) return 'search';
+			if (fieldId.startsWith('add-enemy')) return 'add-enemy';
+			if (fieldId.startsWith('add-my')) return 'add-my';
+			if (fieldId.startsWith('edit-enemy')) return 'edit-enemy';
+			if (fieldId.startsWith('edit-my')) return 'edit-my';
+			if (fieldId.startsWith('war-e1')) return 'war-e1';
+			if (fieldId.startsWith('war-e2')) return 'war-e2';
+			if (fieldId.startsWith('war-e3')) return 'war-e3';
+			return null;
+		}
+
+		// Znajdź następne puste pole
 		function getNextEmptyField(currentFieldId) {
-			// Określ w której sekcji jesteśmy
-			const isEnemy = currentFieldId.includes('enemy');
-			const isMy = currentFieldId.includes('my') && !currentFieldId.includes('enemy');
+			const sectionKey = getFieldSection(currentFieldId);
+			if (!sectionKey) return null;
 			
-			let fields;
-			if (isEnemy) {
-				fields = ADD_FORM_FIELDS.enemy;
-			} else if (isMy) {
-				fields = ADD_FORM_FIELDS.my;
-			} else {
-				return null;
-			}
+			const config = FORM_FIELD_CONFIG[sectionKey];
+			if (!config) return null;
 			
-			const currentIndex = fields.indexOf(currentFieldId);
+			const currentIndex = config.fields.indexOf(currentFieldId);
 			if (currentIndex === -1) return null;
 			
-			// Szukaj następnego pustego pola (od aktualnej pozycji)
-			for (let i = currentIndex + 1; i < fields.length; i++) {
-				const field = $(fields[i]);
+			// Szukaj następnego pustego w tej sekcji
+			for (let i = currentIndex + 1; i < config.fields.length; i++) {
+				const field = $(config.fields[i]);
 				if (field && !field.value.trim()) {
-					return fields[i];
+					return config.fields[i];
 				}
 			}
 			
-			// Jeśli nie ma pustego po aktualnym, szukaj od początku
-			for (let i = 0; i < currentIndex; i++) {
-				const field = $(fields[i]);
-				if (field && !field.value.trim()) {
-					return fields[i];
-				}
-			}
-			
-			// Wszystkie wypełnione - przejdź do następnej sekcji lub zostań
-			if (isEnemy && ADD_FORM_FIELDS.my.length > 0) {
-				// Przejdź do pierwszego pustego w "Twój skład"
-				for (const fieldId of ADD_FORM_FIELDS.my) {
-					const field = $(fieldId);
-					if (field && !field.value.trim()) {
-						return fieldId;
+			// Jeśli jest następna sekcja, szukaj tam
+			if (config.nextSection) {
+				const nextConfig = FORM_FIELD_CONFIG[config.nextSection];
+				if (nextConfig) {
+					for (const fieldId of nextConfig.fields) {
+						const field = $(fieldId);
+						if (field && !field.value.trim()) {
+							return fieldId;
+						}
 					}
 				}
 			}
@@ -5026,29 +5068,47 @@
 			return null;
 		}
 
-		// Skocz do pola w aktywnej sekcji (Ctrl+1-8)
-		function jumpToFieldInSection(num) {
+		// Skocz do konkretnej pozycji (1-8 lub 9 dla peta)
+		function jumpToPosition(num) {
 			const activeEl = document.activeElement;
 			if (!activeEl || !activeEl.id) return;
 			
-			const isEnemy = activeEl.id.includes('enemy');
-			const isMy = activeEl.id.includes('add-my');
+			const sectionKey = getFieldSection(activeEl.id);
+			if (!sectionKey) return;
 			
-			let targetId;
-			if (isEnemy) {
-				targetId = num === 9 ? 'add-enemyPet' : `add-enemy${num}`;
-			} else if (isMy) {
-				targetId = num === 9 ? 'add-myPet' : `add-my${num}`;
-			} else {
-				// Domyślnie - sekcja przeciwnika
-				targetId = num === 9 ? 'add-enemyPet' : `add-enemy${num}`;
+			const config = FORM_FIELD_CONFIG[sectionKey];
+			if (!config) return;
+			
+			// num 1-8 = pozycje, num 9 = pet
+			const targetIndex = num === 9 ? 8 : num - 1;
+			
+			if (targetIndex >= 0 && targetIndex < config.fields.length) {
+				const target = $(config.fields[targetIndex]);
+				if (target) {
+					target.focus();
+					target.select();
+				}
+			}
+		}
+
+		// Pobierz wszystkie pola dla danej zakładki (do Tab navigation)
+		function getAllFieldsForTab(tabId) {
+			const fields = [];
+			
+			if (tabId === 'tab-search') {
+				fields.push(...FORM_FIELD_CONFIG.search.fields);
+			} else if (tabId === 'tab-add') {
+				fields.push('add-name');
+				fields.push(...FORM_FIELD_CONFIG['add-enemy'].fields);
+				fields.push(...FORM_FIELD_CONFIG['add-my'].fields);
+				fields.push('add-comment');
+			} else if (tabId === 'tab-war') {
+				fields.push(...FORM_FIELD_CONFIG['war-e1'].fields);
+				fields.push(...FORM_FIELD_CONFIG['war-e2'].fields);
+				fields.push(...FORM_FIELD_CONFIG['war-e3'].fields);
 			}
 			
-			const target = $(targetId);
-			if (target) {
-				target.focus();
-				target.select();
-			}
+			return fields;
 		}
 		
 		// =====================================================
@@ -8085,21 +8145,26 @@
 					targetList.classList.remove('show');
 					selectedIndex = -1;
 					
-					// Walidacja
+					// Walidacja dla formularza dodawania
 					if (input.id.startsWith('add-') && !['add-name', 'add-comment'].includes(input.id)) {
 						setValidation(input, true);
 					}
 					updateAddFormTagsSelection();
 					updateSearchTagsSelection();
 					
-					// 🆕 AUTO-PRZESKAKIWANIE do następnego pustego pola
-					if (input.id.startsWith('add-') && !['add-name', 'add-comment'].includes(input.id)) {
+					// 🆕 UNIWERSALNE AUTO-PRZESKAKIWANIE
+					const sectionKey = getFieldSection(input.id);
+					if (sectionKey) {
 						const nextFieldId = getNextEmptyField(input.id);
 						if (nextFieldId) {
 							setTimeout(() => {
 								const nextField = $(nextFieldId);
 								if (nextField) {
 									nextField.focus();
+									// Aktualizuj activeAddField jeśli to formularz dodawania
+									if (input.id.startsWith('add-')) {
+										activeAddField = nextFieldId;
+									}
 								}
 							}, 50);
 						}
@@ -8356,53 +8421,67 @@
 		});
 		
 		// =====================================================
-		// SKRÓTY KLAWISZOWE DLA FORMULARZA DODAWANIA
+		// UNIWERSALNE SKRÓTY KLAWISZOWE
 		// =====================================================
-
 		document.addEventListener('keydown', function(e) {
-			// Tylko gdy jesteśmy w zakładce Dodaj
-			const addTab = $('tab-add');
-			if (!addTab || !addTab.classList.contains('active')) return;
+			const activeEl = document.activeElement;
+			if (!activeEl) return;
 			
 			// Ctrl + 1-8 = skocz do pozycji 1-8
 			// Ctrl + 9 = skocz do peta
 			if (e.ctrlKey && !e.shiftKey && !e.altKey) {
 				const num = parseInt(e.key);
 				if (num >= 1 && num <= 9) {
-					e.preventDefault();
-					jumpToFieldInSection(num);
-					return;
+					// Sprawdź czy jesteśmy w odpowiednim polu
+					const sectionKey = getFieldSection(activeEl.id);
+					if (sectionKey) {
+						e.preventDefault();
+						jumpToPosition(num);
+						return;
+					}
 				}
 			}
-			
-			// Tab / Shift+Tab - domyślne zachowanie przeglądarki działa OK
-			// ale możemy ulepszyć kolejność
 		});
 
-		// Ulepszona nawigacja Tab w formularzu dodawania
-		$('tab-add')?.addEventListener('keydown', function(e) {
+		// Ulepszona nawigacja Tab
+		document.addEventListener('keydown', function(e) {
 			if (e.key !== 'Tab') return;
 			
 			const activeEl = document.activeElement;
-			if (!activeEl || !activeEl.id.startsWith('add-')) return;
+			if (!activeEl || !activeEl.id) return;
 			
-			// Określ kolejność pól
-			const allFields = [
-				'add-name',
-				...ADD_FORM_FIELDS.enemy,
-				...ADD_FORM_FIELDS.my,
-				'add-comment'
-			];
+			// Sprawdź w której zakładce jesteśmy
+			let tabId = null;
+			let allFields = [];
+			
+			if ($('tab-search')?.classList.contains('active') && activeEl.id.startsWith('search-')) {
+				tabId = 'tab-search';
+				allFields = getAllFieldsForTab('tab-search');
+			} else if ($('tab-add')?.classList.contains('active') && activeEl.id.startsWith('add-')) {
+				tabId = 'tab-add';
+				allFields = getAllFieldsForTab('tab-add');
+			} else if ($('tab-war')?.classList.contains('active') && activeEl.id.startsWith('war-')) {
+				tabId = 'tab-war';
+				allFields = getAllFieldsForTab('tab-war');
+			} else if (!$('edit-modal')?.classList.contains('hidden') && activeEl.id.startsWith('edit-')) {
+				// Modal edycji
+				allFields = [
+					'edit-name',
+					...FORM_FIELD_CONFIG['edit-enemy'].fields,
+					...FORM_FIELD_CONFIG['edit-my'].fields,
+					'edit-comment'
+				];
+			}
+			
+			if (allFields.length === 0) return;
 			
 			const currentIndex = allFields.indexOf(activeEl.id);
 			if (currentIndex === -1) return;
 			
 			let nextIndex;
 			if (e.shiftKey) {
-				// Shift+Tab = poprzednie pole
 				nextIndex = currentIndex > 0 ? currentIndex - 1 : allFields.length - 1;
 			} else {
-				// Tab = następne pole
 				nextIndex = currentIndex < allFields.length - 1 ? currentIndex + 1 : 0;
 			}
 			
@@ -8410,11 +8489,11 @@
 			if (nextField) {
 				e.preventDefault();
 				nextField.focus();
-				if (nextField.type === 'text') nextField.select();
+				if (nextField.type === 'text' || nextField.type === 'number') {
+					nextField.select();
+				}
 			}
 		});
     </script>
 </body>
 </html>
-
-
