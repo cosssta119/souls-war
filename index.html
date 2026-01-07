@@ -540,6 +540,48 @@
             padding-bottom: 10px;
             border-bottom: 1px solid var(--border);
         }
+		
+		/* Kompaktowa sekcja w podglądzie */
+		#tab-view > .section {
+			padding: 10px 15px;
+			margin-bottom: 10px;
+		}
+
+		#tab-view > .section h2 {
+			font-size: 0.85rem;
+			margin-bottom: 10px;
+			padding-bottom: 8px;
+		}
+
+		/* Mniejsza nawigacja w podglądzie */
+		#tab-view .formation-nav {
+			padding: 8px 12px;
+			margin-bottom: 10px;
+		}
+
+		#tab-view .formation-nav-btn {
+			padding: 8px 14px;
+			font-size: 1rem;
+		}
+
+		#tab-view .id-lookup input {
+			width: 60px;
+			padding: 5px 6px;
+			font-size: 0.75rem;
+		}
+
+		#tab-view .id-lookup .btn {
+			padding: 5px 10px;
+			font-size: 0.65rem;
+		}
+
+		#tab-view .formation-nav-counter {
+			font-size: 0.7rem;
+		}
+
+		#tab-view .formation-nav-counter strong {
+			font-size: 0.8rem;
+		}
         
         /* Inputy */
         .autocomplete-wrapper { position: relative; margin-bottom: 10px; }
@@ -804,6 +846,14 @@
 
 		[data-theme="light"] .search-history-item:hover {
 			background: rgba(153, 101, 21, 0.1);
+		}
+		
+		/* Historia wojny - dropdown w górę */
+		#war-history-dropdown {
+			top: auto;
+			bottom: 100%;
+			margin-top: 0;
+			margin-bottom: 5px;
 		}
 		
 		/* Historia wojny - rozszerzenie */
@@ -1515,24 +1565,118 @@
             position: relative;
             overflow: hidden;
         }
-        .preview-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border);
-        }
-        .preview-title { font-family: 'Cinzel', serif; color: var(--accent-gold); font-size: 0.95rem; }
-        .preview-title .preview-id {
-            background: var(--bg-input);
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            margin-right: 8px;
-        }
-        .preview-actions { display: flex; gap: 8px; }
-        .preview-actions .btn { padding: 10px 18px; font-size: 1rem; margin: 0; }
+		
+		 .preview-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 10px;
+			padding-bottom: 8px;
+			border-bottom: 1px solid var(--border);
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+
+		.preview-title { 
+			font-family: 'Cinzel', serif; 
+			color: var(--accent-gold); 
+			font-size: 0.85rem;
+			display: flex;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: 6px;
+		}
+
+		.preview-title .preview-id {
+			background: var(--bg-input);
+			padding: 2px 8px;
+			border-radius: 10px;
+			font-size: 0.7rem;
+		}
+
+		.preview-actions { 
+			display: flex; 
+			gap: 5px; 
+		}
+
+		.preview-actions .btn { 
+			padding: 6px 12px; 
+			font-size: 0.85rem; 
+			margin: 0; 
+		}
+
+		.formation-type-badge {
+			display: inline-block;
+			padding: 2px 8px;
+			border-radius: 10px;
+			font-size: 0.6rem;
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 0.5px;
+		}
+
+		.preview-meta {
+			display: flex;
+			gap: 12px;
+			flex-wrap: wrap;
+			font-size: 0.65rem;
+			color: var(--text-muted);
+			margin-bottom: 12px;
+			padding-bottom: 8px;
+			border-bottom: 1px dashed var(--border);
+		}
+
+		/* Strzałki nawigacji między formacjami */
+		.formation-nav {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 10px 15px;
+			background: var(--bg-card);
+			border-radius: 8px;
+			margin-bottom: 15px;
+			border: 1px solid var(--border);
+		}
+		.formation-nav-btn {
+			background: var(--bg-input);
+			border: 1px solid var(--border);
+			color: var(--accent-gold);
+			padding: 10px 18px;
+			border-radius: 6px;
+			cursor: pointer;
+			font-size: 1.2rem;
+			transition: all 0.2s;
+		}
+		.formation-nav-btn:hover:not(:disabled) {
+			background: var(--accent-gold);
+			color: var(--bg-dark);
+			transform: scale(1.05);
+		}
+		.formation-nav-btn:disabled {
+			opacity: 0.3;
+			cursor: not-allowed;
+		}
+		.formation-nav-center {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 5px;
+		}
+		.formation-nav-counter {
+			font-size: 0.8rem;
+			color: var(--text-muted);
+		}
+		.formation-nav-counter strong {
+			color: var(--accent-gold);
+			font-size: 0.9rem;
+		}
+		[data-theme="light"] .formation-nav-btn {
+			background: var(--bg-input);
+		}
+		[data-theme="light"] .formation-nav-btn:hover:not(:disabled) {
+			background: var(--accent-gold);
+			color: white;
+		}
 
 		.preview-meta {
 			display: flex;
@@ -1728,9 +1872,23 @@
         .formation-type-badge.user { background: rgba(106, 27, 154, 0.3); color: #ce93d8; border: 1px solid rgba(206, 147, 216, 0.3); }
         
         /* ID Lookup */
-        .id-lookup { display: flex; gap: 10px; margin-bottom: 15px; }
-        .id-lookup input { flex: 1; }
-        .id-lookup .btn { width: auto; padding: 12px 20px; margin-top: 0; }
+		.id-lookup { 
+			display: flex; 
+			gap: 6px; 
+			align-items: center;
+		}
+		.id-lookup input { 
+			width: 70px; 
+			padding: 6px 8px;
+			font-size: 0.8rem;
+			text-align: center;
+		}
+		.id-lookup .btn { 
+			width: auto; 
+			padding: 6px 12px; 
+			margin-top: 0;
+			font-size: 0.7rem;
+		}
         
         /* Empty state */
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
@@ -3004,14 +3162,14 @@
 			background: linear-gradient(135deg, #e65100, #bf360c) !important;
 		}
 		
-		/* ========== WYKLUCZANIE BOHATERÓW ========== */
-
+		/* ========== WYKLUCZANIE BOHATERÓW - KOMPAKTOWE ========== */
 		.excluded-section {
-			margin: 0 0 15px 0;
-			background: linear-gradient(135deg, rgba(244, 67, 54, 0.05), rgba(244, 67, 54, 0.02));
+			background: var(--bg-card);
 			border: 1px solid rgba(244, 67, 54, 0.2);
-			border-radius: 12px;
-			overflow: hidden;
+			border-radius: 8px;
+			padding: 0;
+			margin-bottom: 10px;
+			font-size: 0.75rem;
 		}
 
 		.excluded-section.visible {
@@ -3021,21 +3179,23 @@
 		.excluded-header {
 			display: flex;
 			align-items: center;
-			gap: 8px;
-			padding: 12px 15px;
+			gap: 6px;
+			padding: 8px 12px;
 			cursor: pointer;
+			font-size: 0.75rem;
+			color: var(--text-muted);
 			transition: all 0.2s;
 			user-select: none;
 		}
 
 		.excluded-header:hover {
 			background: rgba(244, 67, 54, 0.05);
+			color: #f44336;
 		}
 
 		.excluded-toggle-icon {
-			font-size: 0.7rem;
+			font-size: 0.6rem;
 			transition: transform 0.2s;
-			color: var(--text-muted);
 		}
 
 		.excluded-toggle-icon.expanded {
@@ -3043,14 +3203,17 @@
 		}
 
 		.excluded-count {
-			font-size: 0.8rem;
+			font-size: 0.7rem;
 			color: #f44336;
 			font-weight: 600;
+			margin-left: auto;
+			margin-right: 5px;
 		}
 
 		.excluded-content {
 			display: none;
-			padding: 0 15px 15px;
+			padding: 0 12px 10px;
+			border-top: 1px solid var(--border);
 		}
 
 		.excluded-content.show {
@@ -3061,17 +3224,17 @@
 		.excluded-chips {
 			display: flex;
 			flex-wrap: wrap;
-			gap: 8px;
-			margin-bottom: 12px;
-			min-height: 36px;
-			padding: 10px;
-			background: rgba(0, 0, 0, 0.2);
-			border-radius: 8px;
+			gap: 5px;
+			margin-bottom: 8px;
+			min-height: 28px;
+			padding: 8px;
+			background: rgba(0, 0, 0, 0.15);
+			border-radius: 6px;
 		}
 
 		.excluded-empty {
 			color: var(--text-muted);
-			font-size: 0.8rem;
+			font-size: 0.7rem;
 			font-style: italic;
 			width: 100%;
 			text-align: center;
@@ -3080,12 +3243,12 @@
 		.excluded-chip {
 			display: inline-flex;
 			align-items: center;
-			gap: 6px;
-			padding: 6px 10px;
+			gap: 4px;
+			padding: 4px 8px;
 			background: linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.1));
 			border: 1px solid #f44336;
-			border-radius: 20px;
-			font-size: 0.8rem;
+			border-radius: 15px;
+			font-size: 0.7rem;
 			color: #ff6b6b;
 			animation: fadeIn 0.2s ease;
 		}
@@ -3095,7 +3258,7 @@
 			border: none;
 			color: #f44336;
 			cursor: pointer;
-			font-size: 0.9rem;
+			font-size: 0.75rem;
 			padding: 0;
 			line-height: 1;
 			opacity: 0.7;
@@ -3109,48 +3272,45 @@
 
 		.excluded-add {
 			display: flex;
-			gap: 8px;
+			gap: 6px;
 			align-items: center;
 		}
 
 		.excluded-add input {
+			padding: 6px 8px !important;
+			font-size: 0.75rem !important;
 			border-color: rgba(244, 67, 54, 0.3);
 		}
 
-		.excluded-add input:focus {
-			border-color: #f44336;
-			box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.2);
-		}
-
 		.excluded-hint {
-			font-size: 0.7rem;
+			font-size: 0.65rem;
 			color: var(--text-muted);
-			margin-top: 10px;
+			margin-top: 6px;
 			text-align: center;
 		}
 
 		.excluded-checkbox-label {
 			display: flex;
 			align-items: center;
-			gap: 8px;
-			font-size: 0.8rem;
+			gap: 6px;
+			font-size: 0.7rem;
 			color: var(--text-muted);
-			margin-top: 10px;
+			margin-top: 8px;
 			cursor: pointer;
-			padding: 8px 10px;
-			background: rgba(0, 0, 0, 0.15);
-			border-radius: 8px;
+			padding: 6px 8px;
+			background: rgba(0, 0, 0, 0.1);
+			border-radius: 6px;
 			transition: all 0.2s;
 		}
 
 		.excluded-checkbox-label:hover {
-			background: rgba(0, 0, 0, 0.25);
+			background: rgba(0, 0, 0, 0.2);
 			color: var(--text-light);
 		}
 
 		.excluded-checkbox-label input {
-			width: 16px;
-			height: 16px;
+			width: 14px;
+			height: 14px;
 			accent-color: #f44336;
 			cursor: pointer;
 		}
@@ -3217,6 +3377,234 @@
 			width: 1400px !important;
 			max-height: 90vh !important;
 		}
+		
+		/* ========== OSTATNIO PRZEGLĄDANE ========== */
+		.recently-viewed-section {
+			background: var(--bg-card);
+			border: 1px solid var(--border);
+			border-radius: 8px;
+			padding: 0;
+			margin-bottom: 10px;
+			font-size: 0.75rem;
+		}
+
+		.recently-viewed-header {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			padding: 8px 12px;
+			cursor: pointer;
+			font-size: 0.75rem;
+			color: var(--text-muted);
+			transition: all 0.2s;
+		}
+
+		.recently-viewed-header:hover {
+			background: rgba(212, 175, 55, 0.05);
+			color: var(--accent-gold);
+		}
+
+		.rv-toggle-icon {
+			font-size: 0.6rem;
+			transition: transform 0.2s;
+		}
+
+		.rv-toggle-icon.expanded {
+			transform: rotate(90deg);
+		}
+
+		.rv-count {
+			font-size: 0.65rem;
+			color: var(--accent-gold);
+			margin-left: auto;
+			margin-right: 5px;
+		}
+
+		.recently-viewed-clear {
+			background: none;
+			border: none;
+			cursor: pointer;
+			font-size: 0.75rem;
+			opacity: 0.5;
+			transition: opacity 0.2s;
+			padding: 0;
+		}
+
+		.recently-viewed-clear:hover {
+			opacity: 1;
+		}
+
+		.recently-viewed-list {
+			padding: 5px 10px 10px;
+			display: flex;
+			flex-wrap: wrap;
+			gap: 5px;
+			border-top: 1px solid var(--border);
+		}
+
+		.recently-viewed-list.show {
+			display: flex !important;
+		}
+
+		.recently-viewed-item {
+			background: var(--bg-input);
+			border: 1px solid var(--border);
+			border-radius: 4px;
+			padding: 4px 8px;
+			cursor: pointer;
+			transition: all 0.2s;
+			font-size: 0.65rem;
+			max-width: 120px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.recently-viewed-item:hover {
+			border-color: var(--accent-gold);
+			background: rgba(212, 175, 55, 0.1);
+		}
+
+		.recently-viewed-item .rv-id {
+			color: var(--accent-gold);
+			font-weight: 600;
+			margin-right: 3px;
+		}
+		
+		/* ========== PODOBNE FORMACJE ========== */
+		.similar-formations-section {
+			margin-top: 20px;
+			padding: 15px;
+			background: linear-gradient(135deg, rgba(106, 27, 154, 0.1), rgba(106, 27, 154, 0.02));
+			border: 1px solid rgba(106, 27, 154, 0.3);
+			border-radius: 12px;
+		}
+		
+		.similar-formations-header {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			margin-bottom: 12px;
+			font-size: 0.9rem;
+			color: var(--accent-purple);
+			font-weight: 600;
+		}
+		
+		.similar-formations-list {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+		
+		.similar-formation-item {
+			background: var(--bg-card);
+			border: 1px solid var(--border);
+			border-radius: 8px;
+			padding: 10px 12px;
+			cursor: pointer;
+			transition: all 0.2s;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+		
+		.similar-formation-item:hover {
+			border-color: var(--accent-purple);
+			transform: translateX(5px);
+		}
+		
+		.similar-formation-info {
+			flex: 1;
+			overflow: hidden;
+		}
+		
+		.similar-formation-name {
+			font-size: 0.8rem;
+			font-weight: 600;
+			color: var(--text-light);
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		
+		.similar-formation-heroes {
+			font-size: 0.7rem;
+			color: var(--text-muted);
+			margin-top: 3px;
+		}
+		
+		.similar-formation-id {
+			font-size: 0.75rem;
+			color: var(--accent-purple);
+			font-weight: 600;
+			margin-left: 10px;
+		}
+		
+		.similar-formations-empty {
+			color: var(--text-muted);
+			font-size: 0.8rem;
+			text-align: center;
+			padding: 10px;
+		}
+		
+		/* ========== CHECKBOX WYSZUKIWANIA W KOMENTARZACH ========== */
+		.search-options {
+			display: flex;
+			justify-content: center;
+			gap: 15px;
+			margin-top: 10px;
+			flex-wrap: wrap;
+		}
+		
+		.search-option-label {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			font-size: 0.75rem;
+			color: var(--text-muted);
+			cursor: pointer;
+			padding: 5px 10px;
+			border-radius: 15px;
+			transition: all 0.2s;
+		}
+		
+		.search-option-label:hover {
+			background: rgba(212, 175, 55, 0.1);
+			color: var(--text-light);
+		}
+		
+		.search-option-label input {
+			width: 14px;
+			height: 14px;
+			accent-color: var(--accent-gold);
+			cursor: pointer;
+		}
+		
+		/* Light theme adjustments */
+		[data-theme="light"] .recently-viewed-section {
+			background: #ffffff;
+		}
+		
+		[data-theme="light"] .recently-viewed-item {
+			background: #f8f5f0;
+		}
+		
+		[data-theme="light"] .recently-viewed-item:hover {
+			background: rgba(153, 101, 21, 0.1);
+			border-color: #996515;
+		}
+		
+		[data-theme="light"] .similar-formations-section {
+			background: linear-gradient(135deg, rgba(106, 27, 154, 0.08), rgba(106, 27, 154, 0.02));
+		}
+		
+		[data-theme="light"] .similar-formation-item {
+			background: #ffffff;
+		}
+		
+		[data-theme="light"] .similar-formation-item:hover {
+			border-color: #6a1b9a;
+		}
     </style>
 	
 	<!-- Google Analytics -->
@@ -3227,6 +3615,9 @@
 	  gtag('js', new Date());
 	  gtag('config', 'G-XX1PXS6V13');
 	</script>
+	
+	<!-- html2canvas do eksportu obrazków -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 	<div class="modal" id="guild-password-modal">
@@ -3369,6 +3760,12 @@
 				</div>
 			</div>
 			<button class="btn btn-secondary" onclick="clearSearch()" style="margin-top: 8px;">✖ <span data-i18n="search.clear">Wyczyść</span></button>
+			<div class="search-options">
+				<label class="search-option-label">
+					<input type="checkbox" id="search-in-comments">
+					<span>💬 <span data-i18n="search.searchInComments">Szukaj też w komentarzach</span></span>
+				</label>
+			</div>
 			<button class="btn btn-compare" id="compare-btn" onclick="openCompareModal()" style="margin-top: 8px; display: none;">
 				📊 <span data-i18n="compare.btn">Porównaj</span>
 				<span class="compare-count-badge" id="compare-count">0</span>
@@ -3425,21 +3822,42 @@
     </div>
     
     <!-- Tab: Podgląd -->
-    <div id="tab-view" class="tab-content">
-        <div class="section">
-            <h2>👁️ <span data-i18n="preview.title">Podgląd formacji</span></h2>
-            <div class="id-lookup">
-                <input type="number" id="lookup-id" data-i18n-placeholder="preview.idPlaceholder" placeholder="Wpisz ID (np. 12)">
-                <button class="btn" onclick="lookupById()" data-i18n="preview.showBtn">POKAŻ</button>
-            </div>
-        </div>
-        
-        <div id="formation-display">
-            <div class="empty-state">
-                <p data-i18n="preview.emptyState">Wpisz ID aby zobaczyć układ formacji</p>
-            </div>
-        </div>
-    </div>
+	<div id="tab-view" class="tab-content">
+		<div class="section">
+			<h2>👁️ <span data-i18n="preview.title">Podgląd formacji</span></h2>
+			
+			<!-- Nawigacja WEWNĄTRZ sekcji -->
+			<div class="formation-nav" id="formation-nav">
+				<button class="formation-nav-btn" id="nav-prev-btn" onclick="navigateFormation(-1)" disabled>◀</button>
+				<div class="formation-nav-center">
+					<div class="id-lookup">
+						<input type="number" id="lookup-id" placeholder="ID">
+						<button class="btn" onclick="lookupById()">POKAŻ</button>
+					</div>
+					<div class="formation-nav-counter" id="nav-counter"></div>
+				</div>
+				<button class="formation-nav-btn" id="nav-next-btn" onclick="navigateFormation(1)" disabled>▶</button>
+			</div>
+		</div>
+		
+		<!-- Ostatnio przeglądane - zwijalne -->
+		<div class="recently-viewed-section" id="recently-viewed-section">
+			<div class="recently-viewed-header" onclick="toggleRecentlyViewed()">
+				<span class="rv-toggle-icon" id="rv-toggle-icon">▶</span>
+				<span>🕐 <span data-i18n="preview.recentlyViewed">Ostatnio przeglądane</span></span>
+				<span class="rv-count" id="rv-count">(0)</span>
+				<button class="recently-viewed-clear" onclick="event.stopPropagation(); clearRecentlyViewed()" title="Wyczyść">🗑️</button>
+			</div>
+			<div class="recently-viewed-list" id="recently-viewed-list" style="display: none;"></div>
+		</div>
+		
+		<!-- Wyświetlana formacja - OSOBNO -->
+		<div id="formation-display">
+			<div class="empty-state">
+				<p data-i18n="preview.emptyState">Wpisz ID aby zobaczyć układ formacji</p>
+			</div>
+		</div>
+	</div>
     
     <!-- Tab: Dodaj -->
     <div id="tab-add" class="tab-content">
@@ -3635,7 +4053,10 @@
     <div id="tab-war-preview" class="tab-content">
         <div class="section">
             <h2>👁️ Podgląd Wojny - 3 składy</h2>
-            <button class="btn btn-secondary" onclick="switchTab('war')" style="margin-bottom: 15px;">← Wróć do planera</button>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                <button class="btn btn-secondary" onclick="switchTab('war')">← Wróć do planera</button>
+                <button class="btn btn-secondary" onclick="exportWarPlanAsText()">📋 Kopiuj tekst</button>
+            </div>
             <div id="war-preview-content">
                 <div class="empty-state">
                     <p>Wybierz kombinację z planera wojny</p>
@@ -3682,7 +4103,6 @@
 				<h3>🛠️ <span data-i18n="admin.tools">Narzędzia</span></h3>
 				<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
 					<button class="btn btn-secondary" onclick="scanDuplicates()">🔍 <span data-i18n="admin.scanDuplicates">Skanuj duplikaty</span></button>
-					<button class="btn btn-danger" onclick="confirmDeleteAllUserFormations()">🗑️ <span data-i18n="admin.deleteAllUser">Usuń wszystkie formacje użytkowników</span></button>
 				</div>
 			</div>
 			
@@ -3708,8 +4128,11 @@
                 <button class="btn btn-success btn-small" onclick="addPet()">➕</button>
             </div>
             
-            <h3 style="font-size: 0.85rem; color: var(--accent-purple); margin: 25px 0 10px;">🚪 <span data-i18n="admin.session">Sesja</span></h3>
-            <button class="btn btn-secondary" onclick="adminLogout()">🚪 <span data-i18n="admin.logout">Wyloguj z trybu Admin</span></button>
+			<h3 style="font-size: 0.85rem; color: var(--accent-purple); margin: 25px 0 10px;">🚪 <span data-i18n="admin.session">Sesja</span></h3>
+			<div style="display: flex; flex-direction: column; gap: 10px;">
+				<button class="btn btn-danger" onclick="confirmDeleteAllUserFormations()">🗑️ <span data-i18n="admin.deleteAllUser">Usuń wszystkie formacje użytkowników</span></button>
+				<button class="btn btn-secondary" onclick="adminLogout()">🚪 <span data-i18n="admin.logout">Wyloguj z trybu Admin</span></button>
+			</div>
         </div>
     </div>
     
@@ -3863,6 +4286,14 @@
 		let selectedForCompare = [];
 		let excludedHeroes = JSON.parse(localStorage.getItem('souls_excluded_heroes') || '[]');
 		let hideExcludedResults = localStorage.getItem('souls_hide_excluded') !== 'false'; // domyślnie true
+		
+		// Nawigacja między formacjami w podglądzie
+		let navFormationIds = []; // Lista ID formacji do nawigowania
+		let navCurrentIndex = -1; // Aktualny indeks w liście nawigacji
+		
+		// Ostatnio przeglądane formacje
+		let recentlyViewed = JSON.parse(localStorage.getItem('souls_recently_viewed') || '[]');
+		const MAX_RECENTLY_VIEWED = 10;
 
 		// ========== KONFIGURACJA ZABEZPIECZEŃ ==========
 		const GUILD_PASSWORD_ENABLED = true; // Zmień na true aby włączyć hasło na wejście
@@ -3913,6 +4344,8 @@
                 'preview.title': 'Podgląd formacji', 'preview.idPlaceholder': 'Wpisz ID (np. 12)', 'preview.showBtn': 'POKAŻ',
                 'preview.emptyState': 'Wpisz ID aby zobaczyć układ formacji', 'preview.notFound': 'Nie znaleziono formacji',
                 'preview.enemy': 'PRZECIWNIK', 'preview.yourTeam': 'TWÓJ SKŁAD', 'preview.noPet': 'Brak peta', 'preview.invalidId': 'Wpisz prawidłowy numer ID!',
+                'preview.recentlyViewed': 'Ostatnio przeglądane', 'preview.noRecent': 'Brak historii',
+                'search.searchInComments': 'Szukaj też w komentarzach',
                 'add.title': 'Dodaj nową formację', 'add.nameLabel': 'Nazwa formacji', 'add.namePlaceholder': 'np. Nick 01-01-2026 W1 / Kontra Dark-Undead v1',
                 'add.yourTeam': 'Twój skład', 'add.enemyTeam': 'Skład przeciwnika', 'add.commentLabel': 'Komentarz (opcjonalnie)',
                 'add.commentPlaceholder': 'np. Unikać Death, Silbren u przeciwnika, kolejność speed: xxx > yyy > zzz, Pao runa PR, itp.', 'add.saveBtn': 'ZAPISZ FORMACJĘ',
@@ -4011,6 +4444,8 @@
                 'preview.title': 'Formation preview', 'preview.idPlaceholder': 'Enter ID (e.g. 12)', 'preview.showBtn': 'SHOW',
                 'preview.emptyState': 'Enter ID to see formation layout', 'preview.notFound': 'Formation not found',
                 'preview.enemy': 'ENEMY', 'preview.yourTeam': 'YOUR TEAM', 'preview.noPet': 'No pet', 'preview.invalidId': 'Enter a valid ID number!',
+                'preview.recentlyViewed': 'Recently viewed', 'preview.noRecent': 'No history',
+                'search.searchInComments': 'Also search in comments',
                 'add.title': 'Add new formation', 'add.nameLabel': 'Formation name', 'add.namePlaceholder': 'e.g. Nick 01-01-2026 W1 / Counter Dark-Undead v1',
                 'add.yourTeam': 'Your team', 'add.enemyTeam': 'Enemy team', 'add.commentLabel': 'Comment (optional)',
                 'add.commentPlaceholder': 'e.g. Avoid Death, Silbren on enemy, speed order: xxx > yyy > zzz, Pao rune PR, etc.', 'add.saveBtn': 'SAVE FORMATION',
@@ -4526,6 +4961,7 @@
 			
             const searchHeroes = getFieldValues('search-pos', 8).filter(v => v).map(normalize);
             const searchPet = normalize($('search-pet').value);
+            const searchInComments = $('search-in-comments')?.checked || false;
             
             if (!searchHeroes.length && !searchPet) { showToast(t('search.enterAtLeastOne'), true); return; }
             
@@ -4534,8 +4970,21 @@
                 const enemyPet = normalize(f.enemyPet);
                 const matchedHeroes = searchHeroes.filter(sh => enemyHeroes.some(eh => eh === sh || eh.startsWith(sh)));
                 const petMatched = searchPet && (enemyPet === searchPet || enemyPet.startsWith(searchPet));
-                const score = matchedHeroes.length + (petMatched ? 1 : 0);
-                return score > 0 ? { formation: f, matchedHeroes, petMatched, score, maxScore: searchHeroes.length + (searchPet ? 1 : 0) } : null;
+                let score = matchedHeroes.length + (petMatched ? 1 : 0);
+                
+                // Dodatkowe wyszukiwanie w komentarzach
+                let commentMatched = false;
+                if (searchInComments && f.comment) {
+                    const commentLower = f.comment.toLowerCase();
+                    const anySearchTermInComment = searchHeroes.some(sh => commentLower.includes(sh)) || 
+                        (searchPet && commentLower.includes(searchPet));
+                    if (anySearchTermInComment) {
+                        commentMatched = true;
+                        score = Math.max(score, 0.5); // Daj wynik 0.5 jeśli tylko komentarz
+                    }
+                }
+                
+                return score > 0 ? { formation: f, matchedHeroes, petMatched, commentMatched, score, maxScore: searchHeroes.length + (searchPet ? 1 : 0) } : null;
             }).filter(Boolean).sort((a, b) => b.score - a.score);
             
             displayResults(results, searchHeroes);
@@ -4738,6 +5187,11 @@
 				const exclusionCheck = isFormationExcluded(f);
 				const hasExcluded = !hideExcludedResults && exclusionCheck.excluded;
 				
+				// Info o dopasowaniu w komentarzu
+				const commentMatchInfo = r.commentMatched && r.matchedHeroes.length === 0 && !r.petMatched 
+					? `<div style="font-size:0.7rem;color:var(--accent-gold);margin-top:3px;">💬 ${currentLang === 'pl' ? 'Znaleziono w komentarzu' : 'Found in comment'}</div>` 
+					: '';
+				
 				return `
 					<div class="result-card ${hasExcluded ? 'has-excluded' : ''}" id="result-card-${f.id}">
 						<div class="result-card-checkbox">
@@ -4746,15 +5200,19 @@
 						<div class="result-card-content" onclick="showFormation(${f.id})">
 							<div class="result-card-header">
 								<span class="result-id">ID: ${f.id}${f.isBase ? '' : ` <span class="badge user-badge">${t('badge.user')}</span>`}</span>
-								<span class="match-score match-${Math.min(r.score, 6)}">${r.score}/${r.maxScore}</span>
+								<span class="match-score match-${Math.min(Math.floor(r.score), 6)}">${r.score % 1 === 0 ? r.score : '💬'}/${r.maxScore}</span>
 							</div>
 							<div class="result-name">${f.name}</div>
 							<div class="result-heroes">${t('search.enemy')}: ${enemyDisplay} + ${petDisplay}</div>
 							${missingHeroes.length ? `<div class="result-missing">❌ ${t('search.missing')}: ${missingHeroes.join(', ')}</div>` : ''}
+							${commentMatchInfo}
 							${hasExcluded ? `<div class="result-excluded-heroes">🚫 ${t('exclude.has')}: ${exclusionCheck.heroes.join(', ')}</div>` : ''}
 						</div>
 					</div>`;
 			}).join('');
+			
+			// Ustaw kontekst nawigacji dla wyników wyszukiwania
+			setNavContext(displayedResults.map(r => r.formation.id));
 			
 			$('results-section').innerHTML = html;
 			updateCompareButton();
@@ -5640,6 +6098,9 @@
 				headerInfo = `<div style="text-align:center;font-size:0.75rem;color:#f44336;margin-bottom:10px;">🚫 ${hiddenCount} ${currentLang === 'pl' ? 'ukrytych (wykluczone)' : 'hidden (excluded)'}</div>`;
 			}
 			
+			// Ustaw kontekst nawigacji dla bazy danych
+			setNavContext(formations.map(f => f.id));
+			
 			$('database-list').innerHTML = headerInfo + (formations.length ? formations.map(f => {
 				const exclusionCheck = isFormationExcluded(f);
 				const hasExcluded = !hideExcludedResults && exclusionCheck.excluded;
@@ -5694,48 +6155,318 @@
             showFormation(id);
         }
         
-        function showFormation(id) {
-            const f = allFormations.find(x => x.id === id);
-            if (!f) {
-                $('formation-display').innerHTML = `<div class="empty-state"><p>${t('preview.notFound')} #${id}</p></div>`;
-                return;
-            }
-            
-            switchTab('view');
-            $('lookup-id').value = id;
-            
-            const isFav = isFavorite(id);
-            
+		function showFormation(id) {
+			const f = allFormations.find(x => x.id === id);
+			if (!f) {
+				$('formation-display').innerHTML = `<div class="empty-state"><p>${t('preview.notFound')} #${id}</p></div>`;
+				return;
+			}
+			
+			switchTab('view');
+			
+			// Aktualizuj pole input
+			const lookupInput = $('lookup-id');
+			if (lookupInput) lookupInput.value = id;
+			
+			// Dodaj do ostatnio przeglądanych
+			addToRecentlyViewed(id, f.name);
+			
+			// Aktualizuj indeks nawigacji jeśli ID jest w liście
+			navCurrentIndex = navFormationIds.indexOf(id);
+			
+			// Aktualizuj przyciski nawigacji (bez przebudowywania HTML)
+			updateFormationNav(id);
+			
+			const isFav = isFavorite(id);
+			
+			// Znajdź podobne formacje (ten sam przeciwnik, inna kontra)
+			const similarHtml = buildSimilarFormations(f);
+			
 			$('formation-display').innerHTML = `
-				<div class="formation-preview">
+				<div class="formation-preview" id="formation-preview-export">
 					<div class="preview-header">
 						<div class="preview-title"><span class="preview-id">#${f.id}</span>${f.name}<span class="formation-type-badge ${f.isBase ? 'base' : 'user'}">${t(f.isBase ? 'badge.base' : 'badge.user')}</span></div>
-							<div class="preview-actions">
-								<button class="btn btn-small btn-secondary" onclick="copyFormationLink(${id})" title="Kopiuj link">🔗</button>
-								${isAdmin ? `<button class="btn btn-small btn-admin" onclick="openEditModal(${id})">✏️</button>` : ''}
-								<button class="btn btn-small ${isFav ? 'btn-favorite-active' : 'btn-secondary'}" onclick="toggleFavoritePreview(${id})">${isFav ? '⭐' : '☆'}</button>
-							</div>
+						<div class="preview-actions">
+							<button class="btn btn-small btn-secondary" onclick="copyFormationLink(${id})" title="Kopiuj link">🔗</button>
+							${isAdmin ? `<button class="btn btn-small btn-admin" onclick="openEditModal(${id})">✏️</button>` : ''}
+							<button class="btn btn-small ${isFav ? 'btn-favorite-active' : 'btn-secondary'}" onclick="toggleFavoritePreview(${id})">${isFav ? '⭐' : '☆'}</button>
+						</div>
 					</div>
 					<div class="preview-meta">
 						${formatDate(f.dateAdded) ? `<span class="preview-meta-item">📅 ${t('preview.added')}: ${formatDate(f.dateAdded)}</span>` : ''}
 						${formatDate(f.lastEdited) ? `<span class="preview-meta-item">✏️ ${t('preview.edited')}: ${formatDate(f.lastEdited)}</span>` : ''}
 					</div>
 					<div class="battle-section enemy">
-                        <div class="battle-title enemy-title"><span class="title-icon">👹</span>${t('preview.enemy')}</div>
-                        <div style="text-align:center">${renderBattlePet(f.enemyPet)}</div>
-                        ${renderBattleGrid(f.enemy, true)}
-                        <div class="battle-arrows animated"><div class="battle-arrow down"></div></div>
-                    </div>
-                    <div class="vs-separator"><span class="vs-badge">VS</span></div>
-                    <div class="battle-section player">
-                        <div class="battle-arrows animated"><div class="battle-arrow up"></div></div>
-                        ${renderBattleGrid(f.my, false)}
-                        <div style="text-align:center">${renderBattlePet(f.myPet)}</div>
-                        <div class="battle-title player-title"><span class="title-icon">⚔️</span>${t('preview.yourTeam')}</div>
-                    </div>
-                    ${f.comment ? `<div class="preview-comment"><span class="comment-icon">💬</span>${f.comment}</div>` : ''}
-                </div>`;
+						<div class="battle-title enemy-title"><span class="title-icon">👹</span>${t('preview.enemy')}</div>
+						<div style="text-align:center">${renderBattlePet(f.enemyPet)}</div>
+						${renderBattleGrid(f.enemy, true)}
+						<div class="battle-arrows animated"><div class="battle-arrow down"></div></div>
+					</div>
+					<div class="vs-separator"><span class="vs-badge">VS</span></div>
+					<div class="battle-section player">
+						<div class="battle-arrows animated"><div class="battle-arrow up"></div></div>
+						${renderBattleGrid(f.my, false)}
+						<div style="text-align:center">${renderBattlePet(f.myPet)}</div>
+						<div class="battle-title player-title"><span class="title-icon">⚔️</span>${t('preview.yourTeam')}</div>
+					</div>
+					${f.comment ? `<div class="preview-comment"><span class="comment-icon">💬</span>${f.comment}</div>` : ''}
+				</div>
+				${similarHtml}`;
+		}
+        
+        // =====================================================
+        // OSTATNIO PRZEGLĄDANE
+        // =====================================================
+        
+        function addToRecentlyViewed(id, name) {
+            // Usuń jeśli już jest (przeniesie na początek)
+            recentlyViewed = recentlyViewed.filter(item => item.id !== id);
+            
+            // Dodaj na początek
+            recentlyViewed.unshift({ id, name, timestamp: Date.now() });
+            
+            // Ogranicz do max
+            if (recentlyViewed.length > MAX_RECENTLY_VIEWED) {
+                recentlyViewed = recentlyViewed.slice(0, MAX_RECENTLY_VIEWED);
+            }
+            
+            // Zapisz
+            localStorage.setItem('souls_recently_viewed', JSON.stringify(recentlyViewed));
+            
+            // Odśwież widok
+            renderRecentlyViewed();
         }
+        
+		function renderRecentlyViewed() {
+			const container = $('recently-viewed-list');
+			const countEl = $('rv-count');
+			if (!container) return;
+			
+			// Aktualizuj licznik
+			if (countEl) countEl.textContent = `(${recentlyViewed.length})`;
+			
+			if (recentlyViewed.length === 0) {
+				container.innerHTML = `<div style="color: var(--text-muted); padding: 10px; text-align: center; width: 100%;">${t('preview.noRecent')}</div>`;
+				return;
+			}
+			
+			container.innerHTML = recentlyViewed.map(item => `
+				<div class="recently-viewed-item" onclick="showFormation(${item.id})" title="${item.name}">
+					<span class="rv-id">#${item.id}</span>${item.name.substring(0, 15)}${item.name.length > 15 ? '..' : ''}
+				</div>
+			`).join('');
+			
+			// Przywróć stan rozwinięcia
+			const wasExpanded = localStorage.getItem('souls_rv_expanded') === 'true';
+			if (wasExpanded) {
+				container.classList.add('show');
+				$('rv-toggle-icon')?.classList.add('expanded');
+			}
+		}
+        
+        function clearRecentlyViewed() {
+            if (!confirm(currentLang === 'pl' ? 'Wyczyścić historię przeglądanych?' : 'Clear viewing history?')) return;
+            recentlyViewed = [];
+            localStorage.setItem('souls_recently_viewed', JSON.stringify(recentlyViewed));
+            renderRecentlyViewed();
+            showToast(currentLang === 'pl' ? '🗑️ Historia wyczyszczona' : '🗑️ History cleared');
+        }
+		
+		function toggleRecentlyViewed() {
+			const list = $('recently-viewed-list');
+			const icon = $('rv-toggle-icon');
+			
+			list.classList.toggle('show');
+			icon.classList.toggle('expanded');
+			
+			// Zapisz stan
+			localStorage.setItem('souls_rv_expanded', list.classList.contains('show'));
+		}
+        
+        // PODOBNE FORMACJE
+		function buildSimilarFormations(formation) {
+			const similar = findSimilarFormations(formation);
+			
+			const headerText = currentLang === 'pl' ? 'Inne kontry na tego przeciwnika' : 'Other counters for this enemy';
+			const emptyText = currentLang === 'pl' ? 'Brak innych kontr' : 'No other counters';
+			
+			return `
+				<div class="similar-formations-section">
+					<div class="similar-formations-header">
+						<span>🔄</span>
+						<span>${headerText}</span>
+						<span style="font-size: 0.75rem; color: var(--text-muted);">(${similar.length})</span>
+					</div>
+					<div class="similar-formations-list">
+						${similar.length === 0 
+							? `<div style="text-align: center; color: var(--text-muted); padding: 15px; font-size: 0.85rem;">${emptyText}</div>`
+							: similar.map(f => `
+								<div class="similar-formation-item" onclick="showFormation(${f.id})">
+									<div class="similar-formation-info">
+										<div class="similar-formation-name">${f.name}</div>
+										<div class="similar-formation-heroes">⚔️ ${f.my.filter(h => h).join(', ') || '—'} + ${f.myPet || '—'}</div>
+									</div>
+									<span class="similar-formation-id">#${f.id}</span>
+								</div>
+							`).join('')}
+					</div>
+				</div>
+			`;
+		}
+        
+        function findSimilarFormations(formation) {
+            const enemyKey = getEnemyKey(formation);
+            
+            return allFormations.filter(f => {
+                // Nie pokazuj tej samej formacji
+                if (f.id === formation.id) return false;
+                
+                // Sprawdź czy przeciwnik jest identyczny
+                const otherEnemyKey = getEnemyKey(f);
+                return enemyKey === otherEnemyKey;
+            });
+        }
+        
+        function getEnemyKey(formation) {
+            // Tworzymy unikalny klucz dla przeciwnika (sortowane dla spójności)
+            const enemyHeroes = formation.enemy.filter(h => h).map(h => h.toLowerCase()).sort();
+            const enemyPet = (formation.enemyPet || '').toLowerCase();
+            return enemyHeroes.join('|') + '||' + enemyPet;
+        }
+        
+		function buildFormationNav(currentId) {
+			const idx = navFormationIds.indexOf(currentId);
+			const total = navFormationIds.length;
+			
+			const hasPrev = idx > 0;
+			const hasNext = idx < total - 1;
+			const prevLabel = currentLang === 'pl' ? 'Poprzedni' : 'Previous';
+			const nextLabel = currentLang === 'pl' ? 'Następny' : 'Next';
+			const showLabel = currentLang === 'pl' ? 'POKAŻ' : 'SHOW';
+			
+			return `
+				<div class="formation-nav">
+					<button class="formation-nav-btn" onclick="navigateFormation(-1)" ${!hasPrev ? 'disabled' : ''} title="${prevLabel}">◀</button>
+					<div class="formation-nav-center">
+						<div class="id-lookup">
+							<input type="number" id="lookup-id" value="${currentId}" placeholder="ID">
+							<button class="btn" onclick="lookupById()">${showLabel}</button>
+						</div>
+						${total > 1 ? `<div class="formation-nav-counter"><strong>${idx + 1}</strong> / ${total}</div>` : ''}
+					</div>
+					<button class="formation-nav-btn" onclick="navigateFormation(1)" ${!hasNext ? 'disabled' : ''} title="${nextLabel}">▶</button>
+				</div>
+			`;
+		}
+		
+		function updateFormationNav(currentId) {
+			const idx = navFormationIds.indexOf(currentId);
+			const total = navFormationIds.length;
+			
+			const prevBtn = $('nav-prev-btn');
+			const nextBtn = $('nav-next-btn');
+			const counter = $('nav-counter');
+			
+			if (prevBtn) {
+				prevBtn.disabled = idx <= 0 || total === 0;
+			}
+			if (nextBtn) {
+				nextBtn.disabled = idx >= total - 1 || total === 0;
+			}
+			if (counter) {
+				if (total > 1 && idx >= 0) {
+					counter.innerHTML = `<strong>${idx + 1}</strong> / ${total}`;
+				} else if (total > 0) {
+					// ID nie jest w liście nawigacji, ale lista istnieje
+					counter.innerHTML = `<span style="font-size: 0.7rem;">poza listą (${total})</span>`;
+				} else {
+					counter.innerHTML = '';
+				}
+			}
+		}
+				
+        function navigateFormation(direction) {
+            if (navFormationIds.length === 0 || navCurrentIndex === -1) return;
+            
+            const newIndex = navCurrentIndex + direction;
+            if (newIndex < 0 || newIndex >= navFormationIds.length) return;
+            
+            const newId = navFormationIds[newIndex];
+            showFormation(newId);
+        }
+				
+        function setNavContext(formationIds) {
+            navFormationIds = formationIds || [];
+            navCurrentIndex = -1;
+        }
+
+        function exportWarPlanAsText() {
+            const element = $('war-preview-content');
+            if (!element || element.querySelector('.empty-state')) {
+                showToast(currentLang === 'pl' ? 'Najpierw wybierz plan wojny' : 'Select war plan first', true);
+                return;
+            }
+            
+            // Zbierz dane z planu wojny
+            const warData = collectWarPlanData();
+            if (!warData) return;
+            
+            let text = `⚔️ PLAN WOJNY - ${new Date().toLocaleDateString()}\n`;
+            text += '═'.repeat(40) + '\n\n';
+            
+            warData.forEach((battle, idx) => {
+                text += `📋 WALKA ${idx + 1}\n`;
+                text += `👹 Przeciwnik: ${battle.enemy.heroes.join(', ')} + ${battle.enemy.pet || '—'}\n`;
+                text += `⚔️ Twoja kontra: ${battle.counter.heroes.join(', ')} + ${battle.counter.pet || '—'}\n`;
+                if (battle.counter.comment) text += `💬 ${battle.counter.comment}\n`;
+                text += '\n';
+            });
+            
+            // Kopiuj do schowka
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(currentLang === 'pl' ? '📋 Plan skopiowany do schowka!' : '📋 Plan copied to clipboard!');
+            }).catch(() => {
+                // Fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast(currentLang === 'pl' ? '📋 Plan skopiowany do schowka!' : '📋 Plan copied to clipboard!');
+            });
+        }
+        
+        function collectWarPlanData() {
+            // Zbierz dane o wrogach z inputów
+            const battles = [];
+            
+            for (let i = 1; i <= 3; i++) {
+                const enemyHeroes = [];
+                for (let j = 1; j <= 5; j++) {
+                    const val = $(`war-e${i}-h${j}`)?.value.trim();
+                    if (val) enemyHeroes.push(val);
+                }
+                const enemyPet = $(`war-e${i}-pet`)?.value.trim();
+                
+                // Szukaj kontry w wynikach (jeśli jest)
+                const counterData = currentWarResults?.[i-1];
+                
+                battles.push({
+                    enemy: { heroes: enemyHeroes, pet: enemyPet },
+                    counter: counterData ? {
+                        heroes: counterData.formation.my.filter(h => h),
+                        pet: counterData.formation.myPet,
+                        comment: counterData.formation.comment
+                    } : { heroes: [], pet: '', comment: '' }
+                });
+            }
+            
+            return battles;
+        }
+        
+        // Przechowuj aktualne wyniki wojny
+        let currentWarResults = null;
         
         function renderBattleGrid(arr, isEnemy) {
             const slot = i => {
@@ -6746,6 +7477,8 @@
             const combo = window.warResults?.[comboIndex];
             if (!combo) return;
             window.currentWarCombo = combo;
+            // Zapisz wyniki dla eksportu
+            currentWarResults = combo.formations;
             switchTab('war-preview');
             renderWarPreview();
         }
@@ -7425,6 +8158,9 @@
 				excludedSection.style.display = 'block';
 			}
 			
+			// Inicjalizacja ostatnio przeglądanych
+			renderRecentlyViewed();
+			
 			// Zamykanie modali kliknięciem poza content
 			$('duplicates-modal')?.addEventListener('click', e => {
 				if (e.target === $('duplicates-modal')) closeDuplicatesModal();
@@ -7492,6 +8228,36 @@
 						// Setup autosave dla War Planner
 						setupWarPlannerAutosave();
 					});
+					
+		// =====================================================
+		// OBSŁUGA KLAWISZY STRZAŁEK DLA NAWIGACJI
+		// =====================================================
+		document.addEventListener('keydown', function(e) {
+			// Sprawdź czy zakładka Podgląd jest aktywna
+			const viewTab = $('tab-view');
+			if (!viewTab || !viewTab.classList.contains('active')) return;
+			
+			// Nie reaguj jeśli focus jest na input/textarea
+			const activeEl = document.activeElement;
+			if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
+				return;
+			}
+			
+			// Nie reaguj jeśli nie ma listy do nawigacji
+			if (navFormationIds.length === 0) return;
+			
+			// Strzałka w lewo - poprzednia formacja
+			if (e.key === 'ArrowLeft') {
+				e.preventDefault();
+				navigateFormation(-1);
+			}
+			
+			// Strzałka w prawo - następna formacja
+			if (e.key === 'ArrowRight') {
+				e.preventDefault();
+				navigateFormation(1);
+			}
+		});
     </script>
 </body>
 </html>
