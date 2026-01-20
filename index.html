@@ -5298,14 +5298,17 @@
 			const config = FORM_FIELD_CONFIG[sectionKey];
 			if (!config) return null;
 			
-			const currentIndex = config.fields.indexOf(currentFieldId);
+			// Dla sekcji add-enemy użyj dynamicznej kolejności
+			const fields = (sectionKey === 'add-enemy') ? getEnemyFieldsInOrder() : config.fields;
+			
+			const currentIndex = fields.indexOf(currentFieldId);
 			if (currentIndex === -1) return null;
 			
 			// Szukaj następnego pustego w tej sekcji
-			for (let i = currentIndex + 1; i < config.fields.length; i++) {
-				const field = $(config.fields[i]);
+			for (let i = currentIndex + 1; i < fields.length; i++) {
+				const field = $(fields[i]);
 				if (field && !field.value.trim()) {
-					return config.fields[i];
+					return fields[i];
 				}
 			}
 			
@@ -5356,7 +5359,7 @@
 				fields.push(...FORM_FIELD_CONFIG.search.fields);
 			} else if (tabId === 'tab-add') {
 				fields.push('add-name');
-				fields.push(...FORM_FIELD_CONFIG['add-enemy'].fields);
+				fields.push(...getEnemyFieldsInOrder());
 				fields.push(...FORM_FIELD_CONFIG['add-my'].fields);
 				fields.push('add-comment');
 			} else if (tabId === 'tab-war') {
@@ -5366,6 +5369,25 @@
 			}
 			
 			return fields;
+		}
+
+		// Zwraca pola przeciwnika w kolejności wizualnej (uwzględnia odwrócenie rzędów)
+		function getEnemyFieldsInOrder() {
+			const isReversed = localStorage.getItem('enemyRowsReversed');
+			const reversed = isReversed === null ? true : isReversed === 'true';
+			
+			if (reversed) {
+				// 6-7-8 na górze → kolejność: 6,7,8 → 4,5 → 1,2,3 → Pet
+				return [
+					'add-enemy6', 'add-enemy7', 'add-enemy8',
+					'add-enemy4', 'add-enemy5',
+					'add-enemy1', 'add-enemy2', 'add-enemy3',
+					'add-enemyPet'
+				];
+			} else {
+				// 1-2-3 na górze → standardowa kolejność
+				return FORM_FIELD_CONFIG['add-enemy'].fields;
+			}
 		}
 		
 		// =====================================================
