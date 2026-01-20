@@ -1953,6 +1953,51 @@
         .add-formations-grid.reversed #section-enemy { order: 2; }
         .add-formations-grid.reversed #section-my { order: 0; }
 
+		/* Układ góra-dół zamiast obok siebie */
+		.add-formations-grid.stacked {
+			display: flex !important;
+			flex-direction: column !important;
+			grid-template-columns: none !important;
+		}
+
+		.section-swap-buttons {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.section-swap-buttons .btn-swap-sections,
+		.section-swap-buttons .btn-layout-toggle {
+			min-width: 180px;
+		}
+
+		.btn-layout-toggle {
+			background: var(--bg-input);
+			border: 1px dashed var(--border);
+			color: var(--text-muted);
+			padding: 5px 14px;
+			font-size: 0.7rem;
+			border-radius: 15px;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			opacity: 0.7;
+		}
+
+		.btn-layout-toggle:hover {
+			opacity: 1;
+			background: rgba(212, 175, 55, 0.1);
+			border-color: var(--accent-gold);
+			color: var(--accent-gold);
+		}
+
+		.btn-layout-toggle.active {
+			background: var(--accent-gold);
+			color: var(--bg-dark);
+			border-style: solid;
+			opacity: 1;
+		}
+
         @media (min-width: 768px) {
             .add-formations-grid { 
                 display: grid; 
@@ -3989,12 +4034,17 @@
 				</div>
 			</div>
 				
-				<!-- Przycisk zamiany kolejności -->
-				<div class="section-swap-container">
+			<!-- Przycisk zamiany kolejności sekcji -->
+			<div class="section-swap-container">
+				<div class="section-swap-buttons">
 					<button type="button" class="btn btn-swap-sections" onclick="swapAddFormSections()" title="Zamień kolejność sekcji">
 						🔄 <span data-i18n="add.swapSections">Zamień kolejność</span>
 					</button>
+					<button type="button" class="btn-layout-toggle" id="btn-layout-toggle" onclick="toggleFormLayout()" title="Zmień układ: obok siebie / góra-dół">
+						📐 <span id="layout-toggle-text">Góra-dół</span>
+					</button>
 				</div>
+			</div>
 				
 				<div class="add-form-section" id="section-my">
 					<h3>⚔️ <span data-i18n="add.yourTeam">Twoja kontra</span></h3>
@@ -4842,6 +4892,49 @@
 			const msg = isReversed 
 				? (currentLang === 'en' ? 'Layout: 6-7-8 on top' : 'Układ: 6-7-8 na górze')
 				: (currentLang === 'en' ? 'Layout: 1-2-3 on top' : 'Układ: 1-2-3 na górze');
+			showToast(msg);
+		}
+		
+		// Przełączanie układu: obok siebie vs góra-dół
+		function loadFormLayoutPreference() {
+			const stacked = localStorage.getItem('addFormStacked') === 'true';
+			const container = $('add-form-sections');
+			const btn = $('btn-layout-toggle');
+			const text = $('layout-toggle-text');
+			if (container && stacked) {
+				container.classList.add('stacked');
+			}
+			if (btn && stacked) {
+				btn.classList.add('active');
+			}
+			if (text) {
+				text.textContent = stacked 
+					? (currentLang === 'en' ? 'Side by side' : 'Obok siebie') 
+					: (currentLang === 'en' ? 'Stacked' : 'Góra-dół');
+			}
+		}
+
+		function toggleFormLayout() {
+			const container = $('add-form-sections');
+			const btn = $('btn-layout-toggle');
+			const text = $('layout-toggle-text');
+			if (!container) return;
+			
+			container.classList.toggle('stacked');
+			btn?.classList.toggle('active');
+			
+			const isStacked = container.classList.contains('stacked');
+			localStorage.setItem('addFormStacked', isStacked);
+			
+			if (text) {
+				text.textContent = isStacked 
+					? (currentLang === 'en' ? 'Side by side' : 'Obok siebie') 
+					: (currentLang === 'en' ? 'Stacked' : 'Góra-dół');
+			}
+			
+			const msg = isStacked 
+				? (currentLang === 'en' ? 'Layout: Stacked (top-bottom)' : 'Układ: Góra-dół')
+				: (currentLang === 'en' ? 'Layout: Side by side' : 'Układ: Obok siebie');
 			showToast(msg);
 		}
         
@@ -8444,6 +8537,7 @@
 			initTheme();
 			loadSectionOrderPreference();
 			loadEnemyRowsPreference();
+			loadFormLayoutPreference();
 			setupAutocomplete();
 			
             if (localStorage.getItem('souls_admin') === ADMIN_PASSWORD_HASH) enableAdminMode();
