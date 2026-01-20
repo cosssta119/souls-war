@@ -1973,6 +1973,40 @@
         #tab-add input[type="text"] { padding: 8px 10px; font-size: 0.85rem; }
         #tab-add .autocomplete-wrapper label { font-size: 0.7rem; margin-bottom: 2px; }
 		
+		/* Odwrócony układ rzędów w sekcji przeciwnika */
+		.enemy-rows-container {
+			display: flex;
+			flex-direction: column;
+		}
+
+		.enemy-rows-container.reversed .form-row:nth-child(1) { order: 3; } /* 1-2-3 na dół */
+		.enemy-rows-container.reversed .form-row:nth-child(2) { order: 2; } /* 4-5 środek */
+		.enemy-rows-container.reversed .form-row:nth-child(3) { order: 1; } /* 6-7-8 na górę */
+
+		.btn-flip-rows {
+			background: var(--bg-input);
+			border: 1px dashed var(--border);
+			color: var(--text-muted);
+			padding: 3px 10px;
+			font-size: 0.65rem;
+			border-radius: 12px;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			margin-left: 10px;
+		}
+
+		.btn-flip-rows:hover {
+			background: rgba(212, 175, 55, 0.1);
+			border-color: var(--accent-gold);
+			color: var(--accent-gold);
+		}
+
+		.btn-flip-rows.active {
+			background: var(--accent-gold);
+			color: var(--bg-dark);
+			border-style: solid;
+		}
+		
 		/* Modal edycji */
 		#edit-modal .modal-content {
 			max-width: 500px;
@@ -3928,8 +3962,11 @@
             </div>
             
 			<div class="add-formations-grid" id="add-form-sections">    
-				<div class="add-form-section" id="section-enemy">
-					<h3>👹 <span data-i18n="add.enemyTeam">Skład przeciwnika</span></h3>
+			<div class="add-form-section" id="section-enemy">
+				<h3>👹 <span data-i18n="add.enemyTeam">Skład przeciwnika</span>
+					<button type="button" class="btn-flip-rows" id="btn-flip-enemy-rows" onclick="toggleEnemyRowsOrder()" title="Odwróć kolejność rzędów">🔃 6-7-8 ↑</button>
+				</h3>
+				<div class="enemy-rows-container" id="enemy-rows-container">
 					<div class="form-row">
 						<div class="autocomplete-wrapper"><label>Poz 1 <span class="quick-pick" onclick="openQuickSelect('add-enemy1', 'Przeciwnik Poz 1')">🏷️</span></label><input type="text" id="add-enemy1" data-type="hero"><div class="autocomplete-list" id="list-add-enemy1"></div></div>
 						<div class="autocomplete-wrapper"><label>Poz 2 <span class="quick-pick" onclick="openQuickSelect('add-enemy2', 'Przeciwnik Poz 2')">🏷️</span></label><input type="text" id="add-enemy2" data-type="hero"><div class="autocomplete-list" id="list-add-enemy2"></div></div>
@@ -3944,12 +3981,13 @@
 						<div class="autocomplete-wrapper"><label>Poz 7 <span class="quick-pick" onclick="openQuickSelect('add-enemy7', 'Przeciwnik Poz 7')">🏷️</span></label><input type="text" id="add-enemy7" data-type="hero"><div class="autocomplete-list" id="list-add-enemy7"></div></div>
 						<div class="autocomplete-wrapper"><label>Poz 8 <span class="quick-pick" onclick="openQuickSelect('add-enemy8', 'Przeciwnik Poz 8')">🏷️</span></label><input type="text" id="add-enemy8" data-type="hero"><div class="autocomplete-list" id="list-add-enemy8"></div></div>
 					</div>
-					<div class="autocomplete-wrapper" style="max-width: 200px; margin: 10px auto 0;">
-						<label>Pet <span class="quick-pick" onclick="openQuickSelect('add-enemyPet', 'Przeciwnik Pet')">🏷️</span></label>
-						<input type="text" id="add-enemyPet" data-type="pet">
-						<div class="autocomplete-list" id="list-add-enemyPet"></div>
-					</div>
 				</div>
+				<div class="autocomplete-wrapper" style="max-width: 200px; margin: 10px auto 0;">
+					<label>Pet <span class="quick-pick" onclick="openQuickSelect('add-enemyPet', 'Przeciwnik Pet')">🏷️</span></label>
+					<input type="text" id="add-enemyPet" data-type="pet">
+					<div class="autocomplete-list" id="list-add-enemyPet"></div>
+				</div>
+			</div>
 				
 				<!-- Przycisk zamiany kolejności -->
 				<div class="section-swap-container">
@@ -4774,6 +4812,38 @@
                 : (currentLang === 'en' ? 'Order: Enemy first' : 'Kolejność: Najpierw przeciwnik');
             showToast(msg);
         }
+		
+		// Odwrócenie kolejności rzędów w sekcji przeciwnika
+		function loadEnemyRowsPreference() {
+			const saved = localStorage.getItem('enemyRowsReversed');
+			// Domyślnie true (6-7-8 na górze), chyba że użytkownik wybrał inaczej
+			const reversed = saved === null ? true : saved === 'true';
+			const container = $('enemy-rows-container');
+			const btn = $('btn-flip-enemy-rows');
+			if (container && reversed) {
+				container.classList.add('reversed');
+			}
+			if (btn && reversed) {
+				btn.classList.add('active');
+			}
+		}
+
+		function toggleEnemyRowsOrder() {
+			const container = $('enemy-rows-container');
+			const btn = $('btn-flip-enemy-rows');
+			if (!container) return;
+			
+			container.classList.toggle('reversed');
+			btn?.classList.toggle('active');
+			
+			const isReversed = container.classList.contains('reversed');
+			localStorage.setItem('enemyRowsReversed', isReversed);
+			
+			const msg = isReversed 
+				? (currentLang === 'en' ? 'Layout: 6-7-8 on top' : 'Układ: 6-7-8 na górze')
+				: (currentLang === 'en' ? 'Layout: 1-2-3 on top' : 'Układ: 1-2-3 na górze');
+			showToast(msg);
+		}
         
         // FIREBASE
         try {
@@ -8373,6 +8443,7 @@
 			
 			initTheme();
 			loadSectionOrderPreference();
+			loadEnemyRowsPreference();
 			setupAutocomplete();
 			
             if (localStorage.getItem('souls_admin') === ADMIN_PASSWORD_HASH) enableAdminMode();
