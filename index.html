@@ -3939,11 +3939,11 @@
 
 			<div class="sort-bar">
 				<span class="sort-label" data-i18n="database.sortLabel">Sortuj:</span>
-				<button class="sort-btn active" data-sort="id-asc" onclick="setDbSort('id-asc')" title="ID rosnąco">ID ↑</button>
+				<button class="sort-btn" data-sort="id-asc" onclick="setDbSort('id-asc')" title="ID rosnąco">ID ↑</button>
 				<button class="sort-btn" data-sort="id-desc" onclick="setDbSort('id-desc')" title="ID malejąco">ID ↓</button>
 				<button class="sort-btn" data-sort="name-asc" onclick="setDbSort('name-asc')" title="Nazwa A-Z">A-Z</button>
 				<button class="sort-btn" data-sort="name-desc" onclick="setDbSort('name-desc')" title="Nazwa Z-A">Z-A</button>
-				<button class="sort-btn" data-sort="date-desc" onclick="setDbSort('date-desc')" title="Najnowsze">🕐 ↓</button>
+				<button class="sort-btn active" data-sort="date-desc" onclick="setDbSort('date-desc')" title="Najnowsze">🕐 ↓</button>
 				<button class="sort-btn" data-sort="date-asc" onclick="setDbSort('date-asc')" title="Najstarsze">🕐 ↑</button>
 			</div>
             
@@ -4422,7 +4422,7 @@
         let favorites = JSON.parse(localStorage.getItem('souls_favorites') || '[]');
         let currentLang = localStorage.getItem('souls_lang') || 'pl';
         let currentDbFilter = 'all';
-		let currentDbSort = 'id-asc';
+		let currentDbSort = 'date-desc';
         let quickSelectTarget = null, activeAddField = null, activeSearchField = null, editingFormationId = null;
 		let currentTheme = localStorage.getItem('souls_theme') || 'dark';
 		let isGuildAuthenticated = false;
