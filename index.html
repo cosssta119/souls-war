@@ -603,19 +603,19 @@
             box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
         }
         
-        .autocomplete-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: var(--bg-card);
-            border: 1px solid var(--accent-gold);
-            border-radius: 5px;
-            max-height: 150px;
-            overflow-y: auto;
-            z-index: 50;
-            display: none;
-        }
+		.autocomplete-list {
+			position: absolute;
+			top: 100%;
+			left: 0;
+			right: 0;
+			background: var(--bg-card);
+			border: 1px solid var(--accent-gold);
+			border-radius: 5px;
+			max-height: 250px;
+			overflow-y: auto;
+			z-index: 50;
+			display: none;
+		}
         
         .autocomplete-list.show { display: block; }
         
@@ -2027,6 +2027,24 @@
 		.enemy-rows-container.reversed .form-row:nth-child(1) { order: 3; } /* 1-2-3 na dół */
 		.enemy-rows-container.reversed .form-row:nth-child(2) { order: 2; } /* 4-5 środek */
 		.enemy-rows-container.reversed .form-row:nth-child(3) { order: 1; } /* 6-7-8 na górę */
+
+		/* Odwrócony układ rzędów w wyszukiwarce */
+		.search-rows-container {
+			display: flex;
+			flex-direction: column;
+		}
+
+		.search-rows-container.reversed .form-row:nth-child(1) { order: 3; } /* 1-2-3 na dół */
+		.search-rows-container.reversed .form-row:nth-child(2) { order: 2; } /* 4-5 środek */
+		.search-rows-container.reversed .form-row:nth-child(3) { order: 1; } /* 6-7-8 na górę */
+
+		.search-formation-grid .btn-flip-rows {
+			position: absolute;
+			top: -10px;
+			right: 15px;
+			background: var(--bg-card);
+			z-index: 1;
+		}
 
 		.btn-flip-rows {
 			background: var(--bg-input);
@@ -3859,19 +3877,22 @@
             </div>
             
 			<div class="search-formation-grid">
-				<div class="form-row">
-					<div class="autocomplete-wrapper"><label>Poz 1</label><input type="text" id="search-pos1" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos1"></div></div>
-					<div class="autocomplete-wrapper"><label>Poz 2</label><input type="text" id="search-pos2" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos2"></div></div>
-					<div class="autocomplete-wrapper"><label>Poz 3</label><input type="text" id="search-pos3" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos3"></div></div>
-				</div>
-				<div class="form-row">
-					<div class="autocomplete-wrapper"><label>Poz 4</label><input type="text" id="search-pos4" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos4"></div></div>
-					<div class="autocomplete-wrapper"><label>Poz 5</label><input type="text" id="search-pos5" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos5"></div></div>
-				</div>
-				<div class="form-row">
-					<div class="autocomplete-wrapper"><label>Poz 6</label><input type="text" id="search-pos6" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos6"></div></div>
-					<div class="autocomplete-wrapper"><label>Poz 7</label><input type="text" id="search-pos7" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos7"></div></div>
-					<div class="autocomplete-wrapper"><label>Poz 8</label><input type="text" id="search-pos8" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos8"></div></div>
+				<button type="button" class="btn-flip-rows" id="btn-flip-search-rows" onclick="toggleSearchRowsOrder()" title="Odwróć kolejność rzędów">🔃 6-7-8 ↑</button>
+				<div class="search-rows-container" id="search-rows-container">
+					<div class="form-row">
+						<div class="autocomplete-wrapper"><label>Poz 1</label><input type="text" id="search-pos1" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos1"></div></div>
+						<div class="autocomplete-wrapper"><label>Poz 2</label><input type="text" id="search-pos2" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos2"></div></div>
+						<div class="autocomplete-wrapper"><label>Poz 3</label><input type="text" id="search-pos3" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos3"></div></div>
+					</div>
+					<div class="form-row">
+						<div class="autocomplete-wrapper"><label>Poz 4</label><input type="text" id="search-pos4" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos4"></div></div>
+						<div class="autocomplete-wrapper"><label>Poz 5</label><input type="text" id="search-pos5" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos5"></div></div>
+					</div>
+					<div class="form-row">
+						<div class="autocomplete-wrapper"><label>Poz 6</label><input type="text" id="search-pos6" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos6"></div></div>
+						<div class="autocomplete-wrapper"><label>Poz 7</label><input type="text" id="search-pos7" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos7"></div></div>
+						<div class="autocomplete-wrapper"><label>Poz 8</label><input type="text" id="search-pos8" placeholder="Hero" autocomplete="off" data-type="hero"><div class="autocomplete-list" id="list-search-pos8"></div></div>
+					</div>
 				</div>
 				<div class="autocomplete-wrapper search-pet-wrapper" style="max-width: 200px; margin: 15px auto 0;">
 					<label>🐾 Pet</label>
@@ -4895,6 +4916,55 @@
 			showToast(msg);
 		}
 		
+		// Odwrócenie kolejności rzędów w wyszukiwarce
+		function loadSearchRowsPreference() {
+			const saved = localStorage.getItem('searchRowsReversed');
+			// Domyślnie true (6-7-8 na górze)
+			const reversed = saved === null ? true : saved === 'true';
+			const container = $('search-rows-container');
+			const btn = $('btn-flip-search-rows');
+			if (container && reversed) {
+				container.classList.add('reversed');
+			}
+			if (btn && reversed) {
+				btn.classList.add('active');
+			}
+		}
+
+		function toggleSearchRowsOrder() {
+			const container = $('search-rows-container');
+			const btn = $('btn-flip-search-rows');
+			if (!container) return;
+			
+			container.classList.toggle('reversed');
+			btn?.classList.toggle('active');
+			
+			const isReversed = container.classList.contains('reversed');
+			localStorage.setItem('searchRowsReversed', isReversed);
+			
+			const msg = isReversed 
+				? (currentLang === 'en' ? 'Layout: 6-7-8 on top' : 'Układ: 6-7-8 na górze')
+				: (currentLang === 'en' ? 'Layout: 1-2-3 on top' : 'Układ: 1-2-3 na górze');
+			showToast(msg);
+		}
+
+		// Zwraca pola wyszukiwarki w kolejności wizualnej
+		function getSearchFieldsInOrder() {
+			const saved = localStorage.getItem('searchRowsReversed');
+			const reversed = saved === null ? true : saved === 'true';
+			
+			if (reversed) {
+				return [
+					'search-pos6', 'search-pos7', 'search-pos8',
+					'search-pos4', 'search-pos5',
+					'search-pos1', 'search-pos2', 'search-pos3',
+					'search-pet'
+				];
+			} else {
+				return FORM_FIELD_CONFIG.search.fields;
+			}
+		}
+
 		// Przełączanie układu: obok siebie vs góra-dół
 		function loadFormLayoutPreference() {
 			const stacked = localStorage.getItem('addFormStacked') === 'true';
@@ -5298,8 +5368,15 @@
 			const config = FORM_FIELD_CONFIG[sectionKey];
 			if (!config) return null;
 			
-			// Dla sekcji add-enemy użyj dynamicznej kolejności
-			const fields = (sectionKey === 'add-enemy') ? getEnemyFieldsInOrder() : config.fields;
+			// Dla sekcji z odwracanymi rzędami użyj dynamicznej kolejności
+			let fields;
+			if (sectionKey === 'add-enemy') {
+				fields = getEnemyFieldsInOrder();
+			} else if (sectionKey === 'search') {
+				fields = getSearchFieldsInOrder();
+			} else {
+				fields = config.fields;
+			}
 			
 			const currentIndex = fields.indexOf(currentFieldId);
 			if (currentIndex === -1) return null;
@@ -5356,7 +5433,7 @@
 			const fields = [];
 			
 			if (tabId === 'tab-search') {
-				fields.push(...FORM_FIELD_CONFIG.search.fields);
+				fields.push(...getSearchFieldsInOrder());
 			} else if (tabId === 'tab-add') {
 				fields.push('add-name');
 				fields.push(...getEnemyFieldsInOrder());
@@ -8559,6 +8636,7 @@
 			initTheme();
 			loadSectionOrderPreference();
 			loadEnemyRowsPreference();
+			loadSearchRowsPreference();
 			loadFormLayoutPreference();
 			setupAutocomplete();
 			
