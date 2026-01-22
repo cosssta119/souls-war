@@ -6647,7 +6647,7 @@
                 return heroes;
             };
             
-            // Funkcja sprawdzająca podobieństwo (Jaccard >= 80%)
+            // Funkcja sprawdzająca podobieństwo (Jaccard)
             const isSimilar = (fp1, fp2) => {
                 const arr1 = [...fp1];
                 const intersection = arr1.filter(h => fp2.has(h)).length;
@@ -6655,67 +6655,40 @@
                 return union > 0 && (intersection / union) >= similarityThreshold;
             };
             
-            // Generuj wszystkie kombinacje i oceń konflikty
-            const combinations = [];
-            const fingerprints = []; // Przechowuj fingerprints dla porównań
+            // KROK 1: Generuj WSZYSTKIE kombinacje (bez filtrowania)
+            const allCombinations = [];
             
             for (const m1 of matches1) {
                 for (const m2 of matches2) {
-                    // Pomiń jeśli ta sama formacja
                     if (m1.formation.id === m2.formation.id) continue;
                     
                     for (const m3 of matches3) {
-                        // Pomiń jeśli ta sama formacja
                         if (m1.formation.id === m3.formation.id || m2.formation.id === m3.formation.id) continue;
                         
                         const conflicts = countHeroConflicts([m1, m2, m3]);
                         const totalScore = m1.score + m2.score + m3.score;
                         const totalBaseScore = (m1.baseScore || m1.score) + (m2.baseScore || m2.score) + (m3.baseScore || m3.score);
                         
-                        const combo = {
+                        allCombinations.push({
                             formations: [m1, m2, m3],
                             conflicts: conflicts.total,
                             conflictDetails: conflicts.details,
                             totalScore,
                             totalBaseScore,
                             avgScore: totalBaseScore / 3
-                        };
-                        
-                        // Filtruj podobne jeśli włączone
-                        if (filterSimilar) {
-                            const fp = getComboFingerprint(combo);
-                            let isDuplicate = false;
-                            
-                            // Porównaj tylko z pierwszymi 50 (wystarczy dla top wyników)
-                            for (let i = 0; i < Math.min(fingerprints.length, 50); i++) {
-                                if (isSimilar(fp, fingerprints[i])) {
-                                    isDuplicate = true;
-                                    break;
-                                }
-                            }
-                            
-                            if (!isDuplicate) {
-                                combinations.push(combo);
-                                fingerprints.push(fp);
-                            }
-                        } else {
-                            combinations.push(combo);
-                        }
+                        });
                     }
                 }
             }
             
-			// Sortuj: zbalansowana waga jakości dopasowania vs konflikty
-			// Normalizacja score do 0-100, progresywna kara za konflikty
-			combinations.sort((a, b) => {
+			// KROK 2: Sortuj WSZYSTKIE po jakości (najlepsze na górze)
+			allCombinations.sort((a, b) => {
 				const maxPossibleA = a.formations.reduce((sum, m) => sum + m.maxScore, 0);
 				const maxPossibleB = b.formations.reduce((sum, m) => sum + m.maxScore, 0);
 				
-				// Procent dopasowania (0-100)
 				const percentA = maxPossibleA > 0 ? (a.totalScore / maxPossibleA) * 100 : 0;
 				const percentB = maxPossibleB > 0 ? (b.totalScore / maxPossibleB) * 100 : 0;
 				
-				// Progresywna kara za konflikty: 1 konflikt = -8, 2 = -18, 3 = -30, itd.
 				const conflictPenaltyA = Math.pow(a.conflicts, 1.5) * 8;
 				const conflictPenaltyB = Math.pow(b.conflicts, 1.5) * 8;
 				
@@ -6723,12 +6696,37 @@
 				const scoreB = percentB - conflictPenaltyB;
 				
 				if (Math.abs(scoreA - scoreB) > 0.1) return scoreB - scoreA;
-				// Przy remisie - mniej konfliktów wygrywa
 				return a.conflicts - b.conflicts;
 			});
             
-			// Weź top 20 - pozwól na więcej opcji z konfliktami
-			const top = combinations.slice(0, 20);
+			// KROK 3: Filtruj podobne (jeśli włączone) - z posortowanej listy zostają NAJLEPSZE
+			let top;
+			if (filterSimilar) {
+				top = [];
+				const fingerprints = [];
+				
+				for (const combo of allCombinations) {
+					if (top.length >= 20) break; // Early exit - mamy już 20 unikalnych
+					
+					const fp = getComboFingerprint(combo);
+					let isDuplicate = false;
+					
+					// Porównaj tylko z już zaakceptowanymi (max 20)
+					for (const existingFp of fingerprints) {
+						if (isSimilar(fp, existingFp)) {
+							isDuplicate = true;
+							break;
+						}
+					}
+					
+					if (!isDuplicate) {
+						top.push(combo);
+						fingerprints.push(fp);
+					}
+				}
+			} else {
+				top = allCombinations.slice(0, 20);
+			}
             
             displayWarResults(top, [enemy1, enemy2, enemy3]);
         }
