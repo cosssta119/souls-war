@@ -210,7 +210,7 @@
 		.autocomplete-item.selected { color: var(--accent-gold); }
 		.autocomplete-item .race { font-size: 0.7rem; color: var(--text-muted); margin-left: 5px; }
 
-		/* Kolory ras w autocomplete */
+		/* Kolory ras w autocomplete - wyższa specyficzność */
 		.autocomplete-item.race-dark { color: var(--race-dark); }
 		.autocomplete-item.race-light { color: var(--race-light); }
 		.autocomplete-item.race-human { color: var(--race-human); }
@@ -2301,11 +2301,157 @@
 
 		[data-theme="light"] ::-webkit-scrollbar-track { background: #f0ebe3; }
 		[data-theme="light"] ::-webkit-scrollbar-thumb { background: #c9a227; }
-		
+
 		[data-theme="light"] .btn-compare { background: linear-gradient(135deg, #e65100, #bf360c) !important; }
 		[data-theme="light"] .toast { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
 		[data-theme="light"] .war-result-card.perfect { border-color: #2e7d32; box-shadow: 0 0 10px rgba(46, 125, 50, 0.15); }
 		[data-theme="light"] .compare-card-header { background: #f0ebe3; }
+
+		/* ===== PINEZKI ===== */
+		.btn-pin {
+			background: var(--bg-input);
+			border: 1px dashed var(--accent-gold);
+			color: var(--accent-gold);
+			padding: 4px 10px;
+			font-size: 0.75rem;
+			border-radius: 15px;
+			cursor: pointer;
+			transition: all 0.2s;
+			opacity: 0.7;
+			margin-left: 10px;
+		}
+		.btn-pin:hover {
+			opacity: 1;
+			background: var(--accent-gold);
+			color: var(--bg-dark);
+			border-style: solid;
+		}
+		.btn-pin-large {
+			background: var(--bg-input);
+			border: 1px dashed var(--accent-gold);
+			color: var(--accent-gold);
+			padding: 8px 16px;
+			font-size: 0.85rem;
+			border-radius: 20px;
+			cursor: pointer;
+			transition: all 0.2s;
+		}
+		.btn-pin-large:hover {
+			background: var(--accent-gold);
+			color: var(--bg-dark);
+			border-style: solid;
+		}
+		.war-result-header-left {
+			display: flex;
+			align-items: center;
+			gap: 5px;
+		}
+		
+		/* Kolorowanie inputów według rasy bohatera */
+		input.hero-race-dark { color: var(--race-dark) !important; }
+		input.hero-race-light { color: var(--race-light) !important; }
+		input.hero-race-human { color: var(--race-human) !important; }
+		input.hero-race-fire { color: var(--race-fire) !important; }
+		input.hero-race-elf { color: var(--race-elf) !important; }
+		input.hero-race-undead { color: var(--race-undead) !important; }
+		input.hero-race-pet { color: var(--accent-gold) !important; }
+		
+		/* Kolory ras bohaterów w wynikach */
+		.hero-dark { color: var(--race-dark); }
+		.hero-light { color: var(--race-light); }
+		.hero-human { color: var(--race-human); }
+		.hero-fire { color: var(--race-fire); }
+		.hero-elf { color: var(--race-elf); }
+		.hero-undead { color: var(--race-undead); }
+		.hero-pet { color: var(--accent-gold); }
+		
+		/* Etykiety sekcji w kartach wyników */
+		.war-formation-section {
+			margin-bottom: 10px;
+		}
+		.war-section-label {
+			font-size: 0.65rem;
+			color: var(--text-muted);
+			text-transform: uppercase;
+			letter-spacing: 0.5px;
+			display: block;
+			margin-bottom: 2px;
+		}
+		.enemy-heroes {
+			opacity: 0.8;
+		}
+		.pet-inline {
+			margin-left: 4px;
+			white-space: nowrap;
+		}
+		
+		.pinned-combo-card {
+			background: var(--bg-input);
+			border: 1px solid var(--accent-gold);
+			border-left: 4px solid var(--accent-gold);
+			border-radius: 8px;
+			padding: 12px;
+			margin-bottom: 10px;
+		}
+		.pinned-combo-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 8px;
+		}
+		.pinned-combo-name {
+			font-weight: 600;
+			color: var(--accent-gold);
+			font-size: 0.9rem;
+		}
+		.pinned-combo-time {
+			font-size: 0.7rem;
+			color: var(--text-muted);
+		}
+		.pinned-combo-stats {
+			display: flex;
+			gap: 10px;
+			margin-bottom: 10px;
+		}
+		.pinned-stat {
+			font-size: 0.75rem;
+			padding: 2px 8px;
+			border-radius: 10px;
+			background: rgba(255,255,255,0.1);
+		}
+		.pinned-stat.perfect { background: rgba(76, 175, 80, 0.2); color: #4caf50; }
+		.pinned-stat.good { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
+		.pinned-stat.bad { background: rgba(244, 67, 54, 0.2); color: #f44336; }
+		
+		.pinned-combo-formations {
+			font-size: 0.8rem;
+			color: var(--text-muted);
+			margin-bottom: 10px;
+			padding: 8px;
+			background: rgba(0,0,0,0.2);
+			border-radius: 5px;
+		}
+		.pinned-formation {
+			margin-bottom: 4px;
+		}
+		.pinned-formation:last-child {
+			margin-bottom: 0;
+		}
+		.pinned-combo-actions {
+			display: flex;
+			gap: 8px;
+		}
+		
+		[data-theme="light"] .pinned-combo-card {
+			background: #f8f5f0;
+			border-color: #c9a227;
+		}
+		[data-theme="light"] .pinned-combo-formations {
+			background: rgba(0,0,0,0.05);
+		}
+		[data-theme="light"] .pinned-stat {
+			background: rgba(0,0,0,0.05);
+		}
 
 		/* ===== MEDIA QUERIES ===== */
 		@media (min-width: 768px) {
@@ -2806,6 +2952,15 @@
 			<div id="war-autosave-info" style="text-align: center; font-size: 0.7rem; color: var(--text-muted); margin-top: 8px;"></div>
         </div>
         
+		<!-- Sekcja przypiętych składów -->
+		<div id="pinned-combos-section" class="section" style="display: none;">
+			<h2>📌 Przypięte składy</h2>
+			<div id="pinned-combos-list"></div>
+			<button class="btn btn-small btn-secondary" onclick="clearAllPinnedCombos()" style="margin-top: 10px;">
+				🗑️ Wyczyść wszystkie
+			</button>
+		</div>
+		
         <div id="war-results-section">
             <div class="empty-state">
                 <p>Wpisz składy 3 wrogów i kliknij "Znajdź optymalne składy"</p>
@@ -2820,6 +2975,7 @@
             <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
                 <button class="btn btn-secondary" onclick="switchTab('war')">← Wróć do planera</button>
                 <button class="btn btn-secondary" onclick="exportWarPlanAsText()">📋 Kopiuj tekst</button>
+                <button class="btn btn-pin-large" onclick="pinCurrentWarCombo()" title="Przypnij ten skład">📌 Przypnij</button>
             </div>
             <div id="war-preview-content">
                 <div class="empty-state">
@@ -2906,7 +3062,7 @@
         <button class="nav-btn" onclick="switchTab('view')"><span class="icon">👁️</span><span data-i18n="nav.preview">Podgląd</span></button>
         <button class="nav-btn" onclick="switchTab('add')"><span class="icon">➕</span><span data-i18n="nav.add">Dodaj</span></button>
         <button class="nav-btn admin-only" id="nav-settings" onclick="switchTab('settings')"><span class="icon">⚙️</span><span data-i18n="nav.import">Import</span></button>
-        <button class="nav-btn admin-only" id="nav-war" onclick="switchTab('war')"><span class="icon">⚔️</span><span>Wojna</span></button>
+        <button class="nav-btn" id="nav-war" onclick="switchTab('war')"><span class="icon">⚔️</span><span>Wojna</span></button>
         <button class="nav-btn admin-only" id="nav-admin" onclick="switchTab('admin')"><span class="icon">👑</span><span>Admin</span></button>
     </nav>
     
@@ -3049,6 +3205,7 @@
 		let selectedForCompare = [];
 		let excludedHeroes = JSON.parse(localStorage.getItem('souls_excluded_heroes') || '[]');
 		let hideExcludedResults = localStorage.getItem('souls_hide_excluded') !== 'false'; // domyślnie true
+		let pinnedCombos = JSON.parse(localStorage.getItem('souls_pinned_combos') || '[]');
 		
 		// Nawigacja między formacjami w podglądzie
 		let navFormationIds = []; // Lista ID formacji do nawigowania
@@ -3882,8 +4039,8 @@
 			const results = allFormations.map(f => {
 				const enemyHeroes = f.enemy.filter(h => h).map(normalize);
 				const enemyPet = normalize(f.enemyPet);
-				const matchedHeroes = searchHeroes.filter(sh => enemyHeroes.some(eh => eh === sh || eh.startsWith(sh)));
-				const petMatched = searchPet && (enemyPet === searchPet || enemyPet.startsWith(searchPet));
+				const matchedHeroes = searchHeroes.filter(sh => enemyHeroes.some(eh => heroMatchScore(sh, eh) > 0));
+				const petMatched = searchPet && heroMatchScore(searchPet, enemyPet) > 0;
 				const score = matchedHeroes.length + (petMatched ? 1 : 0);
 				
 				return score > 0 ? { formation: f, matchedHeroes, petMatched, score, maxScore: searchHeroes.length + (searchPet ? 1 : 0) } : null;
@@ -4557,11 +4714,17 @@
 				
 				for (let h = 1; h <= 8; h++) {
 					const el = $(`war-e${e}-h${h}`);
-					if (el) el.value = enemy.heroes[h - 1] || '';
+					if (el) {
+						el.value = enemy.heroes[h - 1] || '';
+						updateInputHeroColor(el);
+					}
 				}
 				
 				const petEl = $(`war-e${e}-pet`);
-				if (petEl) petEl.value = enemy.pet || '';
+				if (petEl) {
+					petEl.value = enemy.pet || '';
+					updateInputHeroColor(petEl, true);
+				}
 			}
 			
 			// Zamknij dropdown
@@ -6218,31 +6381,71 @@
 			};
 		}
         
+        // Funkcja pomocnicza do matchowania bohaterów z wagą
+        function heroMatchScore(search, target) {
+            if (!search || !target) return 0;
+            if (search === target) return 1.0;  // pełne dopasowanie
+            // Częściowe dopasowanie tylko dla min. 3 znaków
+            if (search.length >= 3 && target.startsWith(search)) return 0.9;
+            if (target.length >= 3 && search.startsWith(target)) return 0.9;
+            return 0;
+        }
+
         function findMatchingFormations(enemyTeam, minMatch = 1) {
             const results = [];
             
             allFormations.forEach(f => {
-                const enemyHeroes = f.enemy.filter(h => h).map(normalize);
+                const enemyHeroes = f.enemy.map(h => h ? normalize(h) : '');
                 const enemyPet = normalize(f.enemyPet);
                 
-                // Licz dopasowania
-                let matchedHeroes = enemyTeam.heroes.filter(eh => 
-                    enemyHeroes.some(feh => feh === eh || feh.startsWith(eh) || eh.startsWith(feh))
-                );
+                // Licz dopasowania z uwzględnieniem pozycji
+                let matchedHeroes = [];
+                let positionBonus = 0;
                 
+                // Sprawdź każdego bohatera z wyszukiwania
+                enemyTeam.heroes.forEach((searchHero, searchIdx) => {
+                    if (!searchHero) return;
+                    
+                    let matched = false;
+                    
+                    enemyHeroes.forEach((formationHero, formationIdx) => {
+                        if (!formationHero) return;
+                        
+                        const matchScore = heroMatchScore(searchHero, formationHero);
+                        if (matchScore > 0) {
+                            matched = true;
+                            // Bonus za tę samą pozycję (używamy heroesRaw dla pozycji)
+                            if (enemyTeam.heroesRaw && enemyTeam.heroesRaw[searchIdx]) {
+                                const searchPosIdx = enemyTeam.heroesRaw.findIndex((h, i) => h && normalize(h) === searchHero);
+                                if (searchPosIdx === formationIdx) {
+                                    positionBonus += 0.3; // bonus za dopasowanie pozycji
+                                }
+                            }
+                        }
+                    });
+                    
+                    if (matched) {
+                        matchedHeroes.push(searchHero);
+                    }
+                });
+                
+                // Pet matching z minimalną długością
                 const petMatched = enemyTeam.pet && enemyPet && 
-                    (enemyPet === enemyTeam.pet || enemyPet.startsWith(enemyTeam.pet));
+                    heroMatchScore(enemyTeam.pet, enemyPet) > 0;
                 
-                const score = matchedHeroes.length + (petMatched ? 1 : 0);
+                const baseScore = matchedHeroes.length + (petMatched ? 1 : 0);
+                const score = baseScore + positionBonus; // score z bonusem pozycji
                 const maxScore = enemyTeam.heroes.length + (enemyTeam.pet ? 1 : 0);
                 
-                if (score >= minMatch) {
+                if (baseScore >= minMatch) {
                     results.push({
                         formation: f,
                         score,
+                        baseScore, // wynik bez bonusu (do wyświetlania)
                         maxScore,
                         matchedHeroes,
-                        petMatched
+                        petMatched,
+                        positionBonus
                     });
                 }
             });
@@ -6320,24 +6523,38 @@
                         
                         const conflicts = countHeroConflicts([m1, m2, m3]);
                         const totalScore = m1.score + m2.score + m3.score;
+                        const totalBaseScore = (m1.baseScore || m1.score) + (m2.baseScore || m2.score) + (m3.baseScore || m3.score);
                         
                         combinations.push({
                             formations: [m1, m2, m3],
                             conflicts: conflicts.total,
                             conflictDetails: conflicts.details,
                             totalScore,
-                            avgScore: totalScore / 3
+                            totalBaseScore,
+                            avgScore: totalBaseScore / 3
                         });
                     }
                 }
             }
             
-			// Sortuj: priorytet dla wysokiego score z małą liczbą konfliktów
-			// Wzór: score * 10 - conflicts * 5 (wysoki score jest ważniejszy)
+			// Sortuj: zbalansowana waga jakości dopasowania vs konflikty
+			// Normalizacja score do 0-100, progresywna kara za konflikty
 			combinations.sort((a, b) => {
-				const scoreA = a.totalScore * 10 - a.conflicts * 3;
-				const scoreB = b.totalScore * 10 - b.conflicts * 3;
-				if (scoreA !== scoreB) return scoreB - scoreA;
+				const maxPossibleA = a.formations.reduce((sum, m) => sum + m.maxScore, 0);
+				const maxPossibleB = b.formations.reduce((sum, m) => sum + m.maxScore, 0);
+				
+				// Procent dopasowania (0-100)
+				const percentA = maxPossibleA > 0 ? (a.totalScore / maxPossibleA) * 100 : 0;
+				const percentB = maxPossibleB > 0 ? (b.totalScore / maxPossibleB) * 100 : 0;
+				
+				// Progresywna kara za konflikty: 1 konflikt = -8, 2 = -18, 3 = -30, itd.
+				const conflictPenaltyA = Math.pow(a.conflicts, 1.5) * 8;
+				const conflictPenaltyB = Math.pow(b.conflicts, 1.5) * 8;
+				
+				const scoreA = percentA - conflictPenaltyA;
+				const scoreB = percentB - conflictPenaltyB;
+				
+				if (Math.abs(scoreA - scoreB) > 0.1) return scoreB - scoreA;
 				// Przy remisie - mniej konfliktów wygrywa
 				return a.conflicts - b.conflicts;
 			});
@@ -6362,7 +6579,7 @@
 			
 			// Oblicz statystyki ogólne
 			const perfectCount = results.filter(r => r.conflicts === 0).length;
-			const avgScore = (results.reduce((sum, r) => sum + r.totalScore, 0) / results.length).toFixed(1);
+			const avgScore = (results.reduce((sum, r) => sum + (r.totalBaseScore || r.totalScore), 0) / results.length).toFixed(1);
 			const maxPossibleScore = enemies.reduce((sum, e) => sum + e.heroes.length + (e.pet ? 1 : 0), 0);
 			
 			let html = `
@@ -6403,13 +6620,19 @@
 				
 				// Oblicz ogólną ocenę (0-100%)
 				const maxPossible = combo.formations.reduce((sum, m) => sum + m.maxScore, 0);
-				const scorePercent = maxPossible > 0 ? Math.round((combo.totalScore / maxPossible) * 100) : 0;
+				const totalBase = combo.totalBaseScore || combo.formations.reduce((sum, m) => sum + (m.baseScore || m.score), 0);
+				const scorePercent = maxPossible > 0 ? Math.round((totalBase / maxPossible) * 100) : 0;
 				const scoreClass = scorePercent >= 80 ? 'high' : scorePercent >= 50 ? 'medium' : 'low';
 				
 				html += `
 					<div class="war-result-card ${cardClass}" onclick="showWarPreview(${idx})">
 						<div class="war-result-header">
-							<span class="war-result-rank">#${idx + 1}</span>
+							<div class="war-result-header-left">
+								<span class="war-result-rank">#${idx + 1}</span>
+								<button class="btn-pin" onclick="event.stopPropagation(); pinWarCombo(${idx})" title="Przypnij ten skład">
+									📌
+								</button>
+							</div>
 							<div class="war-result-badges">
 								<span class="war-score-badge ${scoreClass}">${scorePercent}% trafień</span>
 								<span class="war-conflict-badge ${badgeClass}">${badgeText}</span>
@@ -6420,8 +6643,9 @@
 								const f = m.formation;
 								const myHeroes = f.my.filter(h => h);
 								const enemy = enemies[i];
-								const scoreClass = m.score >= 4 ? 'high' : m.score >= 2 ? 'medium' : 'low';
-								const matchPercent = m.maxScore > 0 ? Math.round((m.score / m.maxScore) * 100) : 0;
+								const displayScore = m.baseScore !== undefined ? m.baseScore : Math.floor(m.score);
+								const scoreClass = displayScore >= 4 ? 'high' : displayScore >= 2 ? 'medium' : 'low';
+								const matchPercent = m.maxScore > 0 ? Math.round((displayScore / m.maxScore) * 100) : 0;
 								
 								return `
 									<div class="war-formation-box">
@@ -6429,19 +6653,34 @@
 											⚔️ Walka ${i + 1}
 											<span class="formation-id">#${f.id}</span>
 										</h4>
-										<div class="heroes-list">
-											${myHeroes.slice(0, 5).map(h => {
-												const isConflict = conflictHeroes.has(normalize(h));
-												return isConflict ? `<span class="hero-conflict">${h}</span>` : h;
-											}).join(', ') || '—'}
-											${myHeroes.length > 5 ? '...' : ''}
+										<div class="war-formation-section">
+											<span class="war-section-label">Twój skład:</span>
+											<div class="heroes-list">
+												${myHeroes.slice(0, 5).map(h => {
+													const isConflict = conflictHeroes.has(normalize(h));
+													const heroData = heroes.find(hr => normalize(hr.name) === normalize(h));
+													const raceClass = heroData?.race ? `hero-${heroData.race.toLowerCase()}` : '';
+													return isConflict 
+														? `<span class="hero-conflict">${h}</span>` 
+														: `<span class="${raceClass}">${h}</span>`;
+												}).join(', ') || '—'}${myHeroes.length > 5 ? '...' : ''}${f.myPet ? ` <span class="pet-inline">+ 🐾 <span class="hero-pet">${f.myPet}</span></span>` : ''}
+											</div>
 										</div>
-										${f.myPet ? `<div class="pet-info">🐾 ${f.myPet}</div>` : ''}
+										<div class="war-formation-section">
+											<span class="war-section-label">Wróg z bazy:</span>
+											<div class="heroes-list enemy-heroes">
+												${f.enemy.filter(h => h).slice(0, 5).map(h => {
+													const heroData = heroes.find(hr => normalize(hr.name) === normalize(h));
+													const raceClass = heroData?.race ? `hero-${heroData.race.toLowerCase()}` : '';
+													return `<span class="${raceClass}">${h}</span>`;
+												}).join(', ') || '—'}${f.enemy.filter(h => h).length > 5 ? '...' : ''}${f.enemyPet ? ` <span class="pet-inline">+ 🐾 <span class="hero-pet">${f.enemyPet}</span></span>` : ''}
+											</div>
+										</div>
 										<div class="war-vs-enemy">
 											<div class="war-match-bar">
 												<div class="war-match-fill ${scoreClass}" style="width: ${matchPercent}%"></div>
 											</div>
-											<span class="war-match-score ${scoreClass}">${m.score}/${m.maxScore}</span>
+											<span class="war-match-score ${scoreClass}">${displayScore}/${m.maxScore}</span>
 										</div>
 									</div>`;
 							}).join('')}
@@ -6456,6 +6695,198 @@
 			});
 			
 			$('war-results-section').innerHTML = html;
+		}
+
+		// =====================================================
+		// PINEZKI - ZAPISYWANIE SKŁADÓW
+		// =====================================================
+		
+		function pinWarCombo(comboIndex) {
+			const combo = window.warResults?.[comboIndex];
+			if (!combo) return;
+			
+			const defaultName = `Skład #${pinnedCombos.length + 1}`;
+			const name = prompt('Nazwa dla tego składu:', defaultName);
+			if (name === null) return; // anulowano
+			
+			const pinned = {
+				id: Date.now(),
+				name: name || defaultName,
+				enemies: combo.enemies,
+				formations: combo.formations.map(f => ({
+					formationId: f.formation.id,
+					formationName: f.formation.name,
+					enemy: [...f.formation.enemy],
+					my: [...f.formation.my],
+					enemyPet: f.formation.enemyPet,
+					myPet: f.formation.myPet,
+					score: f.score,
+					baseScore: f.baseScore !== undefined ? f.baseScore : Math.floor(f.score),
+					maxScore: f.maxScore
+				})),
+				conflicts: combo.conflicts,
+				conflictDetails: combo.conflictDetails,
+				totalScore: combo.totalScore,
+				totalBaseScore: combo.totalBaseScore || combo.formations.reduce((sum, f) => sum + (f.baseScore !== undefined ? f.baseScore : Math.floor(f.score)), 0),
+				savedAt: new Date().toISOString()
+			};
+			
+			pinnedCombos.unshift(pinned);
+			if (pinnedCombos.length > 20) pinnedCombos = pinnedCombos.slice(0, 20);
+			localStorage.setItem('souls_pinned_combos', JSON.stringify(pinnedCombos));
+			
+			renderPinnedCombos();
+			showToast('📌 Skład przypięty!');
+		}
+		
+		// Przypnij aktualnie oglądany skład (z podglądu wojny)
+		function pinCurrentWarCombo() {
+			// Jeśli mamy indeks z warResults, użyj standardowej funkcji
+			if (window.currentWarComboIndex !== undefined && window.warResults?.[window.currentWarComboIndex]) {
+				pinWarCombo(window.currentWarComboIndex);
+				return;
+			}
+			
+			// W przeciwnym razie (np. z przypiętego składu) - stwórz nowy pin z currentWarCombo
+			const combo = window.currentWarCombo;
+			if (!combo) {
+				showToast('Brak składu do przypięcia', true);
+				return;
+			}
+			
+			const defaultName = `Skład #${pinnedCombos.length + 1}`;
+			const name = prompt('Nazwa dla tego składu:', defaultName);
+			if (name === null) return;
+			
+			const pinned = {
+				id: Date.now(),
+				name: name || defaultName,
+				enemies: combo.enemies,
+				formations: combo.formations.map(f => ({
+					formationId: f.formation.id,
+					formationName: f.formation.name,
+					enemy: [...f.formation.enemy],
+					my: [...f.formation.my],
+					enemyPet: f.formation.enemyPet,
+					myPet: f.formation.myPet,
+					score: f.score,
+					baseScore: f.baseScore !== undefined ? f.baseScore : Math.floor(f.score),
+					maxScore: f.maxScore
+				})),
+				conflicts: combo.conflicts,
+				conflictDetails: combo.conflictDetails || [],
+				totalScore: combo.totalScore || combo.formations.reduce((sum, f) => sum + f.score, 0),
+				totalBaseScore: combo.formations.reduce((sum, f) => sum + (f.baseScore !== undefined ? f.baseScore : Math.floor(f.score)), 0),
+				savedAt: new Date().toISOString()
+			};
+			
+			pinnedCombos.unshift(pinned);
+			if (pinnedCombos.length > 20) pinnedCombos = pinnedCombos.slice(0, 20);
+			localStorage.setItem('souls_pinned_combos', JSON.stringify(pinnedCombos));
+			
+			renderPinnedCombos();
+			showToast('📌 Skład przypięty!');
+		}
+		
+		function unpinCombo(id) {
+			if (!confirm('Czy na pewno chcesz odpiąć ten skład?')) return;
+			
+			pinnedCombos = pinnedCombos.filter(p => p.id !== id);
+			localStorage.setItem('souls_pinned_combos', JSON.stringify(pinnedCombos));
+			
+			renderPinnedCombos();
+			showToast('Skład odpięty');
+		}
+		
+		function renderPinnedCombos() {
+			const container = $('pinned-combos-list');
+			const section = $('pinned-combos-section');
+			if (!container || !section) return;
+			
+			if (pinnedCombos.length === 0) {
+				section.style.display = 'none';
+				return;
+			}
+			
+			section.style.display = 'block';
+			
+			container.innerHTML = pinnedCombos.map(pinned => {
+				const conflictClass = pinned.conflicts === 0 ? 'perfect' : pinned.conflicts <= 2 ? 'good' : 'bad';
+				const timeAgo = getTimeAgo(new Date(pinned.savedAt));
+				
+				// Oblicz % dopasowania
+				const maxPossible = pinned.formations.reduce((sum, f) => sum + f.maxScore, 0);
+				const totalBase = pinned.totalBaseScore || pinned.formations.reduce((sum, f) => sum + (f.baseScore || f.score), 0);
+				const percent = maxPossible > 0 ? Math.round((totalBase / maxPossible) * 100) : 0;
+				
+				return `
+					<div class="pinned-combo-card">
+						<div class="pinned-combo-header">
+							<span class="pinned-combo-name">📌 ${pinned.name}</span>
+							<span class="pinned-combo-time">${timeAgo}</span>
+						</div>
+						<div class="pinned-combo-stats">
+							<span class="pinned-stat ${conflictClass}">
+								${pinned.conflicts === 0 ? '✓ Idealne' : `${pinned.conflicts} konflikt${pinned.conflicts === 1 ? '' : pinned.conflicts < 5 ? 'y' : 'ów'}`}
+							</span>
+							<span class="pinned-stat">${percent}% trafień</span>
+						</div>
+						<div class="pinned-combo-formations">
+							${pinned.formations.map((f, i) => `
+								<div class="pinned-formation">
+									<strong>Walka ${i+1}</strong> (#${f.formationId}): 
+									${f.my.filter(h => h).slice(0, 4).join(', ')}${f.my.filter(h => h).length > 4 ? '...' : ''}
+								</div>
+							`).join('')}
+						</div>
+						<div class="pinned-combo-actions">
+							<button class="btn btn-small btn-secondary" onclick="loadPinnedCombo(${pinned.id})">
+								👁️ Podgląd
+							</button>
+							<button class="btn btn-small btn-danger" onclick="unpinCombo(${pinned.id})">
+								✕ Odepnij
+							</button>
+						</div>
+					</div>
+				`;
+			}).join('');
+		}
+		
+		function loadPinnedCombo(id) {
+			const pinned = pinnedCombos.find(p => p.id === id);
+			if (!pinned) return;
+			
+			// Przekształć pinnedCombo do formatu window.currentWarCombo
+			window.currentWarCombo = {
+				formations: pinned.formations.map(f => ({
+					formation: {
+						id: f.formationId,
+						name: f.formationName,
+						enemy: f.enemy,
+						my: f.my,
+						enemyPet: f.enemyPet,
+						myPet: f.myPet
+					},
+					score: f.score,
+					maxScore: f.maxScore,
+					matchedHeroes: [] // nie mamy tej informacji
+				})),
+				conflicts: pinned.conflicts,
+				conflictDetails: pinned.conflictDetails || []
+			};
+			
+			currentWarResults = pinned.formations;
+			switchTab('war-preview');
+			renderWarPreview();
+		}
+		
+		function clearAllPinnedCombos() {
+			if (!confirm('Czy na pewno chcesz usunąć WSZYSTKIE przypięte składy?')) return;
+			
+			pinnedCombos = [];
+			localStorage.setItem('souls_pinned_combos', JSON.stringify(pinnedCombos));
+			renderPinnedCombos();
+			showToast('Wszystkie pinezki usunięte');
 		}
         
 		// =====================================================
@@ -6525,17 +6956,48 @@
 					if (el) {
 						el.addEventListener('input', debounce(saveWarPlannerToStorage, 500));
 						el.addEventListener('blur', saveWarPlannerToStorage);
+						el.addEventListener('input', () => updateInputHeroColor(el));
+						el.addEventListener('blur', () => updateInputHeroColor(el));
+						// Koloruj przy starcie jeśli jest wartość
+						updateInputHeroColor(el);
 					}
 				}
 				const petEl = $(`war-e${e}-pet`);
 				if (petEl) {
 					petEl.addEventListener('input', debounce(saveWarPlannerToStorage, 500));
 					petEl.addEventListener('blur', saveWarPlannerToStorage);
+					petEl.addEventListener('input', () => updateInputHeroColor(petEl, true));
+					petEl.addEventListener('blur', () => updateInputHeroColor(petEl, true));
+					// Koloruj przy starcie jeśli jest wartość
+					updateInputHeroColor(petEl, true);
 				}
 			}
 			
 			// Pokaż info o ostatnim zapisie
 			updateWarAutosaveInfo();
+		}
+		
+		// Aktualizuj kolor inputa na podstawie rasy bohatera
+		function updateInputHeroColor(input, isPet = false) {
+			// Usuń wszystkie klasy kolorów
+			input.classList.remove('hero-race-dark', 'hero-race-light', 'hero-race-human', 
+				'hero-race-fire', 'hero-race-elf', 'hero-race-undead', 'hero-race-pet');
+			
+			const value = input.value.trim();
+			if (!value) return;
+			
+			if (isPet) {
+				// Dla petów - zawsze złoty kolor
+				input.classList.add('hero-race-pet');
+				return;
+			}
+			
+			// Znajdź bohatera i jego rasę
+			const hero = heroes.find(h => normalize(h.name) === normalize(value));
+			if (hero && hero.race) {
+				const raceClass = `hero-race-${hero.race.toLowerCase()}`;
+				input.classList.add(raceClass);
+			}
 		}
 
 		// Funkcja debounce - opóźnia wykonanie
@@ -6551,10 +7013,17 @@
 			for (let e = 1; e <= 3; e++) {
 				for (let h = 1; h <= 8; h++) {
 					const el = $(`war-e${e}-h${h}`);
-					if (el) el.value = '';
+					if (el) {
+						el.value = '';
+						el.classList.remove('hero-race-dark', 'hero-race-light', 'hero-race-human', 
+							'hero-race-fire', 'hero-race-elf', 'hero-race-undead', 'hero-race-pet');
+					}
 				}
 				const pet = $(`war-e${e}-pet`);
-				if (pet) pet.value = '';
+				if (pet) {
+					pet.value = '';
+					pet.classList.remove('hero-race-pet');
+				}
 			}
 			$('war-results-section').innerHTML = `
 				<div class="empty-state">
@@ -6571,6 +7040,7 @@
             const combo = window.warResults?.[comboIndex];
             if (!combo) return;
             window.currentWarCombo = combo;
+            window.currentWarComboIndex = comboIndex; // Zapisz indeks dla przypinania
             // Zapisz wyniki dla eksportu
             currentWarResults = combo.formations;
             switchTab('war-preview');
@@ -6646,7 +7116,7 @@
 			});
 			
 			// Oblicz statystyki globalne
-			const totalScore = combo.formations.reduce((sum, m) => sum + m.score, 0);
+			const totalScore = combo.formations.reduce((sum, m) => sum + (m.baseScore !== undefined ? m.baseScore : Math.floor(m.score)), 0);
 			const maxPossibleScore = combo.formations.reduce((sum, m) => sum + m.maxScore, 0);
 			const totalPercent = maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : 0;
 			const totalConflicts = combo.conflicts || 0;
@@ -6683,7 +7153,7 @@
 					<div class="war-preview-per-battle">
 						${combo.formations.map((m, i) => `
 							<span class="war-preview-battle-score">
-								<strong>${t('war.battle')} ${i + 1}:</strong> ${m.score}/${m.maxScore}
+								<strong>${t('war.battle')} ${i + 1}:</strong> ${m.baseScore !== undefined ? m.baseScore : Math.floor(m.score)}/${m.maxScore}
 							</span>
 						`).join('')}
 					</div>
@@ -6718,7 +7188,8 @@
 				// Analiza dopasowania
 				const analysis = analyzeWarMatch(searchedEnemy, f);
 				
-				const scorePercent = match.maxScore > 0 ? Math.round((match.score / match.maxScore) * 100) : 0;
+				const displayScore = match.baseScore !== undefined ? match.baseScore : Math.floor(match.score);
+				const scorePercent = match.maxScore > 0 ? Math.round((displayScore / match.maxScore) * 100) : 0;
 				const scoreClass = scorePercent >= 80 ? 'high' : scorePercent >= 50 ? 'medium' : 'low';
 				const cardClass = analysis.missing.length === 0 ? 'perfect-match' : 'has-missing';
 				
@@ -7098,6 +7569,12 @@
 					targetList.classList.remove('show');
 					selectedIndex = -1;
 					
+					// Aktualizuj kolor inputa dla War Planner
+					if (input.id.startsWith('war-')) {
+						const isPet = input.id.includes('-pet');
+						updateInputHeroColor(input, isPet);
+					}
+					
 					// Walidacja dla formularza dodawania
 					if (input.id.startsWith('add-') && !['add-name', 'add-comment'].includes(input.id)) {
 						setValidation(input, true);
@@ -7346,6 +7823,9 @@
 						
 						// Setup autosave dla War Planner
 						setupWarPlannerAutosave();
+						
+						// Renderuj przypięte składy
+						renderPinnedCombos();
 					});
 					
 		// =====================================================
