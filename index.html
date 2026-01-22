@@ -2934,6 +2934,28 @@
             </div>
             
 			<button class="btn btn-success" onclick="findWarFormations()" style="margin-top: 15px;">🎯 ZNAJDŹ OPTYMALNE SKŁADY</button>
+			<div class="similarity-filter" style="margin-top: 12px; padding: 10px 12px; background: var(--bg-input); border-radius: 8px; border: 1px solid var(--border);">
+				<label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+					<input type="checkbox" id="war-similarity-enabled" onchange="toggleSimilarityFilter(this.checked)" style="width: 16px; height: 16px; cursor: pointer;">
+					<span style="font-size: 0.85rem; color: var(--text-secondary);">🔍 Filtruj podobne składy</span>
+				</label>
+				<div id="similarity-slider-container" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);">
+					<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+						<span style="font-size: 0.8rem; color: var(--text-secondary);">Próg podobieństwa:</span>
+						<span id="similarity-value" style="font-size: 0.85rem; font-weight: 600; color: var(--accent-gold); min-width: 40px; text-align: right;">60%</span>
+					</div>
+					<div style="display: flex; align-items: center; gap: 10px;">
+						<span style="font-size: 0.7rem; color: var(--text-muted);">40%</span>
+						<input type="range" id="war-similarity-threshold" min="40" max="90" value="60" step="10" 
+							style="flex: 1; height: 6px; cursor: pointer; accent-color: var(--accent-gold);"
+							oninput="updateSimilarityLabel(this.value)">
+						<span style="font-size: 0.7rem; color: var(--text-muted);">90%</span>
+					</div>
+					<div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; text-align: center;" id="similarity-hint">
+						Ukrywa kombinacje z &gt;60% tymi samymi bohaterami
+					</div>
+				</div>
+			</div>
 			<div style="display: flex; gap: 10px; margin-top: 8px;">
 				<button class="btn btn-secondary" onclick="clearWarPlanner()" style="flex: 1;">✖ Wyczyść</button>
 				<div class="search-history-wrapper" style="flex: 1;">
@@ -6557,12 +6579,40 @@
             };
         }
         
+		// ===== FILTR PODOBIEŃSTWA =====
+		// DOMYŚLNA WARTOŚĆ SUWAKA PO ZAZNACZENIU CHECKBOX - ZMIEŃ TUTAJ:
+		const SIMILARITY_DEFAULT_VALUE = 60; // Możesz zmienić na 40, 50, 70, 80, 90
+		
+		function toggleSimilarityFilter(enabled) {
+			const container = $('similarity-slider-container');
+			const slider = $('war-similarity-threshold');
+			if (container) {
+				container.style.display = enabled ? 'block' : 'none';
+			}
+			if (enabled && slider) {
+				slider.value = SIMILARITY_DEFAULT_VALUE;
+				updateSimilarityLabel(SIMILARITY_DEFAULT_VALUE);
+			}
+		}
+		
+		function updateSimilarityLabel(value) {
+			const label = $('similarity-value');
+			const hint = $('similarity-hint');
+			if (label) label.textContent = value + '%';
+			if (hint) hint.textContent = `Ukrywa kombinacje z >${value}% tymi samymi bohaterami`;
+		}
+
         function findWarFormations() {
 			// Zapisz do historii
 			saveWarToHistory();
             const enemy1 = getWarEnemyTeam(1);
             const enemy2 = getWarEnemyTeam(2);
             const enemy3 = getWarEnemyTeam(3);
+            
+            // Sprawdź czy filtrowanie włączone i pobierz próg
+            const filterEnabled = $('war-similarity-enabled')?.checked ?? false;
+            const similarityThreshold = filterEnabled ? (parseInt($('war-similarity-threshold')?.value || 60) / 100) : 0;
+            const filterSimilar = filterEnabled && similarityThreshold > 0;
             
             // Sprawdź czy wprowadzono przynajmniej po jednym bohaterze
             if (!enemy1.heroes.length && !enemy2.heroes.length && !enemy3.heroes.length) {
@@ -6588,8 +6638,26 @@
                 return;
             }
             
+            // Funkcja do obliczania "odcisku" kombinacji (zestaw bohaterów)
+            const getComboFingerprint = (combo) => {
+                const heroes = new Set();
+                combo.formations.forEach(m => {
+                    m.formation.my.filter(h => h).forEach(h => heroes.add(normalize(h)));
+                });
+                return heroes;
+            };
+            
+            // Funkcja sprawdzająca podobieństwo (Jaccard >= 80%)
+            const isSimilar = (fp1, fp2) => {
+                const arr1 = [...fp1];
+                const intersection = arr1.filter(h => fp2.has(h)).length;
+                const union = new Set([...fp1, ...fp2]).size;
+                return union > 0 && (intersection / union) >= similarityThreshold;
+            };
+            
             // Generuj wszystkie kombinacje i oceń konflikty
             const combinations = [];
+            const fingerprints = []; // Przechowuj fingerprints dla porównań
             
             for (const m1 of matches1) {
                 for (const m2 of matches2) {
@@ -6604,14 +6672,35 @@
                         const totalScore = m1.score + m2.score + m3.score;
                         const totalBaseScore = (m1.baseScore || m1.score) + (m2.baseScore || m2.score) + (m3.baseScore || m3.score);
                         
-                        combinations.push({
+                        const combo = {
                             formations: [m1, m2, m3],
                             conflicts: conflicts.total,
                             conflictDetails: conflicts.details,
                             totalScore,
                             totalBaseScore,
                             avgScore: totalBaseScore / 3
-                        });
+                        };
+                        
+                        // Filtruj podobne jeśli włączone
+                        if (filterSimilar) {
+                            const fp = getComboFingerprint(combo);
+                            let isDuplicate = false;
+                            
+                            // Porównaj tylko z pierwszymi 50 (wystarczy dla top wyników)
+                            for (let i = 0; i < Math.min(fingerprints.length, 50); i++) {
+                                if (isSimilar(fp, fingerprints[i])) {
+                                    isDuplicate = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!isDuplicate) {
+                                combinations.push(combo);
+                                fingerprints.push(fp);
+                            }
+                        } else {
+                            combinations.push(combo);
+                        }
                     }
                 }
             }
