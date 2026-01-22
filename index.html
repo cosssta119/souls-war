@@ -3206,6 +3206,7 @@
 		let excludedHeroes = JSON.parse(localStorage.getItem('souls_excluded_heroes') || '[]');
 		let hideExcludedResults = localStorage.getItem('souls_hide_excluded') !== 'false'; // domyślnie true
 		let pinnedCombos = JSON.parse(localStorage.getItem('souls_pinned_combos') || '[]');
+		let currentFormation = null;
 		
 		// Nawigacja między formacjami w podglądzie
 		let navFormationIds = []; // Lista ID formacji do nawigowania
@@ -5416,6 +5417,7 @@
         
 		function showFormation(id) {
 			const f = allFormations.find(x => x.id === id);
+			currentFormation = f;
 			if (!f) {
 				$('formation-display').innerHTML = `<div class="empty-state"><p>${t('preview.notFound')} #${id}</p></div>`;
 				return;
@@ -5447,6 +5449,7 @@
 					<div class="preview-header">
 						<div class="preview-title"><span class="preview-id">#${f.id}</span>${f.name}<span class="formation-type-badge ${f.isBase ? 'base' : 'user'}">${t(f.isBase ? 'badge.base' : 'badge.user')}</span></div>
 						<div class="preview-actions">
+							<button class="btn btn-small btn-secondary" onclick="exportSingleFormationAsText()">📋 Kopiuj skład tekstowo</button>
 							<button class="btn btn-small btn-secondary" onclick="copyFormationLink(${id})" title="Kopiuj link">🔗</button>
 							${isAdmin ? `<button class="btn btn-small btn-admin" onclick="openEditModal(${id})">✏️</button>` : ''}
 							<button class="btn btn-small ${isFav ? 'btn-favorite-active' : 'btn-secondary'}" onclick="toggleFavoritePreview(${id})">${isFav ? '⭐' : '☆'}</button>
@@ -5727,6 +5730,48 @@
                 showToast(currentLang === 'pl' ? '📋 Skład skopiowany do schowka!' : '📋 Formation copied to clipboard!');
             });
         }
+		
+		function exportSingleFormationAsText() {
+			const f = currentFormation;
+			if (!f) {
+				showToast('Najpierw wybierz formację', true);
+				return;
+			}
+			
+			const myHeroes = f.my || [];
+			const myPet = f.myPet || '';
+			
+			let text = `⚔️ SKŁAD #${f.id}\n`;
+			text += '════════════════════════════\n\n';
+			
+			// Formatowanie 3-2-3
+			const row1 = [myHeroes[0] || '—', myHeroes[1] || '—', myHeroes[2] || '—'];
+			const row2 = [myHeroes[3] || '—', myHeroes[4] || '—'];
+			const row3 = [myHeroes[5] || '—', myHeroes[6] || '—', myHeroes[7] || '—'];
+			
+			const maxLen = Math.max(...row1.map(h => h.length), ...row2.map(h => h.length), ...row3.map(h => h.length), 8);
+			const pad = (str) => str.padEnd(maxLen, ' ');
+			
+			text += `${pad(row1[0])}  ${pad(row1[1])}  ${row1[2]}\n`;
+			text += `   ${pad(row2[0])}  ${row2[1]}\n`;
+			text += `${pad(row3[0])}  ${pad(row3[1])}  ${row3[2]}\n`;
+			
+			if (myPet) {
+				text += `\n🐾 Pet: ${myPet}\n`;
+			}
+			
+			navigator.clipboard.writeText(text).then(() => {
+				showToast('📋 Skład skopiowany!');
+			}).catch(() => {
+				const textarea = document.createElement('textarea');
+				textarea.value = text;
+				document.body.appendChild(textarea);
+				textarea.select();
+				document.execCommand('copy');
+				document.body.removeChild(textarea);
+				showToast('📋 Skład skopiowany!');
+			});
+		}
         
         function collectWarPlanData() {
             // Zbierz dane o wrogach z inputów
