@@ -2970,6 +2970,27 @@
 					</div>
 				</div>
 			</div>
+			<!-- Sekcja wykluczania bohaterów dla planera wojny -->
+			<div class="war-exclude-section" style="margin-top: 12px; padding: 10px 12px; background: var(--bg-input); border-radius: 8px; border: 1px solid var(--border);">
+				<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+					<span style="font-size: 0.85rem; color: var(--text-secondary);">🚫 Wyklucz bohaterów z kontr</span>
+					<span id="war-excluded-count" style="font-size: 0.75rem; color: #f44336; font-weight: 600;">(0)</span>
+				</div>
+				<div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+					<div class="autocomplete-wrapper" style="flex: 1; margin-bottom: 0;">
+						<input type="text" id="war-excluded-input" data-type="hero" placeholder="Dodaj bohatera do wykluczenia..." autocomplete="off" style="font-size: 0.8rem;">
+						<div class="autocomplete-list" id="list-war-excluded-input"></div>
+					</div>
+					<button class="btn btn-small btn-secondary" onclick="clearWarExcludedHeroes()" title="Wyczyść wszystkich" style="padding: 6px 10px;">🗑️</button>
+				</div>
+				<div id="war-excluded-chips" style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; padding: 6px; background: rgba(0,0,0,0.2); border-radius: 6px; margin-bottom: 8px;">
+					<span id="war-excluded-empty" style="color: var(--text-muted); font-size: 0.75rem; font-style: italic; width: 100%; text-align: center;">Brak wykluczonych</span>
+				</div>
+				<label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.8rem; color: var(--text-secondary); padding: 6px 8px; background: rgba(0,0,0,0.15); border-radius: 6px;">
+					<input type="checkbox" id="war-hide-excluded" checked onchange="onWarExcludeSettingChange()" style="width: 14px; height: 14px; cursor: pointer; accent-color: #f44336;">
+					<span>Ukryj formacje z wykluczonymi bohaterami</span>
+				</label>
+			</div>
 			<div style="display: flex; gap: 10px; margin-top: 8px;">
 				<button class="btn btn-secondary" onclick="clearWarPlanner()" style="flex: 1;">✖ Wyczyść</button>
 				<div class="search-history-wrapper" style="flex: 1;">
@@ -6626,6 +6647,111 @@
 			if (hint) hint.textContent = `Ukrywa kombinacje z >${value}% tymi samymi bohaterami`;
 		}
 
+		// ===== WYKLUCZANIE BOHATERÓW W PLANERZE WOJNY =====
+		let warExcludedHeroes = JSON.parse(localStorage.getItem('souls_war_excluded_heroes') || '[]');
+		let warHideExcluded = localStorage.getItem('souls_war_hide_excluded') !== 'false'; // domyślnie true
+		
+		function initWarExcluded() {
+			renderWarExcludedChips();
+			updateWarExcludedCount();
+			const checkbox = $('war-hide-excluded');
+			if (checkbox) checkbox.checked = warHideExcluded;
+			
+			// Obsługa inputa
+			const input = $('war-excluded-input');
+			if (input) {
+				input.addEventListener('keydown', (e) => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						addWarExcludedHero(input.value.trim());
+						input.value = '';
+					}
+				});
+			}
+		}
+		
+		function addWarExcludedHero(heroName) {
+			if (!heroName) return;
+			
+			const normalizedName = normalize(heroName);
+			const hero = heroes.find(h => normalize(h.name) === normalizedName);
+			const finalName = hero ? hero.name : heroName;
+			
+			if (warExcludedHeroes.some(h => normalize(h) === normalizedName)) {
+				showToast('Ten bohater jest już wykluczony', true);
+				return;
+			}
+			
+			warExcludedHeroes.push(finalName);
+			localStorage.setItem('souls_war_excluded_heroes', JSON.stringify(warExcludedHeroes));
+			renderWarExcludedChips();
+			updateWarExcludedCount();
+			showToast(`🚫 ${finalName} wykluczony z planera`);
+		}
+		
+		function removeWarExcludedHero(heroName) {
+			const normalizedName = normalize(heroName);
+			warExcludedHeroes = warExcludedHeroes.filter(h => normalize(h) !== normalizedName);
+			localStorage.setItem('souls_war_excluded_heroes', JSON.stringify(warExcludedHeroes));
+			renderWarExcludedChips();
+			updateWarExcludedCount();
+		}
+		
+		function clearWarExcludedHeroes() {
+			if (!warExcludedHeroes.length) return;
+			if (!confirm('Czy na pewno wyczyścić wszystkich wykluczonych?')) return;
+			warExcludedHeroes = [];
+			localStorage.setItem('souls_war_excluded_heroes', JSON.stringify(warExcludedHeroes));
+			renderWarExcludedChips();
+			updateWarExcludedCount();
+			showToast('Lista wykluczonych wyczyszczona');
+		}
+		
+		function renderWarExcludedChips() {
+			const container = $('war-excluded-chips');
+			const emptyMsg = $('war-excluded-empty');
+			if (!container) return;
+			
+			if (!warExcludedHeroes.length) {
+				container.innerHTML = '<span id="war-excluded-empty" style="color: var(--text-muted); font-size: 0.75rem; font-style: italic; width: 100%; text-align: center;">Brak wykluczonych</span>';
+				return;
+			}
+			
+			container.innerHTML = warExcludedHeroes.map(hero => `
+				<span class="excluded-chip" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: rgba(244, 67, 54, 0.2); border: 1px solid rgba(244, 67, 54, 0.4); border-radius: 12px; font-size: 0.75rem; color: #f44336;">
+					${hero}
+					<button onclick="removeWarExcludedHero('${hero.replace(/'/g, "\\'")}')" style="background: none; border: none; color: #f44336; cursor: pointer; font-size: 0.8rem; padding: 0 2px; opacity: 0.7;" title="Usuń">✕</button>
+				</span>
+			`).join('');
+		}
+		
+		function updateWarExcludedCount() {
+			const countEl = $('war-excluded-count');
+			if (countEl) countEl.textContent = `(${warExcludedHeroes.length})`;
+		}
+		
+		function onWarExcludeSettingChange() {
+			warHideExcluded = $('war-hide-excluded')?.checked ?? true;
+			localStorage.setItem('souls_war_hide_excluded', warHideExcluded);
+		}
+		
+		function isWarFormationExcluded(formation) {
+			if (!warExcludedHeroes.length) return { excluded: false, heroes: [] };
+			
+			const myHeroes = (formation.my || []).filter(h => h).map(h => normalize(h));
+			const myPet = formation.myPet ? normalize(formation.myPet) : null;
+			
+			const excludedFound = warExcludedHeroes.filter(ex => {
+				const normalizedEx = normalize(ex);
+				return myHeroes.includes(normalizedEx) || (myPet && myPet === normalizedEx);
+			});
+			
+			return {
+				excluded: excludedFound.length > 0,
+				heroes: excludedFound
+			};
+		}
+
         function findWarFormations() {
 			// Zapisz do historii
 			saveWarToHistory();
@@ -6764,12 +6890,44 @@
 				return;
 			}
 			
+			// Filtruj wyniki według wykluczonych bohaterów
+			let displayedResults = results;
+			let hiddenCount = 0;
+			
+			if (warExcludedHeroes.length > 0) {
+				if (warHideExcluded) {
+					// Ukryj formacje z wykluczonymi
+					displayedResults = results.filter(combo => {
+						// Sprawdź wszystkie 3 formacje w kombinacji
+						for (const m of combo.formations) {
+							if (isWarFormationExcluded(m.formation).excluded) {
+								return false;
+							}
+						}
+						return true;
+					});
+					hiddenCount = results.length - displayedResults.length;
+				}
+			}
+			
+			if (!displayedResults.length) {
+				$('war-results-section').innerHTML = `
+					<div class="empty-state">
+						<p>❌ Nie znaleziono kombinacji bez wykluczonych bohaterów.</p>
+						<p style="font-size:0.8rem;color:var(--text-muted);margin-top:10px;">
+							${hiddenCount} kombinacji ukrytych z powodu wykluczonych bohaterów.<br>
+							Odznacz "Ukryj formacje z wykluczonymi" aby je zobaczyć.
+						</p>
+					</div>`;
+				return;
+			}
+			
 			// Zapisz wyniki i enemies do globalnej zmiennej
-			window.warResults = results.map(r => ({ ...r, enemies }));
+			window.warResults = displayedResults.map(r => ({ ...r, enemies }));
 			
 			// Oblicz statystyki ogólne
-			const perfectCount = results.filter(r => r.conflicts === 0).length;
-			const avgScore = (results.reduce((sum, r) => sum + (r.totalBaseScore || r.totalScore), 0) / results.length).toFixed(1);
+			const perfectCount = displayedResults.filter(r => r.conflicts === 0).length;
+			const avgScore = (displayedResults.reduce((sum, r) => sum + (r.totalBaseScore || r.totalScore), 0) / displayedResults.length).toFixed(1);
 			const maxPossibleScore = enemies.reduce((sum, e) => sum + e.heroes.length + (e.pet ? 1 : 0), 0);
 			
 			let html = `
@@ -6777,7 +6935,7 @@
 					<h3>🎯 Propozycje składów</h3>
 					<div class="war-summary-stats">
 						<div class="war-stat">
-							<span class="war-stat-value">${results.length}</span>
+							<span class="war-stat-value">${displayedResults.length}${hiddenCount > 0 ? ` <span style="font-size:0.7rem;color:#f44336;">(+${hiddenCount} 🚫)</span>` : ''}</span>
 							<span class="war-stat-label">kombinacji</span>
 						</div>
 						<div class="war-stat">
@@ -6799,7 +6957,21 @@
 					Kliknij w propozycję aby zobaczyć szczegółowy podgląd
 				</p>`;
 			
-			results.forEach((combo, idx) => {
+			displayedResults.forEach((combo, idx) => {
+				// Sprawdź czy ma wykluczone (dla trybu "pokaż wszystkie")
+				let hasExcluded = false;
+				let excludedInCombo = [];
+				if (!warHideExcluded && warExcludedHeroes.length > 0) {
+					for (const m of combo.formations) {
+						const check = isWarFormationExcluded(m.formation);
+						if (check.excluded) {
+							hasExcluded = true;
+							excludedInCombo.push(...check.heroes);
+						}
+					}
+					excludedInCombo = [...new Set(excludedInCombo)]; // Unikalne
+				}
+				
 				const cardClass = combo.conflicts === 0 ? 'perfect' : combo.conflicts <= 2 ? 'good' : 'conflicts';
 				const badgeClass = combo.conflicts === 0 ? 'perfect' : combo.conflicts <= 2 ? 'good' : 'bad';
 				const badgeText = combo.conflicts === 0 ? '✓ IDEALNE' : `${combo.conflicts} konflikt${combo.conflicts === 1 ? '' : combo.conflicts < 5 ? 'y' : 'ów'}`;
@@ -6880,6 +7052,10 @@
 								⚠️ <strong>Konflikty:</strong> ${combo.conflictDetails.map(c => 
 									`<span class="conflict-hero">${c.hero}</span>`
 								).join(', ')}
+							</div>` : ''}
+						${hasExcluded ? `
+							<div class="war-excluded-summary" style="margin-top: 8px; padding: 6px 10px; background: rgba(244, 67, 54, 0.1); border: 1px solid rgba(244, 67, 54, 0.3); border-radius: 6px; font-size: 0.75rem; color: #f44336;">
+								🚫 <strong>Wykluczone:</strong> ${excludedInCombo.join(', ')}
 							</div>` : ''}
 					</div>`;
 			});
@@ -7955,6 +8131,9 @@
 			if (excludedSection) {
 				excludedSection.style.display = 'block';
 			}
+			
+			// Inicjalizacja wykluczonych dla planera wojny
+			initWarExcluded();
 			
 			// Inicjalizacja ostatnio przeglądanych
 			renderRecentlyViewed();
