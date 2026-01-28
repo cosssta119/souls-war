@@ -589,6 +589,20 @@
 			border-radius: 3px;
 		}
 		
+		.result-my-heroes {
+			margin-top: 4px;
+			padding-top: 4px;
+			border-top: 1px dashed var(--border);
+		}
+		.my-hero {
+			color: var(--accent-gold);
+			font-weight: 500;
+		}
+		.my-pet {
+			color: var(--accent-gold);
+			font-weight: 500;
+		}
+		
 		.result-missing { 
 			font-size: 0.7rem; 
 			color: #ef5350; 
@@ -4457,6 +4471,7 @@
 							</div>
 							<div class="result-name">${f.name}</div>
 							<div class="result-heroes">${t('search.enemy')}: ${enemyDisplay} + ${petDisplay}</div>
+							<div class="result-heroes result-my-heroes">⚔️ Kontra: ${f.my.filter(h => h).map(h => `<span class="my-hero">${h}</span>`).join(', ') || '—'}${f.myPet ? ` + <span class="my-pet">${f.myPet}</span>` : ''}</div>
 							${missingHeroes.length ? `<div class="result-missing">❌ ${t('search.missing')}: ${missingHeroes.join(', ')}</div>` : ''}
 							${commentMatchInfo}
 							${hasExcluded ? `<div class="result-excluded-heroes">🚫 ${t('exclude.has')}: ${exclusionCheck.heroes.join(', ')}</div>` : ''}
