@@ -4503,22 +4503,28 @@
 		}
 
 		function saveSearchToHistory() {
-			const heroes = getFieldValues('search-pos', 8).filter(v => v);
+			// Zapisz PEŁNĄ tablicę 8 pozycji (z pustymi stringami)
+			const heroes = [];
+			for (let i = 1; i <= 8; i++) {
+				heroes.push($(`search-pos${i}`)?.value.trim() || '');
+			}
 			const pet = $('search-pet').value.trim();
 			
 			// Nie zapisuj pustych wyszukiwań
-			if (!heroes.length && !pet) return;
+			const filledHeroes = heroes.filter(v => v);
+			if (!filledHeroes.length && !pet) return;
 			
 			const entry = {
-				heroes: heroes,
+				heroes: heroes, // Pełna tablica z pozycjami
 				pet: pet,
 				timestamp: new Date().toISOString()
 			};
 			
-			// Sprawdź czy takie samo wyszukiwanie już istnieje
-			const existingIndex = searchHistory.findIndex(h => 
-				JSON.stringify(h.heroes.sort()) === JSON.stringify(heroes.sort()) && h.pet === pet
-			);
+			// Sprawdź czy takie samo wyszukiwanie już istnieje (porównuj tylko wypełnione)
+			const existingIndex = searchHistory.findIndex(h => {
+				const existingFilled = (h.heroes || []).filter(v => v).sort();
+				return JSON.stringify(existingFilled) === JSON.stringify(filledHeroes.sort()) && h.pet === pet;
+			});
 			
 			// Jeśli istnieje, usuń stare
 			if (existingIndex > -1) {
@@ -4545,7 +4551,9 @@
 			}
 			
 			list.innerHTML = searchHistory.map((entry, idx) => {
-				const heroesText = entry.heroes.length ? entry.heroes.join(', ') : '—';
+				// Wyświetl tylko wypełnionych bohaterów (dla czytelności)
+				const filledHeroes = (entry.heroes || []).filter(v => v);
+				const heroesText = filledHeroes.length ? filledHeroes.join(', ') : '—';
 				const petText = entry.pet ? `🐾 ${entry.pet}` : '';
 				const timeAgo = getTimeAgo(new Date(entry.timestamp));
 				
@@ -4570,12 +4578,13 @@
 			}
 			$('search-pet').value = '';
 			
-			// Wypełnij bohaterami
-			entry.heroes.forEach((hero, i) => {
-				if (i < 8) {
-					$(`search-pos${i + 1}`).value = hero;
+			// Wypełnij bohaterami na WŁAŚCIWYCH pozycjach
+			const heroes = entry.heroes || [];
+			for (let i = 0; i < 8; i++) {
+				if (heroes[i]) {
+					$(`search-pos${i + 1}`).value = heroes[i];
 				}
-			});
+			}
 			
 			// Wypełnij peta
 			if (entry.pet) {
@@ -8113,3 +8122,4 @@
     </script>
 </body>
 </html>
+
