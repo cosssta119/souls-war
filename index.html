@@ -6836,8 +6836,9 @@
 				const maxPossibleA = a.formations.reduce((sum, m) => sum + m.maxScore, 0);
 				const maxPossibleB = b.formations.reduce((sum, m) => sum + m.maxScore, 0);
 				
-				const percentA = maxPossibleA > 0 ? (a.totalScore / maxPossibleA) * 100 : 0;
-				const percentB = maxPossibleB > 0 ? (b.totalScore / maxPossibleB) * 100 : 0;
+				// Używamy totalBaseScore (bez bonusu za pozycję) - to samo co wyświetlane procenty
+				const percentA = maxPossibleA > 0 ? (a.totalBaseScore / maxPossibleA) * 100 : 0;
+				const percentB = maxPossibleB > 0 ? (b.totalBaseScore / maxPossibleB) * 100 : 0;
 				
 				const conflictPenaltyA = Math.pow(a.conflicts, 1.5) * 8;
 				const conflictPenaltyB = Math.pow(b.conflicts, 1.5) * 8;
