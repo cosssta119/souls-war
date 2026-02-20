@@ -4621,6 +4621,23 @@
 			'war-e3': {
 				fields: ['war-e3-h1', 'war-e3-h2', 'war-e3-h3', 'war-e3-h4', 'war-e3-h5', 'war-e3-h6', 'war-e3-h7', 'war-e3-h8', 'war-e3-pet'],
 				tabId: 'tab-war'
+			},
+			// Kreator - skład 1
+			'kreator-1': {
+				fields: ['kreator-1-h1', 'kreator-1-h2', 'kreator-1-h3', 'kreator-1-h4', 'kreator-1-h5', 'kreator-1-h6', 'kreator-1-h7', 'kreator-1-h8', 'kreator-1-pet'],
+				nextSection: 'kreator-2',
+				tabId: 'tab-kreator'
+			},
+			// Kreator - skład 2
+			'kreator-2': {
+				fields: ['kreator-2-h1', 'kreator-2-h2', 'kreator-2-h3', 'kreator-2-h4', 'kreator-2-h5', 'kreator-2-h6', 'kreator-2-h7', 'kreator-2-h8', 'kreator-2-pet'],
+				nextSection: 'kreator-3',
+				tabId: 'tab-kreator'
+			},
+			// Kreator - skład 3
+			'kreator-3': {
+				fields: ['kreator-3-h1', 'kreator-3-h2', 'kreator-3-h3', 'kreator-3-h4', 'kreator-3-h5', 'kreator-3-h6', 'kreator-3-h7', 'kreator-3-h8', 'kreator-3-pet'],
+				tabId: 'tab-kreator'
 			}
 		};
 
@@ -4634,6 +4651,9 @@
 			if (fieldId.startsWith('war-e1')) return 'war-e1';
 			if (fieldId.startsWith('war-e2')) return 'war-e2';
 			if (fieldId.startsWith('war-e3')) return 'war-e3';
+			if (fieldId.startsWith('kreator-1')) return 'kreator-1';
+			if (fieldId.startsWith('kreator-2')) return 'kreator-2';
+			if (fieldId.startsWith('kreator-3')) return 'kreator-3';
 			return null;
 		}
 
@@ -8654,8 +8674,8 @@
 					targetList.classList.remove('show');
 					selectedIndex = -1;
 					
-					// Aktualizuj kolor inputa dla War Planner
-					if (input.id.startsWith('war-')) {
+					// Aktualizuj kolor inputa dla War Planner i Kreator
+					if (input.id.startsWith('war-') || input.id.startsWith('kreator-')) {
 						const isPet = input.id.includes('-pet');
 						updateInputHeroColor(input, isPet);
 					}
@@ -8678,9 +8698,15 @@
 								const nextField = $(nextFieldId);
 								if (nextField) {
 									nextField.focus();
-									// Aktualizuj activeAddField jeśli to formularz dodawania
+									// Aktualizuj aktywne pole w zależności od sekcji
 									if (input.id.startsWith('add-')) {
 										activeAddField = nextFieldId;
+									}
+									if (input.id.startsWith('kreator-')) {
+										activeKreatorField = nextFieldId;
+									}
+									if (input.id.startsWith('war-')) {
+										activeWarField = nextFieldId;
 									}
 								}
 							}, 50);
@@ -8696,8 +8722,14 @@
 						updateAddFormTagsSelection();
 					}
 					if (input.id.startsWith('search-')) updateSearchTagsSelection();
-					if (input.id.startsWith('war-')) updateWarTagsSelection();
-					if (input.id.startsWith('kreator-')) updateKreatorTagsSelection();
+					if (input.id.startsWith('war-')) {
+						updateWarTagsSelection();
+						updateInputHeroColor(input, input.id.includes('-pet'));
+					}
+					if (input.id.startsWith('kreator-')) {
+						updateKreatorTagsSelection();
+						updateInputHeroColor(input, input.id.includes('-pet'));
+					}
 					
 					const val = input.value.toLowerCase();
 					if (val.length < 1) { targetList.classList.remove('show'); return; }
@@ -9031,3 +9063,4 @@
     </script>
 </body>
 </html>
+
