@@ -3064,25 +3064,28 @@
 				</div>
 			</div>
 			<!-- Sekcja wykluczania bohaterów dla planera wojny -->
-			<div class="war-exclude-section" style="margin-top: 12px; padding: 10px 12px; background: var(--bg-input); border-radius: 8px; border: 1px solid var(--border);">
-				<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-					<span style="font-size: 0.85rem; color: var(--text-secondary);">🚫 Wyklucz bohaterów z kontr</span>
+			<div class="war-exclude-section" style="margin-top: 12px; padding: 0; background: var(--bg-input); border-radius: 8px; border: 1px solid var(--border); overflow: hidden;">
+				<div class="excluded-header" onclick="toggleWarExcludedSection()" style="padding: 10px 12px; margin: 0;">
+					<span class="excluded-toggle-icon" id="war-excluded-toggle-icon">▶</span>
+					<span>🚫 Wyklucz bohaterów z kontr</span>
 					<span id="war-excluded-count" style="font-size: 0.75rem; color: #f44336; font-weight: 600;">(0)</span>
 				</div>
-				<div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
-					<div class="autocomplete-wrapper" style="flex: 1; margin-bottom: 0;">
-						<input type="text" id="war-excluded-input" data-type="hero" placeholder="Dodaj bohatera do wykluczenia..." autocomplete="off" style="font-size: 0.8rem;">
-						<div class="autocomplete-list" id="list-war-excluded-input"></div>
+				<div class="excluded-content" id="war-excluded-content" style="padding: 0 12px 12px 12px;">
+					<div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+						<div class="autocomplete-wrapper" style="flex: 1; margin-bottom: 0;">
+							<input type="text" id="war-excluded-input" data-type="hero" placeholder="Dodaj bohatera do wykluczenia..." autocomplete="off" style="font-size: 0.8rem;">
+							<div class="autocomplete-list" id="list-war-excluded-input"></div>
+						</div>
+						<button class="btn btn-small btn-secondary" onclick="clearWarExcludedHeroes()" title="Wyczyść wszystkich" style="padding: 6px 10px;">🗑️</button>
 					</div>
-					<button class="btn btn-small btn-secondary" onclick="clearWarExcludedHeroes()" title="Wyczyść wszystkich" style="padding: 6px 10px;">🗑️</button>
+					<div id="war-excluded-chips" style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; padding: 6px; background: rgba(0,0,0,0.2); border-radius: 6px; margin-bottom: 8px;">
+						<span id="war-excluded-empty" style="color: var(--text-muted); font-size: 0.75rem; font-style: italic; width: 100%; text-align: center;">Brak wykluczonych</span>
+					</div>
+					<label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.8rem; color: var(--text-secondary); padding: 6px 8px; background: rgba(0,0,0,0.15); border-radius: 6px;">
+						<input type="checkbox" id="war-hide-excluded" checked onchange="onWarExcludeSettingChange()" style="width: 14px; height: 14px; cursor: pointer; accent-color: #f44336;">
+						<span>Ukryj formacje z wykluczonymi bohaterami</span>
+					</label>
 				</div>
-				<div id="war-excluded-chips" style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; padding: 6px; background: rgba(0,0,0,0.2); border-radius: 6px; margin-bottom: 8px;">
-					<span id="war-excluded-empty" style="color: var(--text-muted); font-size: 0.75rem; font-style: italic; width: 100%; text-align: center;">Brak wykluczonych</span>
-				</div>
-				<label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.8rem; color: var(--text-secondary); padding: 6px 8px; background: rgba(0,0,0,0.15); border-radius: 6px;">
-					<input type="checkbox" id="war-hide-excluded" checked onchange="onWarExcludeSettingChange()" style="width: 14px; height: 14px; cursor: pointer; accent-color: #f44336;">
-					<span>Ukryj formacje z wykluczonymi bohaterami</span>
-				</label>
 			</div>
 			<div style="display: flex; gap: 10px; margin-top: 8px;">
 				<button class="btn btn-secondary" onclick="clearWarPlanner()" style="flex: 1;">✖ Wyczyść</button>
@@ -3150,24 +3153,6 @@
                 </div>
                 <div style="text-align: center; margin-top: 8px; font-size: 0.7rem; color: var(--text-muted); opacity: 0.8;">
                     💡 <kbd style="background: var(--bg-input); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border);">Ctrl</kbd>+klik na tag = ukryj bohatera
-                </div>
-            </div>
-            
-            <!-- Wykluczeni bohaterowie -->
-            <div class="kreator-exclude-section" style="margin-bottom: 15px; padding: 10px 12px; background: var(--bg-input); border-radius: 8px; border: 1px solid var(--border);">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="font-size: 0.85rem; color: var(--text-secondary);">🚫 Ukryj bohaterów w tagach</span>
-                    <span id="kreator-excluded-count" style="font-size: 0.75rem; color: #f44336; font-weight: 600;">(0)</span>
-                </div>
-                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
-                    <div class="autocomplete-wrapper" style="flex: 1; margin-bottom: 0;">
-                        <input type="text" id="kreator-excluded-input" data-type="hero" placeholder="Dodaj bohatera do ukrycia..." autocomplete="off" style="font-size: 0.8rem;">
-                        <div class="autocomplete-list" id="list-kreator-excluded-input"></div>
-                    </div>
-                    <button class="btn btn-small btn-secondary" onclick="clearKreatorExcludedHeroes()" title="Wyczyść wszystkich" style="padding: 6px 10px;">🗑️</button>
-                </div>
-                <div id="kreator-excluded-chips" style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; padding: 6px; background: rgba(0,0,0,0.2); border-radius: 6px;">
-                    <span id="kreator-excluded-empty" style="color: var(--text-muted); font-size: 0.75rem; font-style: italic; width: 100%; text-align: center;">Brak ukrytych</span>
                 </div>
             </div>
             
@@ -3249,6 +3234,27 @@
                         <div class="war-row war-pet-row">
                             <div class="autocomplete-wrapper"><input type="text" id="kreator-3-pet" placeholder="Pet" data-type="pet" autocomplete="off"><div class="autocomplete-list" id="list-kreator-3-pet"></div></div>
                         </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Wykluczeni bohaterowie -->
+            <div class="kreator-exclude-section" style="margin-top: 15px; padding: 0; background: var(--bg-input); border-radius: 8px; border: 1px solid var(--border); overflow: hidden;">
+                <div class="excluded-header" onclick="toggleKreatorExcludedSection()" style="padding: 10px 12px; margin: 0;">
+                    <span class="excluded-toggle-icon" id="kreator-excluded-toggle-icon">▶</span>
+                    <span>🚫 Ukryj bohaterów w tagach</span>
+                    <span id="kreator-excluded-count" style="font-size: 0.75rem; color: #f44336; font-weight: 600;">(0)</span>
+                </div>
+                <div class="excluded-content" id="kreator-excluded-content" style="padding: 0 12px 12px 12px;">
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                        <div class="autocomplete-wrapper" style="flex: 1; margin-bottom: 0;">
+                            <input type="text" id="kreator-excluded-input" data-type="hero" placeholder="Dodaj bohatera do ukrycia..." autocomplete="off" style="font-size: 0.8rem;">
+                            <div class="autocomplete-list" id="list-kreator-excluded-input"></div>
+                        </div>
+                        <button class="btn btn-small btn-secondary" onclick="clearKreatorExcludedHeroes()" title="Wyczyść wszystkich" style="padding: 6px 10px;">🗑️</button>
+                    </div>
+                    <div id="kreator-excluded-chips" style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; padding: 6px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                        <span id="kreator-excluded-empty" style="color: var(--text-muted); font-size: 0.75rem; font-style: italic; width: 100%; text-align: center;">Brak ukrytych</span>
                     </div>
                 </div>
             </div>
@@ -4957,6 +4963,22 @@
 		function toggleExcludedSection() {
 			const content = $('excluded-content');
 			const icon = $('excluded-toggle-icon');
+			
+			content.classList.toggle('show');
+			icon.classList.toggle('expanded');
+		}
+		
+		function toggleWarExcludedSection() {
+			const content = $('war-excluded-content');
+			const icon = $('war-excluded-toggle-icon');
+			
+			content.classList.toggle('show');
+			icon.classList.toggle('expanded');
+		}
+		
+		function toggleKreatorExcludedSection() {
+			const content = $('kreator-excluded-content');
+			const icon = $('kreator-excluded-toggle-icon');
 			
 			content.classList.toggle('show');
 			icon.classList.toggle('expanded');
@@ -9345,4 +9367,3 @@
     </script>
 </body>
 </html>
-
