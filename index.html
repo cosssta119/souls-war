@@ -2711,6 +2711,9 @@
                 <div id="quick-tags-container">
                     <div style="text-align: center; color: var(--text-muted); font-size: 0.75rem;" data-i18n="common.loading">Ładowanie...</div>
                 </div>
+                <div style="text-align: center; margin-top: 8px; font-size: 0.7rem; color: var(--text-muted); opacity: 0.8;">
+                    💡 <kbd style="background: var(--bg-input); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border);">Ctrl</kbd>+klik na tag = wyklucz bohatera z wyników
+                </div>
             </div>
             
 			<div class="search-formation-grid">
@@ -2957,6 +2960,9 @@
             <div class="war-form-tags" style="margin-bottom: 15px;">
                 <div id="war-quick-tags-container">
                     <div style="text-align: center; color: var(--text-muted); font-size: 0.75rem;">Ładowanie tagów...</div>
+                </div>
+                <div style="text-align: center; margin-top: 8px; font-size: 0.7rem; color: var(--text-muted); opacity: 0.8;">
+                    💡 <kbd style="background: var(--bg-input); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border);">Ctrl</kbd>+klik na tag = wyklucz bohatera z wyników
                 </div>
             </div>
             
@@ -4353,6 +4359,12 @@
         let activeWarField = null;
         
         function addToWar(heroName, event) {
+            // Ctrl+klik = wyklucz bohatera z wyników
+            if (event && event.ctrlKey) {
+                addWarExcludedHero(heroName);
+                return;
+            }
+            
             // Znajdź wszystkie pola wroga na zakładce Wojna
             const allFields = [];
             for (let e = 1; e <= 3; e++) {
