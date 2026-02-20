@@ -4000,6 +4000,10 @@
                 if (snap.val()) {
                     heroes = Object.values(snap.val()).sort((a, b) => a.name.localeCompare(b.name));
                     if (isAdmin) renderHeroesList();
+                    // Regeneruj tagi po załadowaniu bohaterów z bazy
+                    generateWarTags();
+                    generateKreatorTags();
+                    generateAddFormTags();
                 }
             });
             
@@ -4007,6 +4011,10 @@
                 if (snap.val()) {
                     pets = Object.values(snap.val()).map(getPetName).sort();
                     if (isAdmin) renderPetsList();
+                    // Regeneruj tagi po załadowaniu petów z bazy
+                    generateWarTags();
+                    generateKreatorTags();
+                    generateAddFormTags();
                 }
             });
             
@@ -9063,4 +9071,3 @@
     </script>
 </body>
 </html>
-
