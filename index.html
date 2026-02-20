@@ -1488,6 +1488,42 @@
 		.war-pet-row .autocomplete-wrapper { width: 100px; }
 		.war-pet-row input { font-size: 0.65rem; }
 
+		/* Kreator składów */
+		.kreator-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+		.kreator-grid.count-1 { grid-template-columns: 1fr; max-width: 300px; margin: 0 auto; }
+		.kreator-grid.count-2 { grid-template-columns: repeat(2, 1fr); }
+		
+		.kreator-section {
+			background: rgba(212, 175, 55, 0.1);
+			border: 1px solid rgba(212, 175, 55, 0.3);
+			border-radius: 10px;
+			padding: 12px;
+		}
+		
+		.kreator-title {
+			font-size: 0.85rem;
+			color: var(--accent-gold);
+			text-align: center;
+			margin-bottom: 10px;
+			padding-bottom: 8px;
+			border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+		}
+		
+		.kreator-saved-item {
+			background: var(--bg-card);
+			border: 1px solid var(--border);
+			border-radius: 8px;
+			padding: 12px;
+			margin-bottom: 10px;
+			cursor: pointer;
+			transition: border-color 0.2s;
+		}
+		.kreator-saved-item:hover { border-color: var(--accent-gold); }
+		.kreator-saved-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+		.kreator-saved-item-name { font-weight: 600; color: var(--accent-gold); }
+		.kreator-saved-item-date { font-size: 0.7rem; color: var(--text-muted); }
+		.kreator-saved-item-content { font-size: 0.75rem; color: var(--text-secondary); }
+
 		.war-result-card {
 			background: var(--bg-card);
 			border: 2px solid var(--border);
@@ -2488,6 +2524,8 @@
 		@media (max-width: 768px) {
 			.war-planner-grid,
 			.war-formations-grid,
+			.kreator-grid,
+			.kreator-grid.count-2,
 			.compare-grid.cols-2,
 			.compare-grid.cols-3 { grid-template-columns: 1fr; }
 			#duplicates-modal .modal-content { width: 98vw !important; max-width: 98vw !important; margin: 10px !important; }
@@ -2873,6 +2911,13 @@
                 Wpisz 3 składy wrogów, a system zaproponuje optymalne kontr-formacje bez powtórzeń bohaterów
             </p>
             
+            <!-- Tagi bohaterów dla planera wojny (zwinięte domyślnie) -->
+            <div class="war-form-tags" style="margin-bottom: 15px;">
+                <div id="war-quick-tags-container">
+                    <div style="text-align: center; color: var(--text-muted); font-size: 0.75rem;">Ładowanie tagów...</div>
+                </div>
+            </div>
+            
             <div class="war-planner-grid">
 				<!-- Wróg 1 -->
 				<div class="war-enemy-section">
@@ -3042,6 +3087,121 @@
         </div>
     </div>
     
+    <!-- Tab: Kreator składów -->
+    <div id="tab-kreator" class="tab-content">
+        <div class="section">
+            <h2>🎯 Kreator składów</h2>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px; text-align: center;">
+                Ułóż własne składy i skopiuj je lub zapisz do pamięci
+            </p>
+            
+            <!-- Tagi bohaterów (rozwinięte) -->
+            <div class="kreator-form-tags" style="margin-bottom: 15px;">
+                <div id="kreator-quick-tags-container">
+                    <div style="text-align: center; color: var(--text-muted); font-size: 0.75rem;">Ładowanie tagów...</div>
+                </div>
+            </div>
+            
+            <!-- Ile składów -->
+            <div style="display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <span style="font-size: 0.85rem; color: var(--text-secondary);">Liczba składów:</span>
+                <button class="btn btn-small" onclick="setKreatorCount(1)" id="kreator-count-1">1</button>
+                <button class="btn btn-small" onclick="setKreatorCount(2)" id="kreator-count-2">2</button>
+                <button class="btn btn-small btn-success" onclick="setKreatorCount(3)" id="kreator-count-3">3</button>
+            </div>
+            
+            <div class="kreator-grid" id="kreator-grid">
+                <!-- Skład 1 -->
+                <div class="kreator-section" id="kreator-section-1">
+                    <h3 class="kreator-title">Skład 1</h3>
+                    <div class="war-enemy-grid">
+                        <div class="war-row">
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-1-h1" placeholder="1" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-1-h1"></div></div>
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-1-h2" placeholder="2" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-1-h2"></div></div>
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-1-h3" placeholder="3" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-1-h3"></div></div>
+                        </div>
+                        <div class="war-row">
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-1-h4" placeholder="4" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-1-h4"></div></div>
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-1-h5" placeholder="5" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-1-h5"></div></div>
+                        </div>
+                        <div class="war-row">
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-1-h6" placeholder="6" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-1-h6"></div></div>
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-1-h7" placeholder="7" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-1-h7"></div></div>
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-1-h8" placeholder="8" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-1-h8"></div></div>
+                        </div>
+                        <div class="war-row war-pet-row">
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-1-pet" placeholder="Pet" data-type="pet" autocomplete="off"><div class="autocomplete-list" id="list-kreator-1-pet"></div></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Skład 2 -->
+                <div class="kreator-section" id="kreator-section-2">
+                    <h3 class="kreator-title">Skład 2</h3>
+                    <div class="war-enemy-grid">
+                        <div class="war-row">
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-2-h1" placeholder="1" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-2-h1"></div></div>
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-2-h2" placeholder="2" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-2-h2"></div></div>
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-2-h3" placeholder="3" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-2-h3"></div></div>
+                        </div>
+                        <div class="war-row">
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-2-h4" placeholder="4" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-2-h4"></div></div>
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-2-h5" placeholder="5" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-2-h5"></div></div>
+                        </div>
+                        <div class="war-row">
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-2-h6" placeholder="6" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-2-h6"></div></div>
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-2-h7" placeholder="7" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-2-h7"></div></div>
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-2-h8" placeholder="8" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-2-h8"></div></div>
+                        </div>
+                        <div class="war-row war-pet-row">
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-2-pet" placeholder="Pet" data-type="pet" autocomplete="off"><div class="autocomplete-list" id="list-kreator-2-pet"></div></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Skład 3 -->
+                <div class="kreator-section" id="kreator-section-3">
+                    <h3 class="kreator-title">Skład 3</h3>
+                    <div class="war-enemy-grid">
+                        <div class="war-row">
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-3-h1" placeholder="1" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-3-h1"></div></div>
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-3-h2" placeholder="2" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-3-h2"></div></div>
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-3-h3" placeholder="3" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-3-h3"></div></div>
+                        </div>
+                        <div class="war-row">
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-3-h4" placeholder="4" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-3-h4"></div></div>
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-3-h5" placeholder="5" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-3-h5"></div></div>
+                        </div>
+                        <div class="war-row">
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-3-h6" placeholder="6" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-3-h6"></div></div>
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-3-h7" placeholder="7" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-3-h7"></div></div>
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-3-h8" placeholder="8" data-type="hero" autocomplete="off"><div class="autocomplete-list" id="list-kreator-3-h8"></div></div>
+                        </div>
+                        <div class="war-row war-pet-row">
+                            <div class="autocomplete-wrapper"><input type="text" id="kreator-3-pet" placeholder="Pet" data-type="pet" autocomplete="off"><div class="autocomplete-list" id="list-kreator-3-pet"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Przyciski akcji -->
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 15px;">
+                <button class="btn btn-success" onclick="copyKreatorAsText()">📋 Kopiuj składy</button>
+                <button class="btn btn-secondary" onclick="saveKreatorToMemory()">💾 Zapisz do pamięci</button>
+                <button class="btn btn-secondary" onclick="clearKreator()">✖ Wyczyść</button>
+            </div>
+        </div>
+        
+        <!-- Sekcja zapisanych składów -->
+        <div id="kreator-saved-section" class="section" style="display: none;">
+            <h2>💾 Zapisane składy</h2>
+            <div id="kreator-saved-list"></div>
+            <button class="btn btn-small btn-secondary" onclick="clearAllKreatorSaved()" style="margin-top: 10px;">
+                🗑️ Wyczyść wszystkie
+            </button>
+        </div>
+    </div>
+    
     <!-- Tab: Ustawienia -->
     <div id="tab-settings" class="tab-content">
         <div class="section">
@@ -3120,6 +3280,7 @@
         <button class="nav-btn" onclick="switchTab('add')"><span class="icon">➕</span><span data-i18n="nav.add">Dodaj</span></button>
         <button class="nav-btn admin-only" id="nav-settings" onclick="switchTab('settings')"><span class="icon">⚙️</span><span data-i18n="nav.import">Import</span></button>
         <button class="nav-btn" id="nav-war" onclick="switchTab('war')"><span class="icon">⚔️</span><span>Wojna</span></button>
+        <button class="nav-btn" id="nav-kreator" onclick="switchTab('kreator')"><span class="icon">🎯</span><span>Kreator</span></button>
         <button class="nav-btn admin-only" id="nav-admin" onclick="switchTab('admin')"><span class="icon">👑</span><span>Admin</span></button>
     </nav>
     
@@ -3289,7 +3450,7 @@
             {name:"Muerte",race:"Undead"},{name:"Melantha",race:"Undead"},{name:"Nox",race:"Undead"},{name:"Ripper",race:"Undead"},
             {name:"Fleta",race:"Undead"},{name:"Ash",race:"Undead"},{name:"Dextor",race:"Undead"},{name:"Carmen",race:"Undead"},
             {name:"Zenon",race:"Undead"},{name:"Amanda",race:"Undead"},{name:"Void",race:"Undead"},{name:"Harfa",race:"Undead"},
-            {name:"Serena",race:"Elf"},{name:"Oneric",race:"Elf"},{name:"Elara",race:"Elf"},{name:"CoCo",race:"Elf"},
+            {name:"Serena",race:"Elf"},{name:"Oneiric",race:"Elf"},{name:"Elara",race:"Elf"},{name:"CoCo",race:"Elf"},
             {name:"Babu",race:"Elf"},{name:"Sander",race:"Elf"},{name:"Tania",race:"Elf"},{name:"Galan",race:"Elf"},
             {name:"Aolmond",race:"Elf"},{name:"LuLu",race:"Elf"},{name:"Fiona",race:"Elf"},{name:"Abala",race:"Elf"},
             {name:"Bella",race:"Fire"},{name:"Lupico",race:"Fire"},{name:"Paopao",race:"Fire"},{name:"Jack",race:"Fire"},
@@ -3873,6 +4034,8 @@
             filterDatabase();
             generateQuickTags();
             generateAddFormTags();
+            generateWarTags();
+            generateKreatorTags();
         }
         
         function showToast(msg, isError = false) {
@@ -3930,7 +4093,7 @@
         const RACE_EMOJI = { Dark: '🌑', Light: '☀️', Human: '👤', Fire: '🔥', Elf: '🌿', Undead: '💀' };
         
 		function buildTagsHTML(raceGroups, petsData, clickHandler, petClickHandler, showCounts = false) {
-			let html = `<div class="quick-tags-expand-all"><button class="expand-all-btn" onclick="toggleAllTags(this.closest('.search-form-tags, .add-form-tags'))">▼ ${t('quickTags.expandAll')}</button></div>`;
+			let html = `<div class="quick-tags-expand-all"><button class="expand-all-btn" onclick="toggleAllTags(this.closest('.search-form-tags, .add-form-tags, .war-form-tags, .kreator-form-tags'))">▼ ${t('quickTags.expandAll')}</button></div>`;
 			
 			RACE_ORDER.forEach(race => {
 				if (raceGroups[race]?.length) {
@@ -3980,6 +4143,308 @@
             
             container.innerHTML = buildTagsHTML(raceGroups, pets, "addTagToActiveField", "addTagToActiveField");
             updateAddFormTagsSelection();
+        }
+        
+        function generateWarTags() {
+            const container = $('war-quick-tags-container');
+            if (!container) return;
+            
+            const raceGroups = { Dark: [], Light: [], Human: [], Fire: [], Elf: [], Undead: [] };
+            heroes.forEach(h => raceGroups[h.race]?.push(h.name));
+            RACE_ORDER.forEach(r => raceGroups[r].sort((a, b) => a.localeCompare(b)));
+            
+            // Dla wojny - własna funkcja addToWar
+            container.innerHTML = buildTagsHTML(raceGroups, pets, "addToWar", "addPetToWar", false);
+        }
+        
+        function generateKreatorTags() {
+            const container = $('kreator-quick-tags-container');
+            if (!container) return;
+            
+            const raceGroups = { Dark: [], Light: [], Human: [], Fire: [], Elf: [], Undead: [] };
+            heroes.forEach(h => raceGroups[h.race]?.push(h.name));
+            RACE_ORDER.forEach(r => raceGroups[r].sort((a, b) => a.localeCompare(b)));
+            
+            // Dla kreatora - własna funkcja addToKreator
+            let html = buildTagsHTML(raceGroups, pets, "addToKreator", "addPetToKreator", false);
+            container.innerHTML = html;
+            
+            // Rozwiń wszystkie tagi
+            setTimeout(() => {
+                container.querySelectorAll('.quick-tags-header').forEach(h => {
+                    h.classList.add('expanded');
+                    h.nextElementSibling.classList.add('show');
+                });
+                const btn = container.querySelector('.expand-all-btn');
+                if (btn) btn.textContent = `▲ ${t('quickTags.collapseAll')}`;
+            }, 100);
+        }
+        
+        // ===== TAGI DLA WOJNY =====
+        let activeWarField = null;
+        
+        function addToWar(heroName, event) {
+            // Znajdź wszystkie pola wroga na zakładce Wojna
+            const allFields = [];
+            for (let e = 1; e <= 3; e++) {
+                for (let h = 1; h <= 8; h++) {
+                    allFields.push(`war-e${e}-h${h}`);
+                }
+            }
+            
+            // Sprawdź czy już jest - jeśli tak, usuń (toggle)
+            for (const fieldId of allFields) {
+                const input = $(fieldId);
+                if (input && input.value.trim().toLowerCase() === heroName.toLowerCase()) {
+                    input.value = '';
+                    input.classList.remove('hero-race-dark', 'hero-race-light', 'hero-race-human', 
+                        'hero-race-fire', 'hero-race-elf', 'hero-race-undead');
+                    updateWarTagsSelection();
+                    return;
+                }
+            }
+            
+            // Funkcja wpisująca do pola i przeskakująca dalej
+            function fillFieldAndJump(fieldId) {
+                const input = $(fieldId);
+                if (!input) return false;
+                input.value = heroName;
+                updateInputHeroColor(input, false);
+                updateWarTagsSelection();
+                const nextField = getNextEmptyWarField(fieldId);
+                if (nextField) {
+                    setTimeout(() => {
+                        $(nextField)?.focus();
+                        activeWarField = nextField;
+                    }, 10);
+                }
+                return true;
+            }
+            
+            // Jeśli jest aktywne pole
+            if (activeWarField) {
+                const activeInput = $(activeWarField);
+                // Jeśli aktywne pole jest puste - wpisz tam
+                if (activeInput && !activeInput.value.trim()) {
+                    fillFieldAndJump(activeWarField);
+                    return;
+                }
+                // Jeśli aktywne pole jest zajęte - znajdź następne puste PO nim
+                const nextEmpty = getNextEmptyWarField(activeWarField);
+                if (nextEmpty) {
+                    fillFieldAndJump(nextEmpty);
+                    return;
+                }
+            }
+            
+            // Brak aktywnego pola lub wszystkie po nim zajęte - szukaj od początku
+            for (const fieldId of allFields) {
+                const input = $(fieldId);
+                if (input && !input.value.trim()) {
+                    fillFieldAndJump(fieldId);
+                    return;
+                }
+            }
+            showToast('Wszystkie pola są zajęte!', true);
+        }
+        
+        function addPetToWar(petName) {
+            const petFields = ['war-e1-pet', 'war-e2-pet', 'war-e3-pet'];
+            
+            // Toggle - jeśli już jest, usuń
+            for (const fieldId of petFields) {
+                const input = $(fieldId);
+                if (input && input.value.trim().toLowerCase() === petName.toLowerCase()) {
+                    input.value = '';
+                    input.classList.remove('hero-race-pet');
+                    updateWarTagsSelection();
+                    return;
+                }
+            }
+            
+            // Dodaj do pierwszego wolnego pola pet
+            for (const fieldId of petFields) {
+                const input = $(fieldId);
+                if (input && !input.value.trim()) {
+                    input.value = petName;
+                    input.classList.add('hero-race-pet');
+                    updateWarTagsSelection();
+                    return;
+                }
+            }
+            showToast('Wszystkie pola Pet są zajęte!', true);
+        }
+        
+        function getNextEmptyWarField(currentFieldId) {
+            const allFields = [];
+            for (let e = 1; e <= 3; e++) {
+                for (let h = 1; h <= 8; h++) {
+                    allFields.push(`war-e${e}-h${h}`);
+                }
+            }
+            const currentIdx = allFields.indexOf(currentFieldId);
+            for (let i = currentIdx + 1; i < allFields.length; i++) {
+                const input = $(allFields[i]);
+                if (input && !input.value.trim()) return allFields[i];
+            }
+            return null;
+        }
+        
+        function updateWarTagsSelection() {
+            const container = $('war-quick-tags-container');
+            if (!container) return;
+            
+            // Zbierz wszystkie wartości z pól
+            const values = new Set();
+            for (let e = 1; e <= 3; e++) {
+                for (let h = 1; h <= 8; h++) {
+                    const val = $(`war-e${e}-h${h}`)?.value.trim().toLowerCase();
+                    if (val) values.add(val);
+                }
+                const pet = $(`war-e${e}-pet`)?.value.trim().toLowerCase();
+                if (pet) values.add(pet);
+            }
+            
+            // Zaznacz tagi
+            container.querySelectorAll('.quick-tag').forEach(tag => {
+                const tagValue = tag.textContent.trim().toLowerCase();
+                tag.classList.toggle('selected', values.has(tagValue));
+            });
+        }
+        
+        // ===== TAGI DLA KREATORA =====
+        let activeKreatorField = null;
+        
+        function addToKreator(heroName, event) {
+            // Znajdź wszystkie pola w kreatorze (tylko widoczne składy)
+            const allFields = [];
+            for (let s = 1; s <= kreatorCount; s++) {
+                for (let h = 1; h <= 8; h++) {
+                    allFields.push(`kreator-${s}-h${h}`);
+                }
+            }
+            
+            // Sprawdź czy już jest - jeśli tak, usuń (toggle)
+            for (const fieldId of allFields) {
+                const input = $(fieldId);
+                if (input && input.value.trim().toLowerCase() === heroName.toLowerCase()) {
+                    input.value = '';
+                    input.classList.remove('hero-race-dark', 'hero-race-light', 'hero-race-human', 
+                        'hero-race-fire', 'hero-race-elf', 'hero-race-undead');
+                    updateKreatorTagsSelection();
+                    return;
+                }
+            }
+            
+            // Funkcja wpisująca do pola i przeskakująca dalej
+            function fillFieldAndJump(fieldId) {
+                const input = $(fieldId);
+                if (!input) return false;
+                input.value = heroName;
+                updateInputHeroColor(input, false);
+                updateKreatorTagsSelection();
+                const nextField = getNextEmptyKreatorField(fieldId);
+                if (nextField) {
+                    setTimeout(() => {
+                        $(nextField)?.focus();
+                        activeKreatorField = nextField;
+                    }, 10);
+                }
+                return true;
+            }
+            
+            // Jeśli jest aktywne pole
+            if (activeKreatorField) {
+                const activeInput = $(activeKreatorField);
+                // Jeśli aktywne pole jest puste - wpisz tam
+                if (activeInput && !activeInput.value.trim()) {
+                    fillFieldAndJump(activeKreatorField);
+                    return;
+                }
+                // Jeśli aktywne pole jest zajęte - znajdź następne puste PO nim
+                const nextEmpty = getNextEmptyKreatorField(activeKreatorField);
+                if (nextEmpty) {
+                    fillFieldAndJump(nextEmpty);
+                    return;
+                }
+            }
+            
+            // Brak aktywnego pola lub wszystkie po nim zajęte - szukaj od początku
+            for (const fieldId of allFields) {
+                const input = $(fieldId);
+                if (input && !input.value.trim()) {
+                    fillFieldAndJump(fieldId);
+                    return;
+                }
+            }
+            showToast('Wszystkie pola są zajęte!', true);
+        }
+        
+        function addPetToKreator(petName) {
+            const petFields = [];
+            for (let s = 1; s <= kreatorCount; s++) {
+                petFields.push(`kreator-${s}-pet`);
+            }
+            
+            // Toggle - jeśli już jest, usuń
+            for (const fieldId of petFields) {
+                const input = $(fieldId);
+                if (input && input.value.trim().toLowerCase() === petName.toLowerCase()) {
+                    input.value = '';
+                    input.classList.remove('hero-race-pet');
+                    updateKreatorTagsSelection();
+                    return;
+                }
+            }
+            
+            // Dodaj do pierwszego wolnego pola pet
+            for (const fieldId of petFields) {
+                const input = $(fieldId);
+                if (input && !input.value.trim()) {
+                    input.value = petName;
+                    input.classList.add('hero-race-pet');
+                    updateKreatorTagsSelection();
+                    return;
+                }
+            }
+            showToast('Wszystkie pola Pet są zajęte!', true);
+        }
+        
+        function getNextEmptyKreatorField(currentFieldId) {
+            const allFields = [];
+            for (let s = 1; s <= kreatorCount; s++) {
+                for (let h = 1; h <= 8; h++) {
+                    allFields.push(`kreator-${s}-h${h}`);
+                }
+            }
+            const currentIdx = allFields.indexOf(currentFieldId);
+            for (let i = currentIdx + 1; i < allFields.length; i++) {
+                const input = $(allFields[i]);
+                if (input && !input.value.trim()) return allFields[i];
+            }
+            return null;
+        }
+        
+        function updateKreatorTagsSelection() {
+            const container = $('kreator-quick-tags-container');
+            if (!container) return;
+            
+            // Zbierz wszystkie wartości z pól
+            const values = new Set();
+            for (let s = 1; s <= kreatorCount; s++) {
+                for (let h = 1; h <= 8; h++) {
+                    const val = $(`kreator-${s}-h${h}`)?.value.trim().toLowerCase();
+                    if (val) values.add(val);
+                }
+                const pet = $(`kreator-${s}-pet`)?.value.trim().toLowerCase();
+                if (pet) values.add(pet);
+            }
+            
+            // Zaznacz tagi
+            container.querySelectorAll('.quick-tag').forEach(tag => {
+                const tagValue = tag.textContent.trim().toLowerCase();
+                tag.classList.toggle('selected', values.has(tagValue));
+            });
         }
         
         function toggleQuickTagSection(header) {
@@ -4794,6 +5259,8 @@
 					updateInputHeroColor(petEl, true);
 				}
 			}
+			
+			updateWarTagsSelection();
 			
 			// Zamknij dropdown
 			$('war-history-dropdown').classList.add('hidden');
@@ -5734,68 +6201,57 @@
                 return;
             }
             
-            let text = `\n`;
-            text += '════════════════════════════════════════\n\n';
+            let text = '';
             
             combo.formations.forEach((match, idx) => {
                 const f = match.formation;
                 const myHeroes = f.my || [];
                 const myPet = f.myPet || '';
                 
-                text += `📋 WALKA ${idx + 1}\n`;
-                
-                // Formatowanie 3-2-3 (pozycje 0-7)
-                // Rząd 1 (pozycje 0, 1, 2)
-                const row1 = [
-                    myHeroes[0] || '—',
-                    myHeroes[1] || '—',
-                    myHeroes[2] || '—'
-                ];
-                // Rząd 2 (pozycje 3, 4)
-                const row2 = [
-                    myHeroes[3] || '—',
-                    myHeroes[4] || '—'
-                ];
-                // Rząd 3 (pozycje 5, 6, 7)
-                const row3 = [
-                    myHeroes[5] || '—',
-                    myHeroes[6] || '—',
-                    myHeroes[7] || '—'
-                ];
-                
-                // Oblicz maksymalną szerokość dla wyrównania
-                const maxLen = Math.max(
-                    ...row1.map(h => h.length),
-                    ...row2.map(h => h.length),
-                    ...row3.map(h => h.length),
-                    8
-                );
-                
-                const pad = (str) => str.padEnd(maxLen, ' ');
-                
-				text += `   ${pad(row1[0])}  ${pad(row1[1])}  ${row1[2]}\n`;
-				text += `      ${pad(row2[0])}  ${row2[1]}\n`;
-				text += `   ${pad(row3[0])}  ${pad(row3[1])}  ${row3[2]}\n`;
-                
-                if (myPet) {
-                    text += `   🐾 Pet: ${myPet}\n`;
-                }
+                text += `Walka ${idx + 1}\n`;
+                text += formatFormationAsText(myHeroes, myPet);
                 text += '\n';
             });
             
             // Kopiuj do schowka
-            navigator.clipboard.writeText(text).then(() => {
+            navigator.clipboard.writeText(text.trim()).then(() => {
                 showToast(currentLang === 'pl' ? '📋 Skład skopiowany do schowka!' : '📋 Formation copied to clipboard!');
             }).catch(() => {
-                // Fallback
                 const textarea = document.createElement('textarea');
-                textarea.value = text;
+                textarea.value = text.trim();
                 document.body.appendChild(textarea);
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
                 showToast(currentLang === 'pl' ? '📋 Skład skopiowany do schowka!' : '📋 Formation copied to clipboard!');
             });
+        }
+        
+        // Wspólna funkcja formatowania składu jako tekst
+        function formatFormationAsText(heroes, pet) {
+            const row1 = [heroes[0] || 'x', heroes[1] || 'x', heroes[2] || 'x'];
+            const row2 = [heroes[3] || 'x', heroes[4] || 'x'];
+            const row3 = [heroes[5] || 'x', heroes[6] || 'x', heroes[7] || 'x'];
+            
+            const maxLen = Math.max(
+                ...row1.map(h => h.length),
+                ...row2.map(h => h.length),
+                ...row3.map(h => h.length),
+                1
+            );
+            
+            const pad = (str) => str.padEnd(maxLen, ' ');
+            
+            let text = '';
+            text += `${pad(row1[0])}  ${pad(row1[1])}  ${row1[2]}\n`;
+            text += `   ${pad(row2[0])}  ${row2[1]}\n`;
+            text += `${pad(row3[0])}  ${pad(row3[1])}  ${row3[2]}\n`;
+            
+            if (pet) {
+                text += `Pet: ${pet}\n`;
+            }
+            
+            return text;
         }
 		
 		function exportSingleFormationAsText() {
@@ -5808,30 +6264,14 @@
 			const myHeroes = f.my || [];
 			const myPet = f.myPet || '';
 			
-			let text = `⚔️ SKŁAD #${f.id}\n`;
-			text += '════════════════════════════\n\n';
+			let text = `Skład #${f.id}\n`;
+			text += formatFormationAsText(myHeroes, myPet);
 			
-			// Formatowanie 3-2-3
-			const row1 = [myHeroes[0] || '—', myHeroes[1] || '—', myHeroes[2] || '—'];
-			const row2 = [myHeroes[3] || '—', myHeroes[4] || '—'];
-			const row3 = [myHeroes[5] || '—', myHeroes[6] || '—', myHeroes[7] || '—'];
-			
-			const maxLen = Math.max(...row1.map(h => h.length), ...row2.map(h => h.length), ...row3.map(h => h.length), 8);
-			const pad = (str) => str.padEnd(maxLen, ' ');
-			
-			text += `${pad(row1[0])}  ${pad(row1[1])}  ${row1[2]}\n`;
-			text += `   ${pad(row2[0])}  ${row2[1]}\n`;
-			text += `${pad(row3[0])}  ${pad(row3[1])}  ${row3[2]}\n`;
-			
-			if (myPet) {
-				text += `\n🐾 Pet: ${myPet}\n`;
-			}
-			
-			navigator.clipboard.writeText(text).then(() => {
+			navigator.clipboard.writeText(text.trim()).then(() => {
 				showToast('📋 Skład skopiowany!');
 			}).catch(() => {
 				const textarea = document.createElement('textarea');
-				textarea.value = text;
+				textarea.value = text.trim();
 				document.body.appendChild(textarea);
 				textarea.select();
 				document.execCommand('copy');
@@ -6670,6 +7110,24 @@
 			}
 		}
 		
+		function initWarFields() {
+			// Dodaj listenery do wszystkich pól Wojny
+			for (let e = 1; e <= 3; e++) {
+				for (let h = 1; h <= 8; h++) {
+					const input = $(`war-e${e}-h${h}`);
+					if (input) {
+						input.addEventListener('focus', () => { activeWarField = `war-e${e}-h${h}`; });
+						input.addEventListener('input', () => { updateWarTagsSelection(); });
+						// Nie czyścimy activeWarField w blur - focus na inne pole i tak ustawi nową wartość
+					}
+				}
+				const petInput = $(`war-e${e}-pet`);
+				if (petInput) {
+					petInput.addEventListener('input', () => { updateWarTagsSelection(); });
+				}
+			}
+		}
+		
 		function addWarExcludedHero(heroName) {
 			if (!heroName) return;
 			
@@ -7388,6 +7846,253 @@
 			};
 		}
 		
+		// =====================================================
+		// KREATOR SKŁADÓW
+		// =====================================================
+		
+		let kreatorCount = 3;
+		let kreatorSaved = JSON.parse(localStorage.getItem('souls_kreator_saved') || '[]');
+		
+		function setKreatorCount(count) {
+			kreatorCount = count;
+			const grid = $('kreator-grid');
+			
+			// Aktualizuj przyciski
+			for (let i = 1; i <= 3; i++) {
+				const btn = $(`kreator-count-${i}`);
+				if (btn) {
+					btn.classList.remove('btn-success');
+					if (i === count) btn.classList.add('btn-success');
+				}
+			}
+			
+			// Pokaż/ukryj sekcje
+			$('kreator-section-1').style.display = 'block';
+			$('kreator-section-2').style.display = count >= 2 ? 'block' : 'none';
+			$('kreator-section-3').style.display = count >= 3 ? 'block' : 'none';
+			
+			// Zmień grid
+			grid.classList.remove('count-1', 'count-2');
+			if (count === 1) grid.classList.add('count-1');
+			if (count === 2) grid.classList.add('count-2');
+		}
+		
+		function getKreatorFormation(idx) {
+			const heroes = [];
+			for (let h = 1; h <= 8; h++) {
+				heroes.push($(`kreator-${idx}-h${h}`)?.value.trim() || '');
+			}
+			const pet = $(`kreator-${idx}-pet`)?.value.trim() || '';
+			return { heroes, pet };
+		}
+		
+		function copyKreatorAsText() {
+			let text = '';
+			let hasContent = false;
+			
+			for (let i = 1; i <= kreatorCount; i++) {
+				const formation = getKreatorFormation(i);
+				const filledHeroes = formation.heroes.filter(h => h);
+				
+				if (filledHeroes.length > 0 || formation.pet) {
+					hasContent = true;
+					if (kreatorCount > 1) {
+						text += `Skład ${i}\n`;
+					}
+					text += formatFormationAsText(formation.heroes, formation.pet);
+					text += '\n';
+				}
+			}
+			
+			if (!hasContent) {
+				showToast('Wpisz przynajmniej jednego bohatera!', true);
+				return;
+			}
+			
+			navigator.clipboard.writeText(text.trim()).then(() => {
+				showToast('📋 Składy skopiowane do schowka!');
+			}).catch(() => {
+				const textarea = document.createElement('textarea');
+				textarea.value = text.trim();
+				document.body.appendChild(textarea);
+				textarea.select();
+				document.execCommand('copy');
+				document.body.removeChild(textarea);
+				showToast('📋 Składy skopiowane do schowka!');
+			});
+		}
+		
+		function saveKreatorToMemory() {
+			const formations = [];
+			let hasContent = false;
+			
+			for (let i = 1; i <= kreatorCount; i++) {
+				const formation = getKreatorFormation(i);
+				if (formation.heroes.some(h => h) || formation.pet) {
+					hasContent = true;
+				}
+				formations.push(formation);
+			}
+			
+			if (!hasContent) {
+				showToast('Wpisz przynajmniej jednego bohatera!', true);
+				return;
+			}
+			
+			const defaultName = `Skład ${kreatorSaved.length + 1}`;
+			const name = prompt('Nazwa dla tego zestawu:', defaultName);
+			if (name === null) return;
+			
+			const saved = {
+				id: Date.now(),
+				name: name || defaultName,
+				count: kreatorCount,
+				formations: formations,
+				timestamp: new Date().toISOString()
+			};
+			
+			kreatorSaved.unshift(saved);
+			if (kreatorSaved.length > 20) kreatorSaved = kreatorSaved.slice(0, 20);
+			
+			localStorage.setItem('souls_kreator_saved', JSON.stringify(kreatorSaved));
+			renderKreatorSaved();
+			showToast('💾 Skład zapisany!');
+		}
+		
+		function loadKreatorSaved(id) {
+			const saved = kreatorSaved.find(s => s.id === id);
+			if (!saved) return;
+			
+			// Ustaw liczbę składów
+			setKreatorCount(saved.count);
+			
+			// Wypełnij pola
+			saved.formations.forEach((formation, idx) => {
+				const formIdx = idx + 1;
+				formation.heroes.forEach((hero, hIdx) => {
+					const el = $(`kreator-${formIdx}-h${hIdx + 1}`);
+					if (el) {
+						el.value = hero;
+						updateInputHeroColor(el, false);
+					}
+				});
+				const petEl = $(`kreator-${formIdx}-pet`);
+				if (petEl) {
+					petEl.value = formation.pet || '';
+					updateInputHeroColor(petEl, true);
+				}
+			});
+			
+			updateKreatorTagsSelection();
+			showToast(`Załadowano: ${saved.name}`);
+		}
+		
+		function deleteKreatorSaved(id, event) {
+			event.stopPropagation();
+			if (!confirm('Usunąć ten zapis?')) return;
+			
+			kreatorSaved = kreatorSaved.filter(s => s.id !== id);
+			localStorage.setItem('souls_kreator_saved', JSON.stringify(kreatorSaved));
+			renderKreatorSaved();
+			showToast('Usunięto');
+		}
+		
+		function clearAllKreatorSaved() {
+			if (!kreatorSaved.length) return;
+			if (!confirm('Usunąć WSZYSTKIE zapisane składy?')) return;
+			
+			kreatorSaved = [];
+			localStorage.setItem('souls_kreator_saved', JSON.stringify(kreatorSaved));
+			renderKreatorSaved();
+			showToast('Wszystkie zapisy usunięte');
+		}
+		
+		function clearKreator() {
+			for (let i = 1; i <= 3; i++) {
+				for (let h = 1; h <= 8; h++) {
+					const el = $(`kreator-${i}-h${h}`);
+					if (el) {
+						el.value = '';
+						el.classList.remove('hero-race-dark', 'hero-race-light', 'hero-race-human', 
+							'hero-race-fire', 'hero-race-elf', 'hero-race-undead');
+					}
+				}
+				const petEl = $(`kreator-${i}-pet`);
+				if (petEl) {
+					petEl.value = '';
+					petEl.classList.remove('hero-race-pet');
+				}
+			}
+			updateKreatorTagsSelection();
+			showToast('Wyczyszczono');
+		}
+		
+		function renderKreatorSaved() {
+			const section = $('kreator-saved-section');
+			const list = $('kreator-saved-list');
+			
+			if (!kreatorSaved.length) {
+				section.style.display = 'none';
+				return;
+			}
+			
+			section.style.display = 'block';
+			list.innerHTML = kreatorSaved.map(saved => {
+				const preview = saved.formations
+					.map((f, idx) => {
+						const heroes = f.heroes.filter(h => h);
+						if (!heroes.length && !f.pet) return '';
+						return `<div style="margin-top:4px;"><strong>Skład ${idx + 1}:</strong> ${heroes.join(', ') || '-'}${f.pet ? ` + ${f.pet}` : ''}</div>`;
+					})
+					.filter(p => p)
+					.join('');
+				
+				return `
+					<div class="kreator-saved-item" onclick="loadKreatorSaved(${saved.id})">
+						<div class="kreator-saved-item-header">
+							<span class="kreator-saved-item-name">${saved.name}</span>
+							<div style="display:flex;align-items:center;gap:8px;">
+								<span class="kreator-saved-item-date">${getTimeAgo(new Date(saved.timestamp))}</span>
+								<button class="btn btn-small btn-secondary" onclick="deleteKreatorSaved(${saved.id}, event)" title="Usuń">🗑️</button>
+							</div>
+						</div>
+						<div class="kreator-saved-item-content">${preview}</div>
+					</div>
+				`;
+			}).join('');
+		}
+		
+		function initKreator() {
+			setKreatorCount(3); // Domyślnie 3 składy
+			renderKreatorSaved();
+			initKreatorFields();
+		}
+		
+		function initKreatorFields() {
+			// Dodaj listenery do wszystkich pól Kreatora
+			for (let s = 1; s <= 3; s++) {
+				for (let h = 1; h <= 8; h++) {
+					const input = $(`kreator-${s}-h${h}`);
+					if (input) {
+						input.addEventListener('focus', () => { activeKreatorField = `kreator-${s}-h${h}`; });
+						input.addEventListener('input', () => { 
+							updateKreatorTagsSelection(); 
+							updateInputHeroColor(input, false);
+						});
+						input.addEventListener('blur', () => { updateInputHeroColor(input, false); });
+					}
+				}
+				const petInput = $(`kreator-${s}-pet`);
+				if (petInput) {
+					petInput.addEventListener('input', () => { 
+						updateKreatorTagsSelection(); 
+						updateInputHeroColor(petInput, true);
+					});
+					petInput.addEventListener('blur', () => { updateInputHeroColor(petInput, true); });
+				}
+			}
+		}
+		
 		function clearWarPlanner(keepStorage = false) {
 			for (let e = 1; e <= 3; e++) {
 				for (let h = 1; h <= 8; h++) {
@@ -7404,6 +8109,7 @@
 					pet.classList.remove('hero-race-pet');
 				}
 			}
+			updateWarTagsSelection();
 			$('war-results-section').innerHTML = `
 				<div class="empty-state">
 					<p>Wpisz składy 3 wrogów i kliknij "Znajdź optymalne składy"</p>
@@ -7960,6 +8666,8 @@
 					}
 					updateAddFormTagsSelection();
 					updateSearchTagsSelection();
+					updateWarTagsSelection();
+					updateKreatorTagsSelection();
 					
 					// 🆕 UNIWERSALNE AUTO-PRZESKAKIWANIE
 					const sectionKey = getFieldSection(input.id);
@@ -7988,6 +8696,8 @@
 						updateAddFormTagsSelection();
 					}
 					if (input.id.startsWith('search-')) updateSearchTagsSelection();
+					if (input.id.startsWith('war-')) updateWarTagsSelection();
+					if (input.id.startsWith('kreator-')) updateKreatorTagsSelection();
 					
 					const val = input.value.toLowerCase();
 					if (val.length < 1) { targetList.classList.remove('show'); return; }
@@ -8135,6 +8845,10 @@
 			
 			// Inicjalizacja wykluczonych dla planera wojny
 			initWarExcluded();
+			initWarFields();
+			
+			// Inicjalizacja kreatora
+			initKreator();
 			
 			// Inicjalizacja ostatnio przeglądanych
 			renderRecentlyViewed();
@@ -8317,4 +9031,3 @@
     </script>
 </body>
 </html>
-
