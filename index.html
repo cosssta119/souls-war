@@ -3142,6 +3142,27 @@
                 <div id="kreator-quick-tags-container">
                     <div style="text-align: center; color: var(--text-muted); font-size: 0.75rem;">Ładowanie tagów...</div>
                 </div>
+                <div style="text-align: center; margin-top: 8px; font-size: 0.7rem; color: var(--text-muted); opacity: 0.8;">
+                    💡 <kbd style="background: var(--bg-input); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border);">Ctrl</kbd>+klik na tag = ukryj bohatera
+                </div>
+            </div>
+            
+            <!-- Wykluczeni bohaterowie -->
+            <div class="kreator-exclude-section" style="margin-bottom: 15px; padding: 10px 12px; background: var(--bg-input); border-radius: 8px; border: 1px solid var(--border);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">🚫 Ukryj bohaterów w tagach</span>
+                    <span id="kreator-excluded-count" style="font-size: 0.75rem; color: #f44336; font-weight: 600;">(0)</span>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                    <div class="autocomplete-wrapper" style="flex: 1; margin-bottom: 0;">
+                        <input type="text" id="kreator-excluded-input" data-type="hero" placeholder="Dodaj bohatera do ukrycia..." autocomplete="off" style="font-size: 0.8rem;">
+                        <div class="autocomplete-list" id="list-kreator-excluded-input"></div>
+                    </div>
+                    <button class="btn btn-small btn-secondary" onclick="clearKreatorExcludedHeroes()" title="Wyczyść wszystkich" style="padding: 6px 10px;">🗑️</button>
+                </div>
+                <div id="kreator-excluded-chips" style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; padding: 6px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                    <span id="kreator-excluded-empty" style="color: var(--text-muted); font-size: 0.75rem; font-style: italic; width: 100%; text-align: center;">Brak ukrytych</span>
+                </div>
             </div>
             
             <!-- Ile składów -->
@@ -4298,12 +4319,19 @@
             container.innerHTML = buildTagsHTML(raceGroups, pets, "addToWar", "addPetToWar", false);
         }
         
+        // Wykluczeni bohaterowie w Kreatorze (definiowane wcześnie, bo generateKreatorTags używa tego)
+        let kreatorExcludedHeroes = JSON.parse(localStorage.getItem('souls_kreator_excluded_heroes') || '[]');
+        
         function generateKreatorTags() {
             const container = $('kreator-quick-tags-container');
             if (!container) return;
             
+            // Filtruj wykluczonych bohaterów
+            const excludedNormalized = (kreatorExcludedHeroes || []).map(h => normalize(h));
+            const filteredHeroes = heroes.filter(h => !excludedNormalized.includes(normalize(h.name)));
+            
             const raceGroups = { Dark: [], Light: [], Human: [], Fire: [], Elf: [], Undead: [] };
-            heroes.forEach(h => raceGroups[h.race]?.push(h.name));
+            filteredHeroes.forEach(h => raceGroups[h.race]?.push(h.name));
             RACE_ORDER.forEach(r => raceGroups[r].sort((a, b) => a.localeCompare(b)));
             
             // Dla kreatora - własna funkcja addToKreator
@@ -4457,6 +4485,12 @@
         let activeKreatorField = null;
         
         function addToKreator(heroName, event) {
+            // Ctrl+klik = ukryj bohatera
+            if (event && event.ctrlKey) {
+                addKreatorExcludedHero(heroName);
+                return;
+            }
+            
             // Znajdź wszystkie pola w kreatorze (tylko widoczne składy)
             const allFields = [];
             for (let s = 1; s <= kreatorCount; s++) {
@@ -7371,6 +7405,88 @@
 			};
 		}
 
+		// ===== WYKLUCZANIE BOHATERÓW W KREATORZE =====
+		// kreatorExcludedHeroes zdefiniowane wcześniej (przed generateKreatorTags)
+		
+		function initKreatorExcluded() {
+			renderKreatorExcludedChips();
+			updateKreatorExcludedCount();
+			
+			// Obsługa inputa
+			const input = $('kreator-excluded-input');
+			if (input) {
+				input.addEventListener('keydown', (e) => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						addKreatorExcludedHero(input.value.trim());
+						input.value = '';
+					}
+				});
+			}
+		}
+		
+		function addKreatorExcludedHero(heroName) {
+			if (!heroName) return;
+			
+			const normalizedName = normalize(heroName);
+			const hero = heroes.find(h => normalize(h.name) === normalizedName);
+			const finalName = hero ? hero.name : heroName;
+			
+			if (kreatorExcludedHeroes.some(h => normalize(h) === normalizedName)) {
+				showToast('Ten bohater jest już ukryty', true);
+				return;
+			}
+			
+			kreatorExcludedHeroes.push(finalName);
+			localStorage.setItem('souls_kreator_excluded_heroes', JSON.stringify(kreatorExcludedHeroes));
+			renderKreatorExcludedChips();
+			updateKreatorExcludedCount();
+			generateKreatorTags(); // Regeneruj tagi
+			showToast(`🚫 ${finalName} ukryty w tagach`);
+		}
+		
+		function removeKreatorExcludedHero(heroName) {
+			const normalizedName = normalize(heroName);
+			kreatorExcludedHeroes = kreatorExcludedHeroes.filter(h => normalize(h) !== normalizedName);
+			localStorage.setItem('souls_kreator_excluded_heroes', JSON.stringify(kreatorExcludedHeroes));
+			renderKreatorExcludedChips();
+			updateKreatorExcludedCount();
+			generateKreatorTags(); // Regeneruj tagi
+		}
+		
+		function clearKreatorExcludedHeroes() {
+			if (!kreatorExcludedHeroes.length) return;
+			if (!confirm('Czy na pewno wyczyścić wszystkich ukrytych?')) return;
+			kreatorExcludedHeroes = [];
+			localStorage.setItem('souls_kreator_excluded_heroes', JSON.stringify(kreatorExcludedHeroes));
+			renderKreatorExcludedChips();
+			updateKreatorExcludedCount();
+			generateKreatorTags(); // Regeneruj tagi
+			showToast('Lista ukrytych wyczyszczona');
+		}
+		
+		function renderKreatorExcludedChips() {
+			const container = $('kreator-excluded-chips');
+			if (!container) return;
+			
+			if (!kreatorExcludedHeroes.length) {
+				container.innerHTML = '<span id="kreator-excluded-empty" style="color: var(--text-muted); font-size: 0.75rem; font-style: italic; width: 100%; text-align: center;">Brak ukrytych</span>';
+				return;
+			}
+			
+			container.innerHTML = kreatorExcludedHeroes.map(hero => `
+				<span class="excluded-chip" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: rgba(244, 67, 54, 0.2); border: 1px solid rgba(244, 67, 54, 0.4); border-radius: 12px; font-size: 0.75rem; color: #f44336;">
+					${hero}
+					<button onclick="removeKreatorExcludedHero('${hero.replace(/'/g, "\\'")}')" style="background: none; border: none; color: #f44336; cursor: pointer; font-size: 0.8rem; padding: 0 2px; opacity: 0.7;" title="Usuń">✕</button>
+				</span>
+			`).join('');
+		}
+		
+		function updateKreatorExcludedCount() {
+			const countEl = $('kreator-excluded-count');
+			if (countEl) countEl.textContent = `(${kreatorExcludedHeroes.length})`;
+		}
+
         function findWarFormations() {
 			// Zapisz do historii
 			saveWarToHistory();
@@ -8227,6 +8343,7 @@
 			setKreatorCount(3); // Domyślnie 3 składy
 			renderKreatorSaved();
 			initKreatorFields();
+			initKreatorExcluded();
 		}
 		
 		function initKreatorFields() {
@@ -8815,6 +8932,18 @@
 					targetList.classList.remove('show');
 					selectedIndex = -1;
 					
+					// Obsługa pól wykluczeń - automatyczne dodanie
+					if (input.id === 'war-excluded-input') {
+						addWarExcludedHero(value);
+						input.value = '';
+						return;
+					}
+					if (input.id === 'kreator-excluded-input') {
+						addKreatorExcludedHero(value);
+						input.value = '';
+						return;
+					}
+					
 					// Aktualizuj kolor inputa dla War Planner i Kreator
 					if (input.id.startsWith('war-') || input.id.startsWith('kreator-')) {
 						const isPet = input.id.includes('-pet');
@@ -9204,3 +9333,4 @@
     </script>
 </body>
 </html>
+
