@@ -1114,6 +1114,13 @@
 		}
 		
 		.war-your-team-pet.empty { opacity: 0.5; border-style: dashed; }
+		.war-your-team-pet.conflict { 
+			background: linear-gradient(135deg, rgba(255, 87, 34, 0.2), rgba(255, 87, 34, 0.1)) !important; 
+			border-color: #ff5722 !important; 
+			color: #ff5722 !important;
+			animation: pulseConflict 1.5s infinite; 
+			box-shadow: 0 0 12px rgba(255, 87, 34, 0.6) !important; 
+		}
 
 		/* ===== BATTLE ARROWS & VS ===== */
 		.battle-arrows { display: flex; justify-content: center; align-items: center; padding: 8px 0; gap: 15px; }
@@ -3128,6 +3135,7 @@
             <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
                 <button class="btn btn-secondary" onclick="switchTab('war')">← Wróć do planera</button>
                 <button class="btn btn-pin-large" onclick="pinCurrentWarCombo()" title="Przypnij ten skład">📌 Przypnij</button>
+                <button class="btn btn-success" onclick="copyCurrentWarComboToKreator()" title="Przenieś do Kreatora">📝 Do Kreatora</button>
                 <button class="btn btn-secondary" onclick="exportWarPlanAsText()">📋 Kopiuj skład tekstowo</button>
             </div>
             <div id="war-preview-content">
@@ -3631,11 +3639,11 @@
 				'war.noComment': 'Brak komentarza',
 				'war.fullPreview': 'Pełny podgląd',
 				'war.copyTeam': 'Kopiuj skład',
-				'war.conflictsTitle': 'Konflikty bohaterów',
+				'war.conflictsTitle': 'Konflikty',
 				'war.battles': 'walki',
-				'war.conflictsHint': 'Ci bohaterowie są użyci w więcej niż jednej walce. Musisz wybrać alternatywne formacje.',
+				'war.conflictsHint': 'Te postacie/pety są użyte w więcej niż jednej walce. Musisz wybrać alternatywne formacje.',
 				'war.noConflictsTitle': 'Brak konfliktów!',
-				'war.noConflictsDesc': 'Żaden bohater nie powtarza się między składami. Ta kombinacja jest gotowa do użycia.',
+				'war.noConflictsDesc': 'Żaden bohater ani pet nie powtarza się między składami. Ta kombinacja jest gotowa do użycia.',
 				'war.legendMatched': 'Trafione',
 				'war.legendMissing': 'Brakuje',
 				'war.legendExtra': 'Dodatkowe w bazie',
@@ -3731,11 +3739,11 @@
 				'war.noComment': 'No comment',
 				'war.fullPreview': 'Full preview',
 				'war.copyTeam': 'Copy team',
-				'war.conflictsTitle': 'Hero conflicts',
+				'war.conflictsTitle': 'Conflicts',
 				'war.battles': 'battles',
-				'war.conflictsHint': 'These heroes are used in more than one battle. You need to choose alternative formations.',
+				'war.conflictsHint': 'These heroes/pets are used in more than one battle. You need to choose alternative formations.',
 				'war.noConflictsTitle': 'No conflicts!',
-				'war.noConflictsDesc': 'No hero is repeated between teams. This combination is ready to use.',
+				'war.noConflictsDesc': 'No hero or pet is repeated between teams. This combination is ready to use.',
 				'war.legendMatched': 'Matched',
 				'war.legendMissing': 'Missing',
 				'war.legendExtra': 'Extra in database',
@@ -7270,6 +7278,7 @@
         
         function countHeroConflicts(formations) {
             const heroCount = {};
+            const petCount = {};
             const conflicts = [];
             
             formations.forEach((f, idx) => {
@@ -7278,12 +7287,25 @@
                     if (!heroCount[h]) heroCount[h] = [];
                     heroCount[h].push(idx);
                 });
+                // Sprawdź też pety
+                if (f.formation.myPet) {
+                    const p = normalize(f.formation.myPet);
+                    if (!petCount[p]) petCount[p] = [];
+                    petCount[p].push(idx);
+                }
             });
             
             // Znajdź konflikty (bohaterowie użyci więcej niż raz)
             Object.entries(heroCount).forEach(([hero, indices]) => {
                 if (indices.length > 1) {
-                    conflicts.push({ hero, usedIn: indices, count: indices.length });
+                    conflicts.push({ hero, usedIn: indices, count: indices.length, type: 'hero' });
+                }
+            });
+            
+            // Znajdź konflikty petów
+            Object.entries(petCount).forEach(([pet, indices]) => {
+                if (indices.length > 1) {
+                    conflicts.push({ hero: pet, usedIn: indices, count: indices.length, type: 'pet' });
                 }
             });
             
@@ -7764,6 +7786,9 @@
 								<button class="btn-pin" onclick="event.stopPropagation(); pinWarCombo(${idx})" title="Przypnij ten skład">
 									📌
 								</button>
+								<button class="btn-pin" onclick="event.stopPropagation(); copyWarComboToKreator(${idx})" title="Przenieś do Kreatora" style="background: rgba(76, 175, 80, 0.2); border-color: rgba(76, 175, 80, 0.5);">
+									📝
+								</button>
 							</div>
 							<div class="war-result-badges">
 								<span class="war-score-badge ${scoreClass}">${scorePercent}% trafień</span>
@@ -7873,6 +7898,122 @@
 			
 			renderPinnedCombos();
 			showToast('📌 Skład przypięty!');
+		}
+		
+		// Przenieś wynik z Wojny do Kreatora
+		function copyWarComboToKreator(comboIndex) {
+			const combo = window.warResults?.[comboIndex];
+			if (!combo) return;
+			
+			// Wyczyść Kreator bez pytania
+			for (let s = 1; s <= 3; s++) {
+				for (let h = 1; h <= 8; h++) {
+					const input = $(`kreator-${s}-h${h}`);
+					if (input) {
+						input.value = '';
+						input.classList.remove('hero-race-dark', 'hero-race-light', 'hero-race-human', 
+							'hero-race-fire', 'hero-race-elf', 'hero-race-undead', 'hero-race-pet');
+					}
+				}
+				const petInput = $(`kreator-${s}-pet`);
+				if (petInput) {
+					petInput.value = '';
+					petInput.classList.remove('hero-race-pet');
+				}
+			}
+			
+			// Ustaw liczbę składów na 3
+			setKreatorCount(3);
+			
+			// Wypełnij składy danymi z combo
+			combo.formations.forEach((match, idx) => {
+				const skladNum = idx + 1;
+				const f = match.formation;
+				
+				// Wypełnij bohaterów (my = twój skład)
+				f.my.forEach((hero, heroIdx) => {
+					const input = $(`kreator-${skladNum}-h${heroIdx + 1}`);
+					if (input && hero) {
+						input.value = hero;
+						updateInputHeroColor(input, false);
+					}
+				});
+				
+				// Wypełnij peta
+				const petInput = $(`kreator-${skladNum}-pet`);
+				if (petInput && f.myPet) {
+					petInput.value = f.myPet;
+					updateInputHeroColor(petInput, true);
+				}
+			});
+			
+			// Aktualizuj tagi
+			updateKreatorTagsSelection();
+			
+			// Przełącz na zakładkę Kreator
+			showTab('tab-kreator');
+			
+			showToast('📝 Skład przeniesiony do Kreatora!');
+		}
+		
+		// Przenieś aktualnie oglądany skład do Kreatora (z podglądu wojny)
+		function copyCurrentWarComboToKreator() {
+			if (window.currentWarComboIndex !== undefined && window.warResults?.[window.currentWarComboIndex]) {
+				copyWarComboToKreator(window.currentWarComboIndex);
+				return;
+			}
+			
+			// Jeśli to z przypiętego składu - użyj currentWarCombo bezpośrednio
+			const combo = window.currentWarCombo;
+			if (!combo) {
+				showToast('Brak składu do przeniesienia', true);
+				return;
+			}
+			
+			// Wyczyść Kreator
+			for (let s = 1; s <= 3; s++) {
+				for (let h = 1; h <= 8; h++) {
+					const input = $(`kreator-${s}-h${h}`);
+					if (input) {
+						input.value = '';
+						input.classList.remove('hero-race-dark', 'hero-race-light', 'hero-race-human', 
+							'hero-race-fire', 'hero-race-elf', 'hero-race-undead', 'hero-race-pet');
+					}
+				}
+				const petInput = $(`kreator-${s}-pet`);
+				if (petInput) {
+					petInput.value = '';
+					petInput.classList.remove('hero-race-pet');
+				}
+			}
+			
+			setKreatorCount(3);
+			
+			// Wypełnij składy
+			combo.formations.forEach((match, idx) => {
+				const skladNum = idx + 1;
+				const f = match.formation || match; // obsłuż oba formaty
+				const myHeroes = f.my || [];
+				const myPet = f.myPet || '';
+				
+				myHeroes.forEach((hero, heroIdx) => {
+					const input = $(`kreator-${skladNum}-h${heroIdx + 1}`);
+					if (input && hero) {
+						input.value = hero;
+						updateInputHeroColor(input, false);
+					}
+				});
+				
+				const petInput = $(`kreator-${skladNum}-pet`);
+				if (petInput && myPet) {
+					petInput.value = myPet;
+					updateInputHeroColor(petInput, true);
+				}
+			});
+			
+			updateKreatorTagsSelection();
+			showTab('tab-kreator');
+			showToast('📝 Skład przeniesiony do Kreatora!');
 		}
 		
 		// Przypnij aktualnie oglądany skład (z podglądu wojny)
@@ -8498,18 +8639,31 @@
 			
 			// Zbierz wszystkich bohaterów użytych w "TWÓJ SKŁAD" aby wykryć konflikty
 			const allMyHeroes = {};
+			const allMyPets = {};
 			combo.formations.forEach((match, idx) => {
 				match.formation.my.filter(h => h).forEach(hero => {
 					const h = normalize(hero);
 					if (!allMyHeroes[h]) allMyHeroes[h] = [];
 					allMyHeroes[h].push(idx);
 				});
+				// Sprawdź też pety
+				if (match.formation.myPet) {
+					const p = normalize(match.formation.myPet);
+					if (!allMyPets[p]) allMyPets[p] = [];
+					allMyPets[p].push(idx);
+				}
 			});
 			
 			// Znajdź konflikty (bohaterowie użyci więcej niż raz)
 			const conflictHeroes = new Set();
 			Object.entries(allMyHeroes).forEach(([hero, indices]) => {
 				if (indices.length > 1) conflictHeroes.add(hero);
+			});
+			
+			// Znajdź konflikty petów
+			const conflictPets = new Set();
+			Object.entries(allMyPets).forEach(([pet, indices]) => {
+				if (indices.length > 1) conflictPets.add(pet);
 			});
 			
 			// Oblicz statystyki globalne
@@ -8635,7 +8789,7 @@
 							<div class="war-your-team-section">
 								${renderWarMyTeamGrid(f.my, conflictHeroes)}
 								<div style="text-align: center;">
-									${renderWarMyTeamPet(f.myPet)}
+									${renderWarMyTeamPet(f.myPet, conflictPets)}
 								</div>
 							</div>
 							
@@ -8685,13 +8839,26 @@
 			});
 			
 			// Podsumowanie konfliktów na dole
-			if (conflictHeroes.size > 0) {
+			const hasHeroConflicts = conflictHeroes.size > 0;
+			const hasPetConflicts = conflictPets.size > 0;
+			
+			if (hasHeroConflicts || hasPetConflicts) {
 				const conflictList = [];
 				Object.entries(allMyHeroes).forEach(([hero, indices]) => {
 					if (indices.length > 1) {
 						conflictList.push({
-							hero: hero.charAt(0).toUpperCase() + hero.slice(1),
-							battles: indices.map(i => i + 1)
+							name: hero.charAt(0).toUpperCase() + hero.slice(1),
+							battles: indices.map(i => i + 1),
+							type: 'hero'
+						});
+					}
+				});
+				Object.entries(allMyPets).forEach(([pet, indices]) => {
+					if (indices.length > 1) {
+						conflictList.push({
+							name: pet.charAt(0).toUpperCase() + pet.slice(1),
+							battles: indices.map(i => i + 1),
+							type: 'pet'
 						});
 					}
 				});
@@ -8702,7 +8869,7 @@
 						<div>
 							${conflictList.map(c => `
 								<span class="war-conflict-item">
-									${c.hero} <span class="battles">(${t('war.battles')} ${c.battles.join(', ')})</span>
+									${c.type === 'pet' ? '🐾 ' : ''}${c.name} <span class="battles">(${t('war.battles')} ${c.battles.join(', ')})</span>
 								</span>
 							`).join('')}
 						</div>
@@ -8863,11 +9030,13 @@
 		}
 
 		// Renderuj pet dla "Twój skład"
-		function renderWarMyTeamPet(petName) {
+		function renderWarMyTeamPet(petName, conflictPets) {
 			if (!petName) {
 				return `<div class="war-your-team-pet empty">🐾 —</div>`;
 			}
-			return `<div class="war-your-team-pet">🐾 ${petName}</div>`;
+			const isConflict = conflictPets && conflictPets.has(normalize(petName));
+			const conflictClass = isConflict ? ' conflict' : '';
+			return `<div class="war-your-team-pet${conflictClass}">🐾 ${petName}</div>`;
 		}
 
 		// Renderuj porównanie petów - z oryginalnymi nazwami
