@@ -594,8 +594,10 @@
     <div id="tab-war-preview" class="tab-content">
         <div class="section">
             <h2>👁️ Podgląd Wojny - 3 składy</h2>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+            <div class="war-preview-actions" style="margin-bottom: 10px;">
                 <button class="btn btn-secondary" onclick="switchTab('war')">← Wróć do planera</button>
+            </div>
+            <div class="war-preview-actions" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
                 <button class="btn btn-pin-large" onclick="pinCurrentWarCombo()" title="Przypnij ten skład">📌 Przypnij</button>
                 <button class="btn btn-success" onclick="copyCurrentWarComboToKreator()" title="Przenieś do Kreatora">📝 Do Kreatora</button>
                 <button class="btn btn-secondary" onclick="exportWarPlanAsText()">📋 Kopiuj skład tekstowo</button>
@@ -1128,7 +1130,7 @@
         </div>
     </div>
 
-    <nav class="bottom-nav">
+    <nav class="bottom-nav nav-initializing">
         <button class="nav-btn active" id="nav-search" onclick="switchTab('search')"><span class="icon">🔍</span><span data-i18n="nav.search">Szukaj</span></button>
         <button class="nav-btn" id="nav-database" onclick="switchTab('database')"><span class="icon">📚</span><span data-i18n="nav.database">Baza</span></button>
         <button class="nav-btn" id="nav-view" onclick="switchTab('view')"><span class="icon">👁️</span><span data-i18n="nav.preview">Podgląd</span></button>

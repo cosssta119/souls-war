@@ -65,6 +65,7 @@
 		let appConfig = { ...DEFAULT_CONFIG };
 		let configRef = null;
 		let configInitApplied = false; // domyślne „widoku" (filtr/pakiety) stosujemy tylko raz, przy pierwszym załadowaniu
+			let navConfigReady = false;    // odsłaniamy dolny pasek dopiero gdy dotrze config z Firebase (lub fallback) — koniec FOUC zakładek
 		let currentSearchSort = DEFAULT_CONFIG.defaultSearchSort; // 'relevance' | 'newest'
 		let userTouchedSort = false; // user ręcznie zmienił sortowanie w tej sesji → nie nadpisujemy globalnym domyślnym
 		let lastSearch = null; // { results, searchHeroes } — cache do przełącznika sortowania bez ponownego szukania
@@ -92,7 +93,8 @@
 		const GUILD_PASSWORD_ENABLED = true; // Zmień na true aby włączyć hasło na wejście
 		// ===============================================
 
-		// Hashe haseł (SHA-256) — PRODUKCJA
+		// Hashe haseł (SHA-256) — WERSJA TESTOWA (sandbox)
+		// Hasło gildii: "sandbox"
 		const GUILD_PASSWORD_HASH = '249dc54f04e8c635d90121519b23214d62bf91c4f28edc27ec8c989bc897de70';
 		const ADMIN_PASSWORD_HASH = '73e27fdb26c47415340900ae682ca124348f26663db2f797fb7cee6232126ac5';
         
@@ -204,6 +206,8 @@
 				'war.searchedEnemy': 'Szukany wróg',
 				'war.databaseEnemy': 'Wróg z bazy',
 				'war.yourTeam': 'TWÓJ SKŁAD',
+				'war.enemyZone': 'Wróg',
+				'war.counterLabel': 'kontra',
 				'war.comment': 'Komentarz',
 				'war.noComment': 'Brak komentarza',
 				'war.fullPreview': 'Pełny podgląd',
@@ -216,6 +220,7 @@
 				'war.legendMatched': 'Trafione',
 				'war.legendMissing': 'Brakuje',
 				'war.legendExtra': 'Dodatkowe w bazie',
+				'war.legendMoved': 'Inna pozycja',
 				'war.legendConflict': 'Konflikt (użyty wielokrotnie)',
 				'war.selectCombo': 'Wybierz kombinację z planera wojny',
 				'common.historyCleared': 'Historia wyczyszczona',
@@ -443,6 +448,8 @@
 				'war.searchedEnemy': 'Searched enemy',
 				'war.databaseEnemy': 'Database enemy',
 				'war.yourTeam': 'YOUR TEAM',
+				'war.enemyZone': 'Enemy',
+				'war.counterLabel': 'counter',
 				'war.comment': 'Comment',
 				'war.noComment': 'No comment',
 				'war.fullPreview': 'Full preview',
@@ -455,6 +462,7 @@
 				'war.legendMatched': 'Matched',
 				'war.legendMissing': 'Missing',
 				'war.legendExtra': 'Extra in database',
+				'war.legendMoved': 'Different position',
 				'war.legendConflict': 'Conflict (used multiple times)',
 				'war.selectCombo': 'Select a combination from war planner',
 				'common.historyCleared': 'History cleared',
@@ -774,6 +782,7 @@
 			}
 			renderMoreMenu();
 			if (!useMore) closeMoreMenu();
+			if (navConfigReady) nav?.classList.remove('nav-initializing'); // odsłoń dopiero po dotarciu configu (nie przy domyślnym układzie)
 		}
 
 		// ── Kolejność zakładek w „Widoczność zakładek": ▲▼ + drag&drop (mysz) ──
@@ -3741,33 +3750,36 @@
         function countHeroConflicts(formations) {
             const heroCount = {};
             const petCount = {};
+            const displayName = {}; // znormalizowany klucz -> ładna pisownia (kanoniczna z bazy lub oryginał)
             const conflicts = [];
-            
+
             formations.forEach((f, idx) => {
                 f.formation.my.filter(h => h).forEach(hero => {
                     const h = normalize(hero);
                     if (!heroCount[h]) heroCount[h] = [];
                     heroCount[h].push(idx);
+                    if (!displayName[h]) displayName[h] = findHero(hero)?.name || hero;
                 });
                 // Sprawdź też pety
                 if (f.formation.myPet) {
                     const p = normalize(f.formation.myPet);
                     if (!petCount[p]) petCount[p] = [];
                     petCount[p].push(idx);
+                    if (!displayName[p]) displayName[p] = f.formation.myPet;
                 }
             });
-            
+
             // Znajdź konflikty (bohaterowie użyci więcej niż raz)
             Object.entries(heroCount).forEach(([hero, indices]) => {
                 if (indices.length > 1) {
-                    conflicts.push({ hero, usedIn: indices, count: indices.length, type: 'hero' });
+                    conflicts.push({ hero, display: displayName[hero], usedIn: indices, count: indices.length, type: 'hero' });
                 }
             });
-            
+
             // Znajdź konflikty petów
             Object.entries(petCount).forEach(([pet, indices]) => {
                 if (indices.length > 1) {
-                    conflicts.push({ hero: pet, usedIn: indices, count: indices.length, type: 'pet' });
+                    conflicts.push({ hero: pet, display: displayName[pet], usedIn: indices, count: indices.length, type: 'pet' });
                 }
             });
             
@@ -4120,6 +4132,28 @@
                 return union > 0 && (intersection / union) >= similarityThreshold;
             };
             
+            // Pre-normalizacja bohaterów/petów per kontra (raz, nie w pętli 125k×) — tańsze liczenie konfliktów
+            const prep = arr => arr.forEach(m => {
+                m._myNorm = m.formation.my.filter(h => h).map(normalize);
+                m._petNorm = m.formation.myPet ? normalize(m.formation.myPet) : null;
+            });
+            prep(matches1); prep(matches2); prep(matches3);
+
+            // Szybka suma konfliktów bez budowania obiektów: |A∩B|+|A∩C|+|B∩C| - |A∩B∩C| (+ analogicznie pety)
+            const warConflictTotal = (m1, m2, m3) => {
+                const a = m1._myNorm, b = m2._myNorm, c = m3._myNorm;
+                const inter = (x, y) => { let n = 0; for (const e of x) if (y.includes(e)) n++; return n; };
+                let triple = 0; for (const e of a) if (b.includes(e) && c.includes(e)) triple++;
+                let total = inter(a, b) + inter(a, c) + inter(b, c) - triple;
+                const p1 = m1._petNorm, p2 = m2._petNorm, p3 = m3._petNorm;
+                if (p1 || p2 || p3) {
+                    const pab = (p1 && p1 === p2) ? 1 : 0, pac = (p1 && p1 === p3) ? 1 : 0, pbc = (p2 && p2 === p3) ? 1 : 0;
+                    const ptri = (p1 && p1 === p2 && p2 === p3) ? 1 : 0;
+                    total += pab + pac + pbc - ptri;
+                }
+                return total;
+            };
+
             // KROK 1: Generuj WSZYSTKIE kombinacje (bez filtrowania)
             let allCombinations = [];
             
@@ -4130,17 +4164,21 @@
                     for (const m3 of matches3) {
                         if (m1.formation.id === m3.formation.id || m2.formation.id === m3.formation.id) continue;
                         
-                        const conflicts = countHeroConflicts([m1, m2, m3]);
+                        const conflicts = warConflictTotal(m1, m2, m3);
                         const totalScore = m1.score + m2.score + m3.score;
                         const totalBaseScore = (m1.baseScore || m1.score) + (m2.baseScore || m2.score) + (m3.baseScore || m3.score);
-                        
+                        const maxPossible = m1.maxScore + m2.maxScore + m3.maxScore;
+                        const percent = maxPossible > 0 ? (totalBaseScore / maxPossible) * 100 : 0;
+                        const rankScore = percent - Math.pow(conflicts, CONFLICT_PENALTY_EXP) * CONFLICT_PENALTY_MULT;
+
                         allCombinations.push({
                             formations: [m1, m2, m3],
-                            conflicts: conflicts.total,
-                            conflictDetails: conflicts.details,
+                            conflicts,
                             totalScore,
                             totalBaseScore,
-                            avgScore: totalBaseScore / 3
+                            avgScore: totalBaseScore / 3,
+                            maxPossible,
+                            rankScore
                         });
                     }
                 }
@@ -4156,20 +4194,8 @@
 			}
 			// KROK 2: Sortuj WSZYSTKIE po jakości (najlepsze na górze)
 			allCombinations.sort((a, b) => {
-				const maxPossibleA = a.formations.reduce((sum, m) => sum + m.maxScore, 0);
-				const maxPossibleB = b.formations.reduce((sum, m) => sum + m.maxScore, 0);
-				
-				// Używamy totalBaseScore (bez bonusu za pozycję) - to samo co wyświetlane procenty
-				const percentA = maxPossibleA > 0 ? (a.totalBaseScore / maxPossibleA) * 100 : 0;
-				const percentB = maxPossibleB > 0 ? (b.totalBaseScore / maxPossibleB) * 100 : 0;
-				
-				const conflictPenaltyA = Math.pow(a.conflicts, CONFLICT_PENALTY_EXP) * CONFLICT_PENALTY_MULT;
-				const conflictPenaltyB = Math.pow(b.conflicts, CONFLICT_PENALTY_EXP) * CONFLICT_PENALTY_MULT;
-				
-				const scoreA = percentA - conflictPenaltyA;
-				const scoreB = percentB - conflictPenaltyB;
-				
-				if (Math.abs(scoreA - scoreB) > WAR_TIE_EPSILON) return scoreB - scoreA;
+				// rankScore (percent − kara za konflikty) policzony raz przy generowaniu kombinacji
+				if (Math.abs(a.rankScore - b.rankScore) > WAR_TIE_EPSILON) return b.rankScore - a.rankScore;
 				return a.conflicts - b.conflicts;
 			});
             
@@ -4202,6 +4228,8 @@
 				top = allCombinations.slice(0, WAR_RESULT_LIMIT);
 			}
             
+            // Szczegóły konfliktów liczymy dopiero dla wyświetlanych kombinacji (tanio, ~20 szt.)
+            top.forEach(c => { if (!c.conflictDetails) c.conflictDetails = countHeroConflicts(c.formations).details; });
             displayWarResults(top, [enemy1, enemy2, enemy3]);
         }
 
@@ -4366,8 +4394,8 @@
 											</div>
 										</div>
 										<div class="war-vs-enemy">
-											<div class="war-match-bar">
-												<div class="war-match-fill ${scoreClass}" style="width: ${matchPercent}%"></div>
+											<div class="war-match-bar ${scoreClass}">
+												${Array.from({ length: 10 }, (_, s) => `<span class="war-match-seg ${s < Math.round(matchPercent / 10) ? 'on' : ''}"></span>`).join('')}
 											</div>
 											<span class="war-match-score ${scoreClass}">${displayScore}/${m.maxScore}</span>
 										</div>
@@ -4377,7 +4405,7 @@
 						${combo.conflictDetails.length ? `
 							<div class="war-conflicts-summary">
 								⚠️ <strong>Konflikty:</strong> ${combo.conflictDetails.map(c => 
-									`<span class="conflict-hero">${c.hero}</span>`
+									`<span class="conflict-hero">${c.display || c.hero}</span>`
 								).join(', ')}
 							</div>` : ''}
 						${hasExcluded ? `
@@ -4993,17 +5021,20 @@
 			// Zbierz wszystkich bohaterów użytych w "TWÓJ SKŁAD" aby wykryć konflikty
 			const allMyHeroes = {};
 			const allMyPets = {};
+			const conflictDisplay = {}; // znormalizowany klucz -> ładna pisownia
 			combo.formations.forEach((match, idx) => {
 				match.formation.my.filter(h => h).forEach(hero => {
 					const h = normalize(hero);
 					if (!allMyHeroes[h]) allMyHeroes[h] = [];
 					allMyHeroes[h].push(idx);
+					if (!conflictDisplay[h]) conflictDisplay[h] = findHero(hero)?.name || hero;
 				});
 				// Sprawdź też pety
 				if (match.formation.myPet) {
 					const p = normalize(match.formation.myPet);
 					if (!allMyPets[p]) allMyPets[p] = [];
 					allMyPets[p].push(idx);
+					if (!conflictDisplay[p]) conflictDisplay[p] = match.formation.myPet;
 				}
 			});
 			
@@ -5031,8 +5062,8 @@
 				? `✓ ${t('war.noConflicts')}` 
 				: `${totalConflicts} ${t('war.conflictsCount')}`;
 			
-			let html = `
-				<!-- Podsumowanie kombinacji -->
+			const summaryBox = `
+				<!-- Podsumowanie kombinacji (na dole, dyskretne) -->
 				<div class="war-preview-summary">
 					<div class="war-preview-summary-header">
 						<span class="war-preview-summary-title">📊 ${t('war.combinationSummary')}</span>
@@ -5063,27 +5094,10 @@
 					</div>
 				</div>
 				
-				<!-- Legenda kolorów -->
-				<div class="war-preview-legend">
-					<div class="war-legend-item">
-						<span class="war-legend-dot matched"></span>
-						<span>${t('war.legendMatched')}</span>
-					</div>
-					<div class="war-legend-item">
-						<span class="war-legend-dot missing"></span>
-						<span>${t('war.legendMissing')}</span>
-					</div>
-					<div class="war-legend-item">
-						<span class="war-legend-dot extra"></span>
-						<span>${t('war.legendExtra')}</span>
-					</div>
-					<div class="war-legend-item">
-						<span class="war-legend-dot conflict"></span>
-						<span>${t('war.legendConflict')}</span>
-					</div>
-				</div>
 			`;
 			
+			let html = '';
+
 			// Karty porównania dla każdej walki
 			combo.formations.forEach((match, idx) => {
 				const f = match.formation;
@@ -5108,15 +5122,17 @@
 						</div>
 						
 						<div class="war-compare-body">
-							<!-- Porównanie: Szukany vs Baza -->
-							<div class="war-compare-grid">
+							<!-- STREFA: Wróg (szukany vs baza) -->
+							<div class="war-enemy-zone">
+									<div class="war-zone-label enemy">🎯 ${t('war.enemyZone')}</div>
+									<div class="war-compare-grid">
 								<div class="war-compare-side">
 									<div class="war-compare-side-title searched">🔍 ${t('war.searchedEnemy')}</div>
 									<div style="text-align:center">
 										${renderWarPetComparison(searchedEnemy.petRaw, f.enemyPet, 'searched')}
 									</div>
 									<div class="compact-grid">
-										${renderWarSearchedGrid(searchedEnemy.heroesRaw, analysis)}
+										${renderWarSearchedGrid(searchedEnemy.heroesRaw, analysis, f.enemy)}
 									</div>
 								</div>
 								
@@ -5128,14 +5144,15 @@
 										${renderWarPetComparison(f.enemyPet, searchedEnemy.pet, 'database')}
 									</div>
 									<div class="compact-grid">
-										${renderWarDatabaseGrid(f.enemy, analysis)}
+										${renderWarDatabaseGrid(f.enemy, analysis, searchedEnemy.heroesRaw)}
 									</div>
 								</div>
 							</div>
 							
 							<!-- Separator - Twój skład -->
-							<div class="war-your-team-separator">
-								<span class="war-your-team-badge">⚔️ ${t('war.yourTeam')}</span>
+							</div><!-- /strefa: Wróg -->
+								<div class="war-your-team-separator">
+								<span class="war-your-team-badge">⚔️ ${t('war.yourTeam')} — ${t('war.counterLabel')}</span>
 							</div>
 
 							<!-- Twój skład z konfliktami - ładniejszy -->
@@ -5146,20 +5163,12 @@
 								</div>
 							</div>
 							
-							<!-- Podsumowanie dopasowania -->
-							<div class="war-match-summary">
-								<div class="war-match-item matched">
-									<span class="war-match-item-icon">✅</span>
-									<span class="war-match-item-list">${analysis.matched.length ? analysis.matched.join(', ') : '—'}</span>
-								</div>
-								<div class="war-match-item missing">
-									<span class="war-match-item-icon">❌</span>
-									<span class="war-match-item-list">${analysis.missing.length ? analysis.missing.join(', ') : '—'}</span>
-								</div>
-								<div class="war-match-item extra">
-									<span class="war-match-item-icon">➕</span>
-									<span class="war-match-item-list">${analysis.extra.length ? analysis.extra.join(', ') : '—'}</span>
-								</div>
+							<!-- Mini legenda kolorów -->
+							<div class="war-mini-legend">
+								<span><i class="frame-miss"></i>${t('war.legendMissing')}</span>
+								<span><i class="frame-extra"></i>${t('war.legendExtra')}</span>
+								<span><i class="moved"></i>${t('war.legendMoved')}</span>
+								<span><i class="c"></i>${t('war.legendConflict')}</span>
 							</div>
 							
 							<!-- Komentarz -->
@@ -5191,7 +5200,8 @@
 				`;
 			});
 			
-			// Podsumowanie konfliktów na dole
+			// Konflikty (renderowane na GÓRZE, nad walkami)
+			let conflictsBox = '';
 			const hasHeroConflicts = conflictHeroes.size > 0;
 			const hasPetConflicts = conflictPets.size > 0;
 			
@@ -5200,7 +5210,7 @@
 				Object.entries(allMyHeroes).forEach(([hero, indices]) => {
 					if (indices.length > 1) {
 						conflictList.push({
-							name: hero.charAt(0).toUpperCase() + hero.slice(1),
+							name: conflictDisplay[hero] || hero,
 							battles: indices.map(i => i + 1),
 							type: 'hero'
 						});
@@ -5209,14 +5219,14 @@
 				Object.entries(allMyPets).forEach(([pet, indices]) => {
 					if (indices.length > 1) {
 						conflictList.push({
-							name: pet.charAt(0).toUpperCase() + pet.slice(1),
+							name: conflictDisplay[pet] || pet,
 							battles: indices.map(i => i + 1),
 							type: 'pet'
 						});
 					}
 				});
 				
-				html += `
+				conflictsBox = `
 					<div class="war-conflicts-box has-conflicts">
 						<h3 class="war-conflicts-title bad">⚠️ ${t('war.conflictsTitle')}</h3>
 						<div>
@@ -5232,7 +5242,7 @@
 					</div>
 				`;
 			} else {
-				html += `
+				conflictsBox = `
 					<div class="war-conflicts-box no-conflicts">
 						<h3 class="war-conflicts-title good">✅ ${t('war.noConflictsTitle')}</h3>
 						<p style="font-size: 0.8rem; color: var(--text-muted);">
@@ -5242,7 +5252,8 @@
 				`;
 			}
 			
-			$('war-preview-content').innerHTML = html;
+			// Kolejność: konflikty (góra) → walki → podsumowanie (dół)
+			$('war-preview-content').innerHTML = conflictsBox + html + summaryBox;
 		}
 
 		// Analiza dopasowania między szukanym a bazą
@@ -5297,7 +5308,7 @@
 		}
 
 		// Renderuj siatkę szukanego wroga - z zachowaniem pozycji
-		function renderWarSearchedGrid(heroesRaw, analysis) {
+		function renderWarSearchedGrid(heroesRaw, analysis, otherArr) {
 			const slot = (idx) => {
 				const name = heroesRaw[idx] || '';
 				if (!name) return `<div class="compact-slot empty">—</div>`;
@@ -5310,7 +5321,11 @@
 				
 				let classes = 'compact-slot filled';
 				if (race) classes += ` race-${race}`;
+				const nm = normalize(name);
+				const otherNm = (otherArr && otherArr[idx]) ? normalize(otherArr[idx]) : '';
+				const samePos = otherNm && (otherNm === nm || otherNm.startsWith(nm) || nm.startsWith(otherNm));
 				if (isMatched) classes += ' war-matched';
+				if (isMatched && !samePos) classes += ' war-moved';
 				if (isMissing) classes += ' war-missing';
 				
 				// Kapitalizuj nazwę (pierwsza duża)
@@ -5327,7 +5342,7 @@
 		}
 
 		// Renderuj siatkę wroga z bazy
-		function renderWarDatabaseGrid(heroesArr, analysis) {
+		function renderWarDatabaseGrid(heroesArr, analysis, otherArr) {
 			const slot = (idx) => {
 				const name = heroesArr[idx] || '';
 				if (!name) return `<div class="compact-slot empty">—</div>`;
@@ -5341,7 +5356,10 @@
 				
 				let classes = 'compact-slot filled';
 				if (race) classes += ` race-${race}`;
+				const otherNm = (otherArr && otherArr[idx]) ? normalize(otherArr[idx]) : '';
+				const samePos = otherNm && (otherNm === normName || otherNm.startsWith(normName) || normName.startsWith(otherNm));
 				if (isMatched) classes += ' war-matched';
+				if (isMatched && !samePos) classes += ' war-moved';
 				if (isExtra) classes += ' war-extra';
 				
 				return `<div class="${classes}">${name}</div>`;
@@ -5406,18 +5424,13 @@
 			const displayName = petData || (petName.charAt(0).toUpperCase() + petName.slice(1).toLowerCase());
 			
 			let petClass = 'filled';
-			if (side === 'searched') {
-				if (normOther && (normPet === normOther || normPet.startsWith(normOther) || normOther.startsWith(normPet))) {
-					petClass += ' war-matched';
-				} else if (normPet && !normOther) {
-					petClass += ' war-missing';
-				}
+			const samePet = normOther && (normPet === normOther || normPet.startsWith(normOther) || normOther.startsWith(normPet));
+			if (samePet) {
+				petClass += ' war-matched';      // ten sam pet
+			} else if (side === 'searched') {
+				petClass += ' war-missing';       // pet u szukanego, inny/brak w bazie
 			} else {
-				if (normOther && (normPet === normOther || normPet.startsWith(normOther) || normOther.startsWith(normPet))) {
-					petClass += ' war-matched';
-				} else if (normPet && !normOther) {
-					petClass += ' war-extra';
-				}
+				petClass += ' war-extra';         // pet w bazie, inny/brak u szukanego
 			}
 			
 			return `<div class="compact-pet ${petClass}">🐾 ${displayName}</div>`;
@@ -7866,6 +7879,7 @@
                     appConfig.tabPlacement[k] = (v === 'bar' || v === 'more' || v === 'hidden') ? v : (v === true ? 'more' : 'bar');
                 });
                 appConfig.tabOrder = sanitizeTabOrder(c.tabOrder);
+                navConfigReady = true; // prawdziwy config dotarł → wolno odsłonić pasek (z poprawnym układem)
                 applyTabVisibility();
 
                 // Live: globalne domyślne tam, gdzie użytkownik nie ma własnego wyboru
@@ -7887,6 +7901,9 @@
                 if (allFormations.length) filterDatabase();              // odśwież badge NOWE w bazie
                 if (lastSearch) displayResults(lastSearch.results, lastSearch.searchHeroes); // odśwież aktywne wyniki
             });
+
+            // Fallback: gdyby config nie dotarł (offline/wolny Firebase), odsłoń pasek z domyślnymi po 2.5s
+            setTimeout(() => { if (!navConfigReady) { navConfigReady = true; applyTabVisibility(); } }, 2500);
 
             db.ref('.info/connected').on('value', snap => setOnlineStatus(snap.val() === true));
         } catch (e) {
