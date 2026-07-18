@@ -16,7 +16,8 @@
         const storage = {
             getJson: (key, fallback = null) => {
                 const raw = localStorage.getItem(key);
-                return raw === null ? fallback : JSON.parse(raw);
+                if (raw === null) return fallback;
+                try { return JSON.parse(raw); } catch (e) { return fallback; }
             },
             setJson: (key, val) => localStorage.setItem(key, JSON.stringify(val)),
             getBool: (key, fallback = false) => {
@@ -81,8 +82,12 @@
         let headerClickCount = 0, headerClickTimer = null;
         let favorites = storage.getJson('souls_favorites', []);
         let currentLang = localStorage.getItem('souls_lang') || 'pl';
+        document.documentElement.lang = currentLang; // zsynchronizuj <html lang> z zapamiętanym językiem
         let currentDbFilter = 'all';
 		let currentDbSort = 'id-desc';
+		const DB_PAGE = 200; // paginacja listy Bazy i wyników Szukajki (wzorzec z Galerii)
+		let dbRenderLimit = DB_PAGE, dbViewSig = '';
+		let searchRenderLimit = DB_PAGE;
 		// Globalna konfiguracja gildii (Firebase /config/settings) — wspólna dla wszystkich graczy.
 		// DEFAULT_CONFIG = bezpieczny backup, gdy node nie istnieje lub ma złe wartości.
 		const DEFAULT_CONFIG = {
@@ -173,8 +178,11 @@
         const normalize = str => (str || '').trim().toLowerCase();
         // Wyszukanie bohatera po nazwie (case-insensitive, BEZ trim — zgodnie z dotychczasowym dopasowaniem)
         const findHero = name => heroes.find(h => h.name.toLowerCase() === name.toLowerCase());
-        // Escape stringa do wstawienia w atrybut onclick="fn('...')"
-        const jsStr = s => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        // Escape stringa do wstawienia w atrybut onclick="fn('...')":
+        // najpierw escape JS (\ i '), potem HTML-encode (& " < >) — parser HTML
+        // odkoduje encje zanim JS zobaczy string, a " nie rozerwie atrybutu.
+        const jsStr = s => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+            .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const getPetName = p => typeof p === 'string' ? p : p.name;
 
         // Helpery menedżerów wykluczeń (search / war / kreator)
@@ -490,13 +498,14 @@
 			if (icon) {
 				icon.textContent = theme === 'light' ? '☀️' : '🌙';
 			}
-			btn.title = theme === 'light' ? 'Przełącz na tryb nocny' : 'Przełącz na tryb dzienny';
+			btn.title = theme === 'light' ? t('theme.toDark') : t('theme.toLight');
 		}
 
         // TŁUMACZENIA
         function setLanguage(lang) {
             currentLang = lang;
             localStorage.setItem('souls_lang', lang);
+            document.documentElement.lang = lang; // czytniki ekranu / tłumacze przeglądarek
             document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
             document.querySelector(`.lang-btn[onclick="setLanguage('${lang}')"]`).classList.add('active');
             applyTranslations();
@@ -581,7 +590,7 @@
 			if (name === 'defense') switchDefenseView(currentDefenseView);
 			if (name === 'settings') renderImportStats();
 			if (name === 'heroes') applyHeroesMode(); // Bohaterowie albo Księga (wg zapisanego trybu)
-			if (name === 'screens') renderScreensTab();
+			if (name === 'screens') { ensureScreensLoaded(); renderScreensTab(); } // lazy pierwsze załadowanie metadanych galerii
 
 		}
 
@@ -641,6 +650,40 @@
             }
             
             setValidation(input, isValid);
+        }
+
+        // Wspólna walidacja + kanonizacja danych formacji (Dodaj / Edycja / import CSV).
+        // Zwraca { ok:false, error } albo { ok:true, my, enemy, myPet, enemyPet } z nazwami
+        // w pisowni z bazy — bez kanonizacji "benzel" i "Benzel" liczyły się osobno
+        // w pakietach i quick-tagach (walidacja była case-insensitive, zapis surowy).
+        function validateFormationData(my, enemy, myPet, enemyPet) {
+            my = (my || []).map(h => (h || '').trim());
+            enemy = (enemy || []).map(h => (h || '').trim());
+            myPet = (myPet || '').trim();
+            enemyPet = (enemyPet || '').trim();
+
+            if (!my.filter(h => h).length && !enemy.filter(h => h).length)
+                return { ok: false, error: t('add.addAtLeastOne') };
+            if (my.filter(h => h).length > 5 || enemy.filter(h => h).length > 5)
+                return { ok: false, error: t('add.tooManyHeroes') };
+
+            const allHeroNames = heroes.map(h => h.name.toLowerCase());
+            const invalidHeroes = [...my, ...enemy].filter(h => h && !allHeroNames.includes(h.toLowerCase()));
+            if (invalidHeroes.length)
+                return { ok: false, error: `${t('add.unknownHeroes')}: ${invalidHeroes.slice(0, 3).join(', ')}` };
+
+            const allPetNames = pets.map(p => getPetName(p).toLowerCase());
+            const invalidPets = [myPet, enemyPet].filter(p => p && !allPetNames.includes(p.toLowerCase()));
+            if (invalidPets.length)
+                return { ok: false, error: `${t('add.unknownPets')}: ${invalidPets.join(', ')}` };
+
+            const canonHero = h => h ? (findHero(h)?.name || h) : '';
+            const canonPet = p => {
+                if (!p) return '';
+                const found = pets.find(x => getPetName(x).toLowerCase() === p.toLowerCase());
+                return found ? getPetName(found) : p;
+            };
+            return { ok: true, my: my.map(canonHero), enemy: enemy.map(canonHero), myPet: canonPet(myPet), enemyPet: canonPet(enemyPet) };
         }
 
         // Funkcja pomocnicza do matchowania bohaterów z wagą
@@ -709,11 +752,11 @@
 			const now = new Date();
 			const diff = Math.floor((now - date) / 1000); // sekundy
 			
-			if (diff < 60) return 'przed chwilą';
-			if (diff < 3600) return `${Math.floor(diff / 60)} min temu`;
-			if (diff < 86400) return `${Math.floor(diff / 3600)} godz. temu`;
-			if (diff < 604800) return `${Math.floor(diff / 86400)} dni temu`;
-			return date.toLocaleDateString('pl-PL');
+			if (diff < 60) return t('time.justNow');
+			if (diff < 3600) return t('time.minAgo', { n: Math.floor(diff / 60) });
+			if (diff < 86400) return t('time.hoursAgo', { n: Math.floor(diff / 3600) });
+			if (diff < 604800) return t('time.daysAgo', { n: Math.floor(diff / 86400) });
+			return date.toLocaleDateString(currentLang === 'en' ? 'en-GB' : 'pl-PL');
 		}
 
 		// Czy formacja jest "nowa" (dodana w ostatnich N dniach wg dateAdded; N = globalny appConfig.newFormationDays).
@@ -1153,7 +1196,7 @@
             RACE_ORDER = [...DEFAULT_RACE_ORDER];
             saveRaceOrder();
             refreshAllTags();
-            showToast('Przywrócono domyślną kolejność');
+            showToast(t('race.orderReset'));
         }
 
         function saveRaceOrder() {
@@ -1230,7 +1273,7 @@
 				</div>
 			`).join('') + `
 				<div style="margin-top: 8px; text-align: center;">
-					<button class="btn btn-small btn-secondary" onclick="resetRaceOrder()">↺ Domyślna kolejność</button>
+					<button class="btn btn-small btn-secondary" onclick="resetRaceOrder()">${t('race.orderResetBtn')}</button>
 				</div>
 			`;
 		}
@@ -1488,6 +1531,7 @@
 					: null;
 			}).filter(Boolean);
 
+			searchRenderLimit = DB_PAGE; // nowe wyszukiwanie = od pierwszej strony
 			displayResults(results, searchHeroes);
 		}
 
@@ -1578,7 +1622,10 @@
 				return;
 			}
 			
-			html += displayedResults.map(r => {
+			// Paginacja — popularny bohater potrafi trafić w tysiące formacji, a innerHTML
+			// z tyloma kartami mrozi mobile. searchRenderLimit resetuje searchFormations().
+			const searchMoreCount = displayedResults.length - searchRenderLimit;
+			html += displayedResults.slice(0, searchRenderLimit).map(r => {
 				const f = r.formation;
 				const enemyDisplay = f.enemy.filter(h => h).map(h => r.matchedHeroes.some(mh => normalize(h) === mh || normalize(h).startsWith(mh)) ? `<span class="matched-hero">${h}</span>` : h).join(', ');
 				const petDisplay = r.petMatched ? `<span class="matched-hero">${f.enemyPet}</span>` : (f.enemyPet || '—');
@@ -1607,9 +1654,15 @@
 						</div>
 					</div>`;
 			}).join('');
-			
+			if (searchMoreCount > 0) html += `<button class="screens-show-more" onclick="searchShowMore()">${t('common.showMore', { n: searchMoreCount })}</button>`;
+
 			$('results-section').innerHTML = html;
 			updateCompareButton();
+		}
+
+		function searchShowMore() {
+			searchRenderLimit += DB_PAGE;
+			if (lastSearch) displayResults(lastSearch.results, lastSearch.searchHeroes);
 		}
 
         function clearSearch() {
@@ -1617,7 +1670,8 @@
             $('search-pet').value = '';
             lastSearch = null;
             renderSearchEmptyState();
-            document.querySelectorAll('.quick-tag.selected').forEach(t => t.classList.remove('selected'));
+            // Tylko tagi Szukajki — globalny selektor rozjeżdżał podświetlenie w Dodaj/Wojnie/Kreatorze
+            document.querySelectorAll('#tab-search .quick-tag.selected').forEach(t => t.classList.remove('selected'));
             $('search-counter')?.remove();
         }
 
@@ -1656,8 +1710,8 @@
 			
 			container.innerHTML = excludedHeroes.map(hero => `
 				<div class="excluded-chip">
-					<span>${hero}</span>
-					<button class="excluded-chip-remove" onclick="removeExcludedHero('${hero}')" title="${t('common.delete')}">✕</button>
+					<span>${escapeHtml(hero)}</span>
+					<button class="excluded-chip-remove" onclick="removeExcludedHero('${jsStr(hero)}')" title="${t('common.delete')}">✕</button>
 				</div>
 			`).join('');
 		}
@@ -1682,6 +1736,7 @@
 			if (input) input.value = '';
 
 			filterDatabase();
+			if (lastSearch) displayResults(lastSearch.results, lastSearch.searchHeroes); // odśwież widoczne wyniki Szukajki
 		}
 
 		function removeExcludedHero(name) {
@@ -1693,6 +1748,7 @@
 			showToast(`✅ ${t('excluded.removed')}: ${name}`);
 
 			filterDatabase();
+			if (lastSearch) displayResults(lastSearch.results, lastSearch.searchHeroes);
 		}
 
 		function clearExcludedHeroes() {
@@ -1707,14 +1763,16 @@
 			showToast(t('excluded.cleared'));
 
 			filterDatabase();
+			if (lastSearch) displayResults(lastSearch.results, lastSearch.searchHeroes);
 		}
 
 		function onExcludeSettingChange() {
 			hideExcludedResults = $('exclude-hide-results').checked;
 			storage.setBool('souls_hide_excluded', hideExcludedResults);
-			
-			// Odśwież aktywną zakładkę
+
+			// Odśwież aktywną zakładkę + widoczne wyniki Szukajki
 			filterDatabase();
+			if (lastSearch) displayResults(lastSearch.results, lastSearch.searchHeroes);
 		}
 
 		function isFormationExcluded(formation) {
@@ -1915,7 +1973,7 @@
 			searchHistory.splice(idx, 1);
 			storage.setJson('souls_search_history', searchHistory);
 			renderSearchHistory();
-			showToast(t('common.formationDeleted'));
+			showToast(t('common.historyEntryRemoved'));
 		}
 
 		function clearSearchHistory() {
@@ -2018,7 +2076,7 @@
                     }
                 } else {
                     // at-least: enumerate all sizes from minSize to hs.length
-                    for (let k = minSize; k <= hs.length; k++) {
+                    for (let k = minSize; k <= Math.min(hs.length, 5); k++) {
                         enumerateSubsets(hs, k, subset => {
                             const key = subset.join('|');
                             counts.set(key, (counts.get(key) || 0) + 1);
@@ -2088,7 +2146,7 @@
 
             // Limit do 100 najczęstszych — przy większych ilościach scroll się nie skończy
             const shown = packages.slice(0, 100);
-            const moreInfo = packages.length > 100 ? `<div style="text-align: center; color: var(--text-muted); font-size: 0.75rem; padding: 10px;">... (${packages.length - 100} kolejnych pakietów)</div>` : '';
+            const moreInfo = packages.length > 100 ? `<div style="text-align: center; color: var(--text-muted); font-size: 0.75rem; padding: 10px;">${t('packages.moreCount', { n: packages.length - 100 })}</div>` : '';
 
             listEl.innerHTML = shown.map(p => {
                 const emoji = packageDominantEmoji(p.heroes);
@@ -2176,14 +2234,21 @@
 			
 			// Sortowanie
 			formations = sortFormations(formations);
-			
+
+			// Paginacja (wzorzec z Galerii) — innerHTML z tysiącami kart mroził UI na mobile.
+			// Reset limitu przy każdej zmianie widoku (filtr/sort/szukajka/wykluczeni).
+			const viewSig = `${currentDbFilter}|${currentDbSort}|${searchTerm}|${hideExcludedResults}`;
+			if (viewSig !== dbViewSig) { dbViewSig = viewSig; dbRenderLimit = DB_PAGE; }
+			const dbMoreCount = formations.length - dbRenderLimit;
+			const visibleFormations = formations.slice(0, dbRenderLimit);
+
 			// Pokaż info o ukrytych
 			let headerInfo = '';
 			if (hiddenCount > 0) {
 				headerInfo = `<div style="text-align:center;font-size:0.75rem;color:#f44336;margin-bottom:10px;">🚫 ${hiddenCount} ${t('excluded.hiddenCountLabel')}</div>`;
 			}
-			
-			$('database-list').innerHTML = headerInfo + (formations.length ? formations.map(f => {
+
+			$('database-list').innerHTML = headerInfo + (formations.length ? visibleFormations.map(f => {
 				const exclusionCheck = isFormationExcluded(f);
 				const hasExcluded = !hideExcludedResults && exclusionCheck.excluded;
 				
@@ -2204,8 +2269,14 @@
 						${isAdmin ? `<button class="btn btn-small btn-danger" onclick="event.stopPropagation(); deleteFormation(${f.id})">🗑️</button>` : ''}
 					</div>
 				</div>`
-			}).join('') : `<div class="empty-state"><p>${t('database.noFormations')}</p></div>`);
+			}).join('') + (dbMoreCount > 0 ? `<button class="screens-show-more" onclick="dbShowMore()">${t('common.showMore', { n: dbMoreCount })}</button>` : '')
+			: `<div class="empty-state"><p>${t('database.noFormations')}</p></div>`);
 		}
+
+		function dbShowMore() { dbRenderLimit += DB_PAGE; filterDatabase(); }
+
+		// Debounce dla szukajki Bazy (oninput w HTML) — pełny re-render na każdy klawisz mroził wpisywanie
+		const debouncedFilterDatabase = debounce(filterDatabase, 200);
 
         // =====================================================
         // ULUBIONE
@@ -2466,7 +2537,13 @@
         }
 
         function selectQuickItem(value) {
-            if (quickSelectTarget) $(quickSelectTarget).value = value;
+            if (quickSelectTarget) {
+                const input = $(quickSelectTarget);
+                input.value = value;
+                // Odśwież stan zależny od wartości pola (ramka walidacji, kolor rasy, tagi, licznik) —
+                // samo ustawienie .value nie odpala listenerów input
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
             closeQuickSelect();
         }
 
@@ -2489,12 +2566,14 @@
 		function showFormation(id) {
 			const f = allFormations.find(x => x.id === id);
 			currentFormation = f;
+			switchTab('view'); // też przy braku — komunikat „nie znaleziono" musi być widoczny (deep-link ?formation=N)
 			if (!f) {
 				$('formation-display').innerHTML = `<div class="empty-state"><p>${t('preview.notFound')} #${id}</p></div>`;
+				navFormationIds = allFormations.map(x => x.id).sort((a, b) => a - b);
+				navCurrentIndex = -1;
+				updateFormationNav(id); // wyłącza strzałki i czyści licznik (idx === -1)
 				return;
 			}
-			
-			switchTab('view');
 			
 			// Aktualizuj pole input
 			const lookupInput = $('lookup-id');
@@ -2520,8 +2599,8 @@
 					<div class="preview-header">
 						<div class="preview-title"><span class="preview-id">#${f.id}</span>${escapeHtml(f.name)}<span class="formation-type-badge ${f.isBase ? 'base' : 'user'}">${t(f.isBase ? 'badge.base' : 'badge.user')}</span></div>
 						<div class="preview-actions">
-							<button class="btn btn-small btn-secondary" onclick="exportSingleFormationAsText()">📋 Kopiuj skład tekstowo</button>
-							<button class="btn btn-small btn-secondary" onclick="copyFormationLink(${id})" title="Kopiuj link">🔗</button>
+							<button class="btn btn-small btn-secondary" onclick="exportSingleFormationAsText()">${t('preview.copyTeamText')}</button>
+							<button class="btn btn-small btn-secondary" onclick="copyFormationLink(${id})" title="${t('preview.copyLink')}">🔗</button>
 							${isAdmin ? `<button class="btn btn-small btn-admin" onclick="openEditModal(${id})">✏️</button>` : ''}
 							<button class="btn btn-small ${isFav ? 'btn-favorite-active' : 'btn-secondary'}" onclick="toggleFavoritePreview(${id})">${isFav ? '⭐' : '☆'}</button>
 						</div>
@@ -2581,8 +2660,8 @@
 			}
 			
 			container.innerHTML = recentlyViewed.map(item => `
-				<div class="recently-viewed-item" onclick="showFormation(${item.id})" title="${item.name}">
-					<span class="rv-id">#${item.id}</span>${item.name.substring(0, 15)}${item.name.length > 15 ? '..' : ''}
+				<div class="recently-viewed-item" onclick="showFormation(${Number(item.id) || 0})" title="${escapeHtml(item.name)}">
+					<span class="rv-id">#${item.id}</span>${escapeHtml(item.name.substring(0, 15))}${item.name.length > 15 ? '..' : ''}
 				</div>
 			`).join('');
 			
@@ -2738,18 +2817,18 @@
 		function exportSingleFormationAsText() {
 			const f = currentFormation;
 			if (!f) {
-				showToast('Najpierw wybierz formację', true);
+				showToast(t('preview.selectFirst'), true);
 				return;
 			}
 			
 			const myHeroes = f.my || [];
 			const myPet = f.myPet || '';
 			
-			let text = `Skład #${f.id}\n`;
+			let text = t('war.comboDefaultName', { n: f.id }) + '\n';
 			text += formatFormationAsText(myHeroes, myPet);
 			
 			navigator.clipboard.writeText(text.trim()).then(() => {
-				showToast('📋 Skład skopiowany!');
+				showToast(t('preview.teamCopied'));
 			}).catch(() => {
 				const textarea = document.createElement('textarea');
 				textarea.value = text.trim();
@@ -2757,7 +2836,7 @@
 				textarea.select();
 				document.execCommand('copy');
 				document.body.removeChild(textarea);
-				showToast('📋 Skład skopiowany!');
+				showToast(t('preview.teamCopied'));
 			});
 		}
 
@@ -2818,18 +2897,20 @@
 			}
 			
 			// Pobierz dane z formularza
-			const my = [];
+			const rawMy = [];
 			for (let i = 1; i <= 8; i++) {
-				my.push($(`edit-my${i}`)?.value.trim() || '');
+				rawMy.push($(`edit-my${i}`)?.value.trim() || '');
 			}
-			
-			const enemy = [];
+
+			const rawEnemy = [];
 			for (let i = 1; i <= 8; i++) {
-				enemy.push($(`edit-enemy${i}`)?.value.trim() || '');
+				rawEnemy.push($(`edit-enemy${i}`)?.value.trim() || '');
 			}
-			
-			const myPet = $('edit-myPet').value.trim();
-			const enemyPet = $('edit-enemyPet').value.trim();
+
+			// Ta sama walidacja co przy Dodaj (≤5, znane nazwy, kanonizacja) — edycja jej wcześniej nie miała
+			const v = validateFormationData(rawMy, rawEnemy, $('edit-myPet').value, $('edit-enemyPet').value);
+			if (!v.ok) { showToast(v.error, true); return; }
+			const { my, enemy, myPet, enemyPet } = v;
 			const comment = $('edit-comment').value.trim();
 			
 			// Checkbox isBase
@@ -3112,32 +3193,16 @@
 			if (!isOnline) { showToast(t('common.noConnection'), true); return; }
 			
 			let name = $('add-name').value.trim();
-			
-			const my = getFieldValues('add-my', 8);
-			const enemy = getFieldValues('add-enemy', 8);
-			const myPet = $('add-myPet').value.trim();
-			const enemyPet = $('add-enemyPet').value.trim();
-			
-			if (!my.filter(h => h).length && !enemy.filter(h => h).length) { 
-				showToast(t('add.addAtLeastOne'), true); 
-				return; 
-			}
-			
-			if (my.filter(h => h).length > 5 || enemy.filter(h => h).length > 5) { showToast(t('add.tooManyHeroes'), true); return; }
-			const allHeroNames = heroes.map(h => h.name.toLowerCase());
-			const invalidHeroes = [...my, ...enemy].filter(h => h && !allHeroNames.includes(h.toLowerCase()));
-			if (invalidHeroes.length) { 
-				showToast(`${t('add.unknownHeroes')}: ${invalidHeroes.slice(0, 3).join(', ')}`, true); 
-				return; 
-			}
-			
-			const allPetNames = pets.map(p => getPetName(p).toLowerCase());
-			const invalidPets = [myPet, enemyPet].filter(p => p && !allPetNames.includes(p.toLowerCase()));
-			if (invalidPets.length) { 
-				showToast(`${t('add.unknownPets')}: ${invalidPets.join(', ')}`, true); 
-				return; 
-			}
-			
+
+			const v = validateFormationData(
+				getFieldValues('add-my', 8),
+				getFieldValues('add-enemy', 8),
+				$('add-myPet').value,
+				$('add-enemyPet').value
+			);
+			if (!v.ok) { showToast(v.error, true); return; }
+			const { my, enemy, myPet, enemyPet } = v; // nazwy w pisowni kanonicznej z bazy
+
 			// 🔍 SPRAWDŹ DUPLIKATY
 			const existingDuplicate = checkForExactDuplicate(my, myPet, enemy, enemyPet);
 			if (existingDuplicate) {
@@ -3162,26 +3227,36 @@
 				}).replace(',', '');
 			}
 			
-			const newId = allFormations.length ? Math.max(...allFormations.map(f => f.id)) + 1 : 1;
 			const isBase = isAdmin && $('add-isBase')?.checked || false;
-			
+			const record = {
+				name,
+				my,
+				myPet,
+				enemy,
+				enemyPet,
+				comment: $('add-comment').value.trim(),
+				isBase: isBase,
+				dateAdded: new Date().toISOString()
+			};
+
 			try {
-				await formationsRef.child(String(newId)).set({
-					id: newId, 
-					name, 
-					my, 
-					myPet, 
-					enemy, 
-					enemyPet,
-					comment: $('add-comment').value.trim(),
-					isBase: isBase,
-					dateAdded: new Date().toISOString()
-				});
+				// Transakcja na pierwszym wolnym ID — samo max+1 i set() cicho nadpisywało
+				// rekord, gdy dwie osoby zapisywały w tym samym momencie (obie widziały ten sam max).
+				const startId = allFormations.length ? Math.max(...allFormations.map(f => f.id)) + 1 : 1;
+				let newId = null;
+				for (let attempt = 0; attempt < 20; attempt++) {
+					const candidate = startId + attempt;
+					const res = await formationsRef.child(String(candidate)).transaction(cur =>
+						cur === null ? { ...record, id: candidate } : undefined // undefined = abort (ID zajęte)
+					);
+					if (res.committed) { newId = candidate; break; }
+				}
+				if (newId === null) throw new Error('Nie udało się znaleźć wolnego ID (spróbuj ponownie)');
 				showToast(`${t('add.saved')} #${newId}${isBase ? ' (BAZA)' : ''}!`);
 				clearAddForm();
 				hideDuplicateWarning();
-			} catch (e) { 
-				showToast(`${t('common.error')}: ${e.message}`, true); 
+			} catch (e) {
+				showToast(`${t('common.error')}: ${e.message}`, true);
 			}
 		}
 
@@ -3481,8 +3556,8 @@
 
 			container.innerHTML = warExcludedHeroes.map(hero => `
 				<span class="excluded-chip" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: rgba(244, 67, 54, 0.2); border: 1px solid rgba(244, 67, 54, 0.4); border-radius: 12px; font-size: 0.75rem; color: #f44336;">
-					${hero}
-					<button onclick="removeWarExcludedHero('${hero.replace(/'/g, "\\'")}')" style="background: none; border: none; color: #f44336; cursor: pointer; font-size: 0.8rem; padding: 0 2px; opacity: 0.7;" title="${t('common.remove')}">✕</button>
+					${escapeHtml(hero)}
+					<button onclick="removeWarExcludedHero('${jsStr(hero)}')" style="background: none; border: none; color: #f44336; cursor: pointer; font-size: 0.8rem; padding: 0 2px; opacity: 0.7;" title="${t('common.remove')}">✕</button>
 				</span>
 			`).join('');
 		}
@@ -3812,11 +3887,17 @@
             displayWarResults(top, [enemy1, enemy2, enemy3]);
         }
 
+		// Odmiana "N konfliktów" zależna od języka (pl: konflikt/konflikty/konfliktów)
+		function conflictCountLabel(n) {
+			if (currentLang === 'en') return `${n} ${n === 1 ? 'conflict' : 'conflicts'}`;
+			return `${n} konflikt${n === 1 ? '' : n < 5 ? 'y' : 'ów'}`;
+		}
+
 		function displayWarResults(results, enemies) {
 			if (!results.length) {
 				$('war-results-section').innerHTML = `
 					<div class="empty-state">
-						<p>❌ Nie znaleziono żadnych kombinacji.</p>
+						<p>${t('war.noCombos')}</p>
 					</div>`;
 				return;
 			}
@@ -3844,10 +3925,10 @@
 			if (!displayedResults.length) {
 				$('war-results-section').innerHTML = `
 					<div class="empty-state">
-						<p>❌ Nie znaleziono kombinacji bez wykluczonych bohaterów.</p>
+						<p>${t('war.noCombosExcluded')}</p>
 						<p style="font-size:0.8rem;color:var(--text-muted);margin-top:10px;">
-							${hiddenCount} kombinacji ukrytych z powodu wykluczonych bohaterów.<br>
-							Odznacz "Ukryj formacje z wykluczonymi" aby je zobaczyć.
+							${t('war.hiddenCombos', { n: hiddenCount })}<br>
+							${t('war.hiddenCombosHint')}
 						</p>
 					</div>`;
 				return;
@@ -3863,29 +3944,29 @@
 			
 			let html = `
 				<div class="war-summary-box">
-					<h3>🎯 Propozycje składów</h3>
+					<h3>🎯 ${t('war.proposals')}</h3>
 					<div class="war-summary-stats">
 						<div class="war-stat">
 							<span class="war-stat-value">${displayedResults.length}${hiddenCount > 0 ? ` <span style="font-size:0.7rem;color:#f44336;">(+${hiddenCount} 🚫)</span>` : ''}</span>
-							<span class="war-stat-label">kombinacji</span>
+							<span class="war-stat-label">${t('war.statCombos')}</span>
 						</div>
 						<div class="war-stat">
 							<span class="war-stat-value ${perfectCount > 0 ? 'green' : 'orange'}">${perfectCount}</span>
-							<span class="war-stat-label">idealnych</span>
+							<span class="war-stat-label">${t('war.statPerfect')}</span>
 						</div>
 						<div class="war-stat">
 							<span class="war-stat-value">${avgScore}/${maxPossibleScore}</span>
-							<span class="war-stat-label">śr. trafień</span>
+							<span class="war-stat-label">${t('war.statAvg')}</span>
 						</div>
 					</div>
 					<div class="war-legend">
-						<span class="legend-item"><span class="dot green"></span> Idealne (0 konfliktów)</span>
-						<span class="legend-item"><span class="dot yellow"></span> Dobre (1-2 konflikty)</span>
-						<span class="legend-item"><span class="dot orange"></span> Do rozważenia (3+ konfliktów)</span>
+						<span class="legend-item"><span class="dot green"></span> ${t('war.legendPerfect')}</span>
+						<span class="legend-item"><span class="dot yellow"></span> ${t('war.legendGood')}</span>
+						<span class="legend-item"><span class="dot orange"></span> ${t('war.legendConsider')}</span>
 					</div>
 				</div>
 				<p style="font-size:0.75rem;color:var(--text-muted);margin:15px 0;text-align:center;">
-					Kliknij w propozycję aby zobaczyć szczegółowy podgląd
+					${t('war.clickHint')}
 				</p>`;
 			
 			displayedResults.forEach((combo, idx) => {
@@ -3905,7 +3986,7 @@
 				
 				const cardClass = combo.conflicts === 0 ? 'perfect' : combo.conflicts <= 2 ? 'good' : 'conflicts';
 				const badgeClass = combo.conflicts === 0 ? 'perfect' : combo.conflicts <= 2 ? 'good' : 'bad';
-				const badgeText = combo.conflicts === 0 ? '✓ IDEALNE' : `${combo.conflicts} konflikt${combo.conflicts === 1 ? '' : combo.conflicts < 5 ? 'y' : 'ów'}`;
+				const badgeText = combo.conflicts === 0 ? t('war.perfectBadge') : conflictCountLabel(combo.conflicts);
 				
 				// Zbierz wszystkie konfliktowe bohaterów
 				const conflictHeroes = new Set();
@@ -3922,15 +4003,15 @@
 						<div class="war-result-header">
 							<div class="war-result-header-left">
 								<span class="war-result-rank">#${idx + 1}</span>
-								<button class="btn-pin" onclick="event.stopPropagation(); pinWarCombo(${idx})" title="Przypnij ten skład">
+								<button class="btn-pin" onclick="event.stopPropagation(); pinWarCombo(${idx})" title="${t('war.pinTitle')}">
 									📌
 								</button>
-								<button class="btn-pin" onclick="event.stopPropagation(); copyWarComboToKreator(${idx})" title="Przenieś do Kreatora" style="background: rgba(76, 175, 80, 0.2); border-color: rgba(76, 175, 80, 0.5);">
+								<button class="btn-pin" onclick="event.stopPropagation(); copyWarComboToKreator(${idx})" title="${t('war.toKreatorTitle')}" style="background: rgba(76, 175, 80, 0.2); border-color: rgba(76, 175, 80, 0.5);">
 									📝
 								</button>
 							</div>
 							<div class="war-result-badges">
-								<span class="war-score-badge ${scoreClass}">${scorePercent}% trafień</span>
+								<span class="war-score-badge ${scoreClass}">${scorePercent}% ${t('war.match')}</span>
 								<span class="war-conflict-badge ${badgeClass}">${badgeText}</span>
 							</div>
 						</div>
@@ -3946,30 +4027,30 @@
 								return `
 									<div class="war-formation-box">
 										<h4>
-											⚔️ Walka ${i + 1}
+											⚔️ ${t('war.battle')} ${i + 1}
 											<span class="formation-id">#${f.id}</span>
 										</h4>
 										<div class="war-formation-section">
-											<span class="war-section-label">Twój skład:</span>
+											<span class="war-section-label">${t('war.yourTeam')}:</span>
 											<div class="heroes-list">
 												${myHeroes.slice(0, 5).map(h => {
 													const isConflict = conflictHeroes.has(normalize(h));
 													const heroData = heroes.find(hr => normalize(hr.name) === normalize(h));
 													const raceClass = heroData?.race ? `hero-${heroData.race.toLowerCase()}` : '';
-													return isConflict 
-														? `<span class="hero-conflict">${h}</span>` 
-														: `<span class="${raceClass}">${h}</span>`;
-												}).join(', ') || '—'}${myHeroes.length > 5 ? '...' : ''}${f.myPet ? ` <span class="pet-inline">+ 🐾 <span class="hero-pet">${f.myPet}</span></span>` : ''}
+													return isConflict
+														? `<span class="hero-conflict">${escapeHtml(h)}</span>`
+														: `<span class="${raceClass}">${escapeHtml(h)}</span>`;
+												}).join(', ') || '—'}${myHeroes.length > 5 ? '...' : ''}${f.myPet ? ` <span class="pet-inline">+ 🐾 <span class="hero-pet">${escapeHtml(f.myPet)}</span></span>` : ''}
 											</div>
 										</div>
 										<div class="war-formation-section">
-											<span class="war-section-label">Wróg z bazy:</span>
+											<span class="war-section-label">${t('war.databaseEnemy')}:</span>
 											<div class="heroes-list enemy-heroes">
 												${f.enemy.filter(h => h).slice(0, 5).map(h => {
 													const heroData = heroes.find(hr => normalize(hr.name) === normalize(h));
 													const raceClass = heroData?.race ? `hero-${heroData.race.toLowerCase()}` : '';
-													return `<span class="${raceClass}">${h}</span>`;
-												}).join(', ') || '—'}${f.enemy.filter(h => h).length > 5 ? '...' : ''}${f.enemyPet ? ` <span class="pet-inline">+ 🐾 <span class="hero-pet">${f.enemyPet}</span></span>` : ''}
+													return `<span class="${raceClass}">${escapeHtml(h)}</span>`;
+												}).join(', ') || '—'}${f.enemy.filter(h => h).length > 5 ? '...' : ''}${f.enemyPet ? ` <span class="pet-inline">+ 🐾 <span class="hero-pet">${escapeHtml(f.enemyPet)}</span></span>` : ''}
 											</div>
 										</div>
 										<div class="war-vs-enemy">
@@ -3983,13 +4064,13 @@
 						</div>
 						${combo.conflictDetails.length ? `
 							<div class="war-conflicts-summary">
-								⚠️ <strong>Konflikty:</strong> ${combo.conflictDetails.map(c => 
-									`<span class="conflict-hero">${c.display || c.hero}</span>`
+								⚠️ <strong>${t('war.conflicts')}:</strong> ${combo.conflictDetails.map(c =>
+									`<span class="conflict-hero">${escapeHtml(c.display || c.hero)}</span>`
 								).join(', ')}
 							</div>` : ''}
 						${hasExcluded ? `
 							<div class="war-excluded-summary" style="margin-top: 8px; padding: 6px 10px; background: rgba(244, 67, 54, 0.1); border: 1px solid rgba(244, 67, 54, 0.3); border-radius: 6px; font-size: 0.75rem; color: #f44336;">
-								🚫 <strong>Wykluczone:</strong> ${excludedInCombo.join(', ')}
+								🚫 <strong>${t('war.excludedLabel')}:</strong> ${excludedInCombo.map(escapeHtml).join(', ')}
 							</div>` : ''}
 					</div>`;
 			});
@@ -4001,8 +4082,8 @@
 			const combo = window.warResults?.[comboIndex];
 			if (!combo) return;
 			
-			const defaultName = `Skład #${pinnedCombos.length + 1}`;
-			const name = prompt('Nazwa dla tego składu:', defaultName);
+			const defaultName = t('war.comboDefaultName', { n: pinnedCombos.length + 1 });
+			const name = prompt(t('war.pinPromptName'), defaultName);
 			if (name === null) return; // anulowano
 			
 			const pinned = {
@@ -4032,7 +4113,7 @@
 			storage.setJson('souls_pinned_combos', pinnedCombos);
 			
 			renderPinnedCombos();
-			showToast('📌 Skład przypięty!');
+			showToast(t('war.pinned'));
 		}
 
 		// Przenieś wynik z Wojny do Kreatora
@@ -4086,9 +4167,9 @@
 			updateKreatorTagsSelection();
 			
 			// Przełącz na zakładkę Kreator
-			showTab('tab-kreator');
+			switchTab('kreator');
 			
-			showToast('📝 Skład przeniesiony do Kreatora!');
+			showToast(t('war.movedToKreator'));
 		}
 
 		// Przenieś aktualnie oglądany skład do Kreatora (z podglądu wojny)
@@ -4147,8 +4228,8 @@
 			});
 			
 			updateKreatorTagsSelection();
-			showTab('tab-kreator');
-			showToast('📝 Skład przeniesiony do Kreatora!');
+			switchTab('kreator');
+			showToast(t('war.movedToKreator'));
 		}
 
 		// Przypnij aktualnie oglądany skład (z podglądu wojny)
@@ -4162,12 +4243,12 @@
 			// W przeciwnym razie (np. z przypiętego składu) - stwórz nowy pin z currentWarCombo
 			const combo = window.currentWarCombo;
 			if (!combo) {
-				showToast('Brak składu do przypięcia', true);
+				showToast(t('war.noComboToPin'), true);
 				return;
 			}
 			
-			const defaultName = `Skład #${pinnedCombos.length + 1}`;
-			const name = prompt('Nazwa dla tego składu:', defaultName);
+			const defaultName = t('war.comboDefaultName', { n: pinnedCombos.length + 1 });
+			const name = prompt(t('war.pinPromptName'), defaultName);
 			if (name === null) return;
 			
 			const pinned = {
@@ -4197,17 +4278,17 @@
 			storage.setJson('souls_pinned_combos', pinnedCombos);
 			
 			renderPinnedCombos();
-			showToast('📌 Skład przypięty!');
+			showToast(t('war.pinned'));
 		}
 
 		function unpinCombo(id) {
-			if (!confirm('Czy na pewno chcesz odpiąć ten skład?')) return;
-			
+			if (!confirm(t('war.unpinConfirm'))) return;
+
 			pinnedCombos = pinnedCombos.filter(p => p.id !== id);
 			storage.setJson('souls_pinned_combos', pinnedCombos);
-			
+
 			renderPinnedCombos();
-			showToast('Skład odpięty');
+			showToast(t('war.unpinned'));
 		}
 
 		function renderPinnedCombos() {
@@ -4234,29 +4315,29 @@
 				return `
 					<div class="pinned-combo-card">
 						<div class="pinned-combo-header">
-							<span class="pinned-combo-name">📌 ${pinned.name}</span>
+							<span class="pinned-combo-name">📌 ${escapeHtml(pinned.name)}</span>
 							<span class="pinned-combo-time">${timeAgo}</span>
 						</div>
 						<div class="pinned-combo-stats">
 							<span class="pinned-stat ${conflictClass}">
-								${pinned.conflicts === 0 ? '✓ Idealne' : `${pinned.conflicts} konflikt${pinned.conflicts === 1 ? '' : pinned.conflicts < 5 ? 'y' : 'ów'}`}
+								${pinned.conflicts === 0 ? t('war.perfectShort') : conflictCountLabel(pinned.conflicts)}
 							</span>
-							<span class="pinned-stat">${percent}% trafień</span>
+							<span class="pinned-stat">${percent}% ${t('war.match')}</span>
 						</div>
 						<div class="pinned-combo-formations">
 							${pinned.formations.map((f, i) => `
 								<div class="pinned-formation">
-									<strong>Walka ${i+1}</strong> (#${f.formationId}): 
-									${f.my.filter(h => h).slice(0, 4).join(', ')}${f.my.filter(h => h).length > 4 ? '...' : ''}
+									<strong>${t('war.battle')} ${i+1}</strong> (#${f.formationId}):
+									${f.my.filter(h => h).slice(0, 4).map(escapeHtml).join(', ')}${f.my.filter(h => h).length > 4 ? '...' : ''}
 								</div>
 							`).join('')}
 						</div>
 						<div class="pinned-combo-actions">
 							<button class="btn btn-small btn-secondary" onclick="loadPinnedCombo(${pinned.id})">
-								👁️ Podgląd
+								${t('war.pinnedPreview')}
 							</button>
 							<button class="btn btn-small btn-danger" onclick="unpinCombo(${pinned.id})">
-								✕ Odepnij
+								${t('war.unpin')}
 							</button>
 						</div>
 					</div>
@@ -4567,7 +4648,7 @@
 			warSearchHistory.splice(idx, 1);
 			storage.setJson('souls_war_history', warSearchHistory);
 			renderWarHistory();
-			showToast(t('common.formationDeleted'));
+			showToast(t('common.historyEntryRemoved'));
 		}
 
 		function clearWarHistory() {
@@ -4680,7 +4761,8 @@
 			// Karty porównania dla każdej walki
 			combo.formations.forEach((match, idx) => {
 				const f = match.formation;
-				const searchedEnemy = combo.enemies[idx];
+				// Stare pinezki (localStorage sprzed dodania pola enemies) mogą nie mieć wpisu — nie wysypuj podglądu
+				const searchedEnemy = combo.enemies[idx] || { heroesRaw: [], petRaw: '' };
 				
 				// Analiza dopasowania
 				const analysis = analyzeWarMatch(searchedEnemy, f);
@@ -4910,7 +4992,7 @@
 				// Kapitalizuj nazwę (pierwsza duża)
 				const displayName = hero ? hero.name : (name.charAt(0).toUpperCase() + name.slice(1).toLowerCase());
 
-				return `<div class="${classes} slot-clickable" onclick="event.stopPropagation();showHeroSkills('${jsStr(hero ? hero.name : name)}')">${displayName}</div>`;
+				return `<div class="${classes} slot-clickable" onclick="event.stopPropagation();showHeroSkills('${jsStr(hero ? hero.name : name)}')">${escapeHtml(displayName)}</div>`;
 			};
 			
 			return `
@@ -4941,9 +5023,9 @@
 				if (isMatched && !samePos) classes += ' war-moved';
 				if (isExtra) classes += ' war-extra';
 
-				return `<div class="${classes} slot-clickable" onclick="event.stopPropagation();showHeroSkills('${jsStr(name)}')">${name}</div>`;
+				return `<div class="${classes} slot-clickable" onclick="event.stopPropagation();showHeroSkills('${jsStr(name)}')">${escapeHtml(name)}</div>`;
 			};
-			
+
 			return `
 				<div class="compact-row">${slot(5)}${slot(6)}${slot(7)}</div>
 				<div class="compact-row">${slot(3)}${slot(4)}</div>
@@ -4967,9 +5049,9 @@
 				if (race) classes += ` race-${race}`;
 				if (isConflict) classes += ' conflict';
 
-				return `<div class="${classes} slot-clickable" onclick="event.stopPropagation();showHeroSkills('${jsStr(name)}')">${name}</div>`;
+				return `<div class="${classes} slot-clickable" onclick="event.stopPropagation();showHeroSkills('${jsStr(name)}')">${escapeHtml(name)}</div>`;
 			};
-			
+
 			return `
 				<div class="war-your-team-grid">
 					<div class="war-your-team-row">${slot(0)}${slot(1)}${slot(2)}</div>
@@ -4986,7 +5068,7 @@
 			}
 			const isConflict = conflictPets && conflictPets.has(normalize(petName));
 			const conflictClass = isConflict ? ' conflict' : '';
-			return `<div class="war-your-team-pet${conflictClass} slot-clickable" onclick="event.stopPropagation();showPetSkills('${jsStr(petName)}')">🐾 ${petName}</div>`;
+			return `<div class="war-your-team-pet${conflictClass} slot-clickable" onclick="event.stopPropagation();showPetSkills('${jsStr(petName)}')">🐾 ${escapeHtml(petName)}</div>`;
 		}
 
 		// Renderuj porównanie petów - z oryginalnymi nazwami
@@ -5012,7 +5094,7 @@
 				petClass += ' war-extra';         // pet w bazie, inny/brak u szukanego
 			}
 			
-			return `<div class="compact-pet ${petClass} slot-clickable" onclick="event.stopPropagation();showPetSkills('${jsStr(petData || petName)}')">🐾 ${displayName}</div>`;
+			return `<div class="compact-pet ${petClass} slot-clickable" onclick="event.stopPropagation();showPetSkills('${jsStr(petData || petName)}')">🐾 ${escapeHtml(displayName)}</div>`;
 		}
 
 		// Kopiuj skład do schowka
@@ -5171,8 +5253,8 @@
 
 			container.innerHTML = kreatorExcludedHeroes.map(hero => `
 				<span class="excluded-chip" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: rgba(244, 67, 54, 0.2); border: 1px solid rgba(244, 67, 54, 0.4); border-radius: 12px; font-size: 0.75rem; color: #f44336;">
-					${hero}
-					<button onclick="removeKreatorExcludedHero('${hero.replace(/'/g, "\\'")}')" style="background: none; border: none; color: #f44336; cursor: pointer; font-size: 0.8rem; padding: 0 2px; opacity: 0.7;" title="${t('common.remove')}">✕</button>
+					${escapeHtml(hero)}
+					<button onclick="removeKreatorExcludedHero('${jsStr(hero)}')" style="background: none; border: none; color: #f44336; cursor: pointer; font-size: 0.8rem; padding: 0 2px; opacity: 0.7;" title="${t('common.remove')}">✕</button>
 				</span>
 			`).join('');
 		}
@@ -6020,7 +6102,7 @@
                     const grp = a.text && findSynonymGroup(a.text);
                     // krótkie skróty (≤3 znaki) = całe słowo (żeby „cc" nie łapało „accuracy"); pełne formy podłańcuchem (łapią odmianę)
                     const list = grp ? grp.map(form => ({ field: a.field, text: form, boundary: a.boundary || (form.length <= 3 && !form.includes(' ')) })) : [a];
-                    for (const x of list) { const k = x.field + ' ' + x.text; if (!seen.has(k)) { seen.add(k); out.push(x); } }
+                    for (const x of list) { const k = x.field + '|' + x.text; if (!seen.has(k)) { seen.add(k); out.push(x); } }
                 }
                 cl.alts = out;
             }
@@ -6864,6 +6946,7 @@
         function showHeroSkills(name, hl) {
             const modal = $('hero-skills-modal');
             if (!modal) return;
+            if (canSeeGallery()) ensureScreensLoaded(); // liczniki paska „🦸 Galeria" — po syncu odświeży je refreshOpenHeroGalleryBar
             if (!heroSkillsLoaded) {
                 const titleEl = $('hero-skills-title'), body = $('hero-skills-body');
                 if (titleEl) titleEl.textContent = name;
@@ -7217,6 +7300,7 @@
             if (!isAdmin || !currentDefensePlayerId) return;
             const player = getDefensePlayer(currentDefensePlayerId);
             if (!player) return;
+            if (!defensePlayersRef) { showToast('❌ ' + t('common.noConnection'), true); return; }
             const msg = t('defense.confirmDeletePlayer').replace('{name}', player.name);
             if (!confirm(msg)) return;
 
@@ -7366,7 +7450,13 @@
                 ? t('defense.editImpactActionReuse').replace('{id}', existing.id)
                 : t('defense.editImpactActionNew');
             const activeCount = getActiveAssignmentsForFormation(old.id).length;
-            el.textContent = '⚠️ ' + t('defense.editImpactSlots').replace('{action}', action).replace('{n}', activeCount);
+            let msg = '⚠️ ' + t('defense.editImpactSlots').replace('{action}', action).replace('{n}', activeCount);
+            // CASE B (reuse): rekord docelowy zachowuje SWOJE name/comment — ostrzeż, że wpisane pola przepadną
+            if (existing) {
+                const metaTyped = (newName && newName !== (existing.name || '')) || (newComment && newComment !== (existing.comment || ''));
+                if (metaTyped) msg += ' ' + t('defense.editImpactMetaLost');
+            }
+            el.textContent = msg;
         }
 
         async function saveDefenseEditModal() {
@@ -7619,7 +7709,7 @@
             const select = $('defense-assign-player-select');
             const livePlayers = allDefensePlayers.filter(p => !p.deletedAt);
             select.innerHTML = livePlayers.length
-                ? livePlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')
+                ? livePlayers.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('')
                 : `<option value="" disabled>${t('defense.noPlayers')}</option>`;
             $('defense-assign-modal').classList.remove('hidden');
         }
@@ -7704,7 +7794,7 @@
         function parseDefenseQuery(raw) {
             const q = (raw || '').toLowerCase().trim();
             if (!q) return null;
-            const tokens = q.match(/"[^"]*"|\S+/g) || [];
+            const tokens = q.match(/-?"[^"]*"|\S+/g) || []; // -? przed cudzysłowem: -"fraza" to jeden token
             const include = []; // grupy OR: [[a,b], [c]] → (a|b) AND (c)
             const exclude = [];
             for (let tok of tokens) {
@@ -8024,7 +8114,7 @@
             return `
                 <div id="speed-display-${assignmentId}" class="defense-speed-display">${timelineHtml}</div>
                 <div id="speed-editor-${assignmentId}" class="defense-speed-editor" style="display: none;">
-                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 6px;">⚡ ${t('defense.speedTitle')} (pet pominięty)</div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 6px;">⚡ ${t('defense.speedTitle')} ${t('defense.speedPetSkipped')}</div>
                     ${editorRows}
                     <div style="display: flex; gap: 4px; margin-top: 6px;">
                         <button class="btn btn-tiny btn-success" onclick="saveSpeedEditor(${assignmentId})">💾 ${t('defense.speedSave')}</button>
@@ -8178,7 +8268,11 @@
                     const validKey = k => k && !/[.#$\[\]\/]/.test(String(k)); // klucze Firebase nie mogą mieć . # $ [ ] /
                     const newH = H.filter(h => h && validKey(h.name) && !hNames.has(String(h.name).toLowerCase()));
                     const newP = P.filter(p => { const n = typeof p === 'string' ? p : (p && p.name); return validKey(n) && !pNames.has(String(n).toLowerCase()); });
-                    const newDF = DF.filter(x => x && x.id != null && !dfIds.has(x.id));
+                    // Dedup Obrony też po fingerprincie (nie tylko id) — fingerprint = tożsamość składu;
+                    // restore z innego środowiska nie może utworzyć drugiego rekordu o tym samym fingerprincie
+                    const dfFps = new Set(allDefenseFormations.map(x => x.fingerprint || defenseFingerprint(x.my, x.myPet)));
+                    const newDF = DF.filter(x => x && x.id != null && !dfIds.has(x.id)
+                        && !dfFps.has(x.fingerprint || defenseFingerprint(x.my, x.myPet)));
                     const newDP = DP.filter(x => x && x.id != null && !dpIds.has(x.id));
                     const newDA = DA.filter(x => x && x.id != null && !daIds.has(x.id));
                     const total = newF.length + newH.length + newP.length + newDF.length + newDP.length + newDA.length;
@@ -8395,8 +8489,10 @@
                         const v = rows[i];
                         if (v.length < 11) { skipped++; continue; }
                         const b = (v[0] || '').match(/^\d+$/) ? 1 : 0;
-                        const my = v.slice(b + 1, b + 9).map(cleanVal);
-                        const myPet = cleanVal(v[b + 9]);
+                        // Walidacja jak przy zapisie z UI (≤5, znane nazwy, kanonizacja) — import ją omijał
+                        const vRow = validateFormationData(v.slice(b + 1, b + 9).map(cleanVal), [], cleanVal(v[b + 9]), '');
+                        if (!vRow.ok) { console.warn(`Import Obrony CSV: pominięto wiersz ${i + 1} — ${vRow.error}`); skipped++; continue; }
+                        const { my, myPet } = vRow;
                         const comment = cleanVal(v[b + 10]);
                         const fp = defenseFingerprint(my, myPet);
                         if (seen.has(fp)) { dupes++; continue; }
@@ -8468,11 +8564,16 @@
 						while (existingIds.includes(++maxId));
 						existingIds.push(maxId);
 						
-						// Parsuj pola
-						const myHeroes = vals.slice(startIdx + 1, startIdx + 9).map(cleanVal);
-						const myPet = cleanVal(vals[startIdx + 9]);
-						const enemyHeroes = vals.slice(startIdx + 10, startIdx + 18).map(cleanVal);
-						const enemyPet = cleanVal(vals[startIdx + 18]);
+						// Parsuj pola + ta sama walidacja co przy Dodaj (≤5, znane nazwy, kanonizacja) —
+						// import wcześniej ją omijał i wpuszczał do bazy wiersze łamiące reguły
+						const vRow = validateFormationData(
+							vals.slice(startIdx + 1, startIdx + 9).map(cleanVal),
+							vals.slice(startIdx + 10, startIdx + 18).map(cleanVal),
+							cleanVal(vals[startIdx + 9]),
+							cleanVal(vals[startIdx + 18])
+						);
+						if (!vRow.ok) { console.warn(`Import CSV: pominięto wiersz ${i + 1} — ${vRow.error}`); skipped++; continue; }
+						const { my: myHeroes, myPet, enemy: enemyHeroes, enemyPet } = vRow;
 						const __fp = formationFingerprint(myHeroes, myPet, enemyHeroes, enemyPet);
 						if (seen.has(__fp)) { dupes++; continue; }
 						seen.add(__fp);
@@ -8584,47 +8685,41 @@
         function cancelHeroEdit() { editingHeroName = null; renderHeroesList(); }
 
         // Rename bohatera propagujemy do /formations (my+enemy) i /defenseFormations (my + nowy fingerprint),
-        // żeby nie zostały sieroty referencji. Zwraca liczbę zmienionych rekordów.
+        // żeby nie zostały sieroty referencji.
         // Fingerprint obrony aktualizujemy in-place bezpiecznie: rename to bijekcja nazw (oldName→newName
         // jednolicie), a blokada heroExists gwarantuje że newName nie koliduje z innym bohaterem — więc
         // dwa różne składy nie mogą skleić się w ten sam fingerprint.
-        async function propagateHeroRename(oldName, newName) {
+        // Zwraca { updates, count }: ścieżki względem KORZENIA bazy — caller dokłada zmiany /heroes
+        // i wykonuje JEDEN atomowy db.ref().update(). Wcześniejsza sekwencja osobnych zapisów przy
+        // zerwaniu połączenia zostawiała bazę w stanie połowicznym (formacje z nową nazwą, /heroes ze starą).
+        function propagateHeroRename(oldName, newName) {
             const lo = oldName.toLowerCase();
             let count = 0;
-            const fUpdates = {};
+            const updates = {};
             allFormations.forEach(f => {
                 let changed = false;
                 const my = (f.my || []).map(x => (x && x.toLowerCase() === lo) ? (changed = true, newName) : x);
                 const enemy = (f.enemy || []).map(x => (x && x.toLowerCase() === lo) ? (changed = true, newName) : x);
-                if (changed) { fUpdates[`${f.id}/my`] = my; fUpdates[`${f.id}/enemy`] = enemy; count++; }
+                if (changed) { updates[`formations/${f.id}/my`] = my; updates[`formations/${f.id}/enemy`] = enemy; count++; }
             });
-            if (Object.keys(fUpdates).length) await formationsRef.update(fUpdates);
-
-            if (defenseFormationsRef) {
-                const dUpdates = {};
-                allDefenseFormations.forEach(df => {
-                    let changed = false;
-                    const my = (df.my || []).map(x => (x && x.toLowerCase() === lo) ? (changed = true, newName) : x);
-                    if (changed) {
-                        dUpdates[`${df.id}/my`] = my;
-                        dUpdates[`${df.id}/fingerprint`] = defenseFingerprint(my, df.myPet);
-                        count++;
-                    }
-                });
-                if (Object.keys(dUpdates).length) await defenseFormationsRef.update(dUpdates);
-            }
+            allDefenseFormations.forEach(df => {
+                let changed = false;
+                const my = (df.my || []).map(x => (x && x.toLowerCase() === lo) ? (changed = true, newName) : x);
+                if (changed) {
+                    updates[`defenseFormations/${df.id}/my`] = my;
+                    updates[`defenseFormations/${df.id}/fingerprint`] = defenseFingerprint(my, df.myPet);
+                    count++;
+                }
+            });
             // Foldery galerii bohatera trzymają się przez heroKey — przy rename przepisz heroKey (+ nazwę folderu bohatera).
-            if (screenFoldersRef) {
-                const oldKey = normalize(oldName), newKey = normalize(newName), sUpdates = {};
-                allScreenFolders.forEach(f => {
-                    if (f.heroKey === oldKey && (f.kind === 'hero' || f.kind === 'heroCat')) {
-                        sUpdates[`${f.id}/heroKey`] = newKey;
-                        if (f.kind === 'hero') sUpdates[`${f.id}/name`] = newName;
-                    }
-                });
-                if (Object.keys(sUpdates).length) await screenFoldersRef.update(sUpdates);
-            }
-            return count;
+            const oldKey = normalize(oldName), newKey = normalize(newName);
+            allScreenFolders.forEach(f => {
+                if (f.heroKey === oldKey && (f.kind === 'hero' || f.kind === 'heroCat')) {
+                    updates[`screenFolders/${f.id}/heroKey`] = newKey;
+                    if (f.kind === 'hero') updates[`screenFolders/${f.id}/name`] = newName;
+                }
+            });
+            return { updates, count };
         }
 
         async function saveHeroEdit(oldName) {
@@ -8650,10 +8745,12 @@
                     showToast(`✅ ${t('admin.heroSaved')}`);
                 } else {
                     if (!confirm(t('admin.renameConfirm'))) return;
-                    const affected = await propagateHeroRename(oldName, newName);
-                    await heroesRef.child(newName).set({ name: newName, race: newRace });
-                    await heroesRef.child(oldName).remove();
-                    showToast(`✅ ${t('admin.heroSaved')} (${affected} ${t('status.formations')})`);
+                    // Jeden atomowy multi-path update: propagacja + podmiana klucza w /heroes razem
+                    const { updates, count } = propagateHeroRename(oldName, newName);
+                    updates[`heroes/${newName}`] = { name: newName, race: newRace };
+                    updates[`heroes/${oldName}`] = null;
+                    await db.ref().update(updates);
+                    showToast(`✅ ${t('admin.heroSaved')} (${count} ${t('status.formations')})`);
                 }
                 editingHeroName = null;
             } catch (e) { showToast(`${t('common.error')}: ${e.message}`, true); }
@@ -8693,31 +8790,26 @@
         function cancelPetEdit() { editingPetName = null; renderPetsList(); }
 
         // Rename peta propagujemy do /formations (myPet/enemyPet) i /defenseFormations (myPet + nowy fingerprint).
-        async function propagatePetRename(oldName, newName) {
+        // Jak propagateHeroRename: zwraca { updates, count } ze ścieżkami od korzenia — caller robi jeden atomowy update.
+        function propagatePetRename(oldName, newName) {
             const lo = oldName.toLowerCase();
             let count = 0;
-            const fUpdates = {};
+            const updates = {};
             allFormations.forEach(f => {
                 let changed = false;
                 let myPet = f.myPet, enemyPet = f.enemyPet;
                 if (myPet && myPet.toLowerCase() === lo) { myPet = newName; changed = true; }
                 if (enemyPet && enemyPet.toLowerCase() === lo) { enemyPet = newName; changed = true; }
-                if (changed) { fUpdates[`${f.id}/myPet`] = myPet; fUpdates[`${f.id}/enemyPet`] = enemyPet; count++; }
+                if (changed) { updates[`formations/${f.id}/myPet`] = myPet; updates[`formations/${f.id}/enemyPet`] = enemyPet; count++; }
             });
-            if (Object.keys(fUpdates).length) await formationsRef.update(fUpdates);
-
-            if (defenseFormationsRef) {
-                const dUpdates = {};
-                allDefenseFormations.forEach(df => {
-                    if (df.myPet && df.myPet.toLowerCase() === lo) {
-                        dUpdates[`${df.id}/myPet`] = newName;
-                        dUpdates[`${df.id}/fingerprint`] = defenseFingerprint(df.my, newName);
-                        count++;
-                    }
-                });
-                if (Object.keys(dUpdates).length) await defenseFormationsRef.update(dUpdates);
-            }
-            return count;
+            allDefenseFormations.forEach(df => {
+                if (df.myPet && df.myPet.toLowerCase() === lo) {
+                    updates[`defenseFormations/${df.id}/myPet`] = newName;
+                    updates[`defenseFormations/${df.id}/fingerprint`] = defenseFingerprint(df.my, newName);
+                    count++;
+                }
+            });
+            return { updates, count };
         }
 
         async function savePetEdit(oldName) {
@@ -8734,10 +8826,12 @@
 
             try {
                 if (!confirm(t('admin.renamePetConfirm'))) return;
-                const affected = await propagatePetRename(oldName, newName);
-                await petsRef.child(newName).set({ name: newName });
-                await petsRef.child(oldName).remove();
-                showToast(`✅ ${t('admin.petSaved')} (${affected} ${t('status.formations')})`);
+                // Jeden atomowy multi-path update: propagacja + podmiana klucza w /pets razem
+                const { updates, count } = propagatePetRename(oldName, newName);
+                updates[`pets/${newName}`] = { name: newName };
+                updates[`pets/${oldName}`] = null;
+                await db.ref().update(updates);
+                showToast(`✅ ${t('admin.petSaved')} (${count} ${t('status.formations')})`);
                 editingPetName = null;
             } catch (e) { showToast(`${t('common.error')}: ${e.message}`, true); }
         }
@@ -8980,14 +9074,14 @@
 		function renderDuplicateGroups(groups, type) {
 			return groups.map((group, groupIndex) => {
 				const first = group.formations[0];
-				const enemyList = first.enemy.filter(h => h).join(', ') || '—';
-				const myList = first.my.filter(h => h).join(', ') || '—';
-				
+				const enemyList = first.enemy.filter(h => h).map(escapeHtml).join(', ') || '—';
+				const myList = first.my.filter(h => h).map(escapeHtml).join(', ') || '—';
+
 				return `
 					<div class="duplicate-group ${type}">
 						<div class="duplicate-group-header">
-							<strong>👹 ${t('duplicates.enemy')}:</strong> ${enemyList} ${first.enemyPet ? '+ ' + first.enemyPet : ''}<br>
-							<strong>⚔️ ${t('duplicates.counter')}:</strong> ${myList} ${first.myPet ? '+ ' + first.myPet : ''}
+							<strong>👹 ${t('duplicates.enemy')}:</strong> ${enemyList} ${first.enemyPet ? '+ ' + escapeHtml(first.enemyPet) : ''}<br>
+							<strong>⚔️ ${t('duplicates.counter')}:</strong> ${myList} ${first.myPet ? '+ ' + escapeHtml(first.myPet) : ''}
 						</div>
 						${group.formations.map(f => `
 							<div class="duplicate-item">
@@ -9073,6 +9167,30 @@
         const SCREENS_PAGE = 200, SCREENS_UPLOAD_CONCURRENCY = 3; // paginacja siatki + ile plików wgrywamy równolegle
         let lbScale = 1, lbTx = 0, lbTy = 0; // stan zoom/pan lightboxa
 
+        // ── Lazy-attach listenerów galerii (pierwsze wejście na Screeny / modal bohatera / seed folderów) ──
+        // id ZAWSZE z klucza Firebase (nie z pola) — odporne na rozjazd zapisanego 'id' vs klucza.
+        // Inkrementalnie (child_*): przy zmianie leci tylko delta, nie cały zrzut. Bursty (start, seed ~300 folderów)
+        // scalane debounce'em w jeden rebuild, żeby uniknąć O(n²) przy setkach eventów na starcie.
+        // Zwraca Promise pierwszego pełnego syncu (once('value') odpala się PO child_added istniejących dzieci),
+        // z natychmiastowym applyScreensCache — caller może od razu czytać allScreenFolders/allScreenshots.
+        let screensInitialLoad = null;
+        function ensureScreensLoaded() {
+            if (!screenFoldersRef || !screenshotsRef) return Promise.resolve();
+            if (!screensInitialLoad) {
+                screenFoldersRef.on('child_added', s => { screenFoldersById.set(s.key, { ...s.val(), id: s.key }); scheduleScreensCache('folders'); });
+                screenFoldersRef.on('child_changed', s => { screenFoldersById.set(s.key, { ...s.val(), id: s.key }); scheduleScreensCache('folders'); });
+                screenFoldersRef.on('child_removed', s => { screenFoldersById.delete(s.key); scheduleScreensCache('folders'); });
+                screenshotsRef.on('child_added', s => { screenshotsById.set(s.key, { ...s.val(), id: s.key }); scheduleScreensCache('shots'); });
+                screenshotsRef.on('child_changed', s => { screenshotsById.set(s.key, { ...s.val(), id: s.key }); scheduleScreensCache('shots'); });
+                screenshotsRef.on('child_removed', s => { screenshotsById.delete(s.key); scheduleScreensCache('shots'); });
+                screensInitialLoad = Promise.all([
+                    screenFoldersRef.once('value'),
+                    screenshotsRef.once('value'),
+                ]).then(() => applyScreensCache());
+            }
+            return screensInitialLoad;
+        }
+
         // ── Rebuild cache z Map (debounce; scala bursty child_* w jeden przebieg) ──
         function scheduleScreensCache(kind) {
             screensDirty[kind] = true;
@@ -9110,6 +9228,7 @@
         // (przy dodaniu bohatera podajemy [{name}] zanim cache się odświeży, żeby nie było wyścigu).
         async function ensureHeroFoldersImpl(announce, heroList) {
             if (!isAdmin || !screenFoldersRef) return;
+            await ensureScreensLoaded(); // MUSI mieć pełny cache — na pustym utworzyłoby duplikaty wszystkich folderów
             const list = heroList || heroes;
             const updates = {}, now = new Date().toISOString();
             const gen = () => screenFoldersRef.push().key;
@@ -10093,8 +10212,39 @@
             bookBonusesRef = db.ref('bookBonuses');
             bookMetaRef = db.ref('bookMeta');
 
+            // Sanityzacja rekordu z /formations — baza ma .write:true, więc rekord może być
+            // dowolnie uszkodzony (brak my/enemy; sparse-tablica wraca z RTDB jako obiekt
+            // {0:'A',5:'B'} bez .filter/.map). Wymuszamy 8-slotowe tablice stringów, bo jeden
+            // zły rekord wywracał updateUI w listenerze i apka wisiała na „Ładowanie" u wszystkich.
+            const toSlots8 = v => {
+                const out = new Array(8).fill('');
+                if (Array.isArray(v)) {
+                    v.slice(0, 8).forEach((h, i) => { if (typeof h === 'string') out[i] = h; });
+                } else if (v && typeof v === 'object') {
+                    Object.keys(v).forEach(k => {
+                        const i = Number(k);
+                        if (Number.isInteger(i) && i >= 0 && i < 8 && typeof v[k] === 'string') out[i] = v[k];
+                    });
+                }
+                return out;
+            };
+            const sanitizeFormation = f => {
+                if (!f || typeof f !== 'object') return null;
+                return {
+                    ...f,
+                    id: Number(f.id) || 0,
+                    my: toSlots8(f.my),
+                    enemy: toSlots8(f.enemy),
+                    myPet: typeof f.myPet === 'string' ? f.myPet : '',
+                    enemyPet: typeof f.enemyPet === 'string' ? f.enemyPet : '',
+                    name: typeof f.name === 'string' ? f.name : '',
+                };
+            };
+
             formationsRef.on('value', snap => {
-                allFormations = snap.val() ? Object.values(snap.val()).sort((a, b) => a.id - b.id) : [];
+                allFormations = snap.val()
+                    ? Object.values(snap.val()).map(sanitizeFormation).filter(Boolean).sort((a, b) => a.id - b.id)
+                    : [];
                 updateUI();
                 $('loading').classList.add('hidden');
                 setOnlineStatus(true);
@@ -10179,15 +10329,10 @@
             try { if (firebase.storage) screensStorageRef = firebase.storage().ref(); }
             catch (e) { console.error('Storage init error:', e); }
 
-            // id ZAWSZE z klucza Firebase (nie z pola) — odporne na rozjazd zapisanego 'id' vs klucza.
-            // Inkrementalnie (child_*): przy zmianie leci tylko delta, nie cały zrzut. Bursty (start, seed ~300 folderów)
-            // scalane debounce'em w jeden rebuild, żeby uniknąć O(n²) przy setkach eventów na starcie.
-            screenFoldersRef.on('child_added', s => { screenFoldersById.set(s.key, { ...s.val(), id: s.key }); scheduleScreensCache('folders'); });
-            screenFoldersRef.on('child_changed', s => { screenFoldersById.set(s.key, { ...s.val(), id: s.key }); scheduleScreensCache('folders'); });
-            screenFoldersRef.on('child_removed', s => { screenFoldersById.delete(s.key); scheduleScreensCache('folders'); });
-            screenshotsRef.on('child_added', s => { screenshotsById.set(s.key, { ...s.val(), id: s.key }); scheduleScreensCache('shots'); });
-            screenshotsRef.on('child_changed', s => { screenshotsById.set(s.key, { ...s.val(), id: s.key }); scheduleScreensCache('shots'); });
-            screenshotsRef.on('child_removed', s => { screenshotsById.delete(s.key); scheduleScreensCache('shots'); });
+            // Listenery attachowane LENIWIE (ensureScreensLoaded) przy pierwszym wejściu na zakładkę /
+            // otwarciu podglądu bohatera / seedzie folderów — nie na starcie. Metadane galerii (długie URL-e,
+            // ~1 KB/rekord) kosztowały setki KB transferu na każdą wizytę każdego gracza, także tych,
+            // którzy Galerii nigdy nie otwierają (domyślnie admin-only). Wzorzec jak loadHeroSkills.
 
             // ─── Globalna konfiguracja gildii ───
             // Pod-węzeł 'config/settings' (a nie całe /config), bo reguły Firebase trzymają
@@ -10301,10 +10446,32 @@
 			$('defense-edit-modal')?.addEventListener('click', e => { if (e.target === $('defense-edit-modal')) closeDefenseEditModal(); });
 			document.addEventListener('keydown', e => {
 				if (e.key === 'Escape') {
-					if (!$('quick-select-modal').classList.contains('hidden')) closeQuickSelect();
-					if (!$('edit-modal').classList.contains('hidden')) closeEditModal();
-					if (!$('defense-assign-modal').classList.contains('hidden')) closeDefenseAssignModal();
-					if (!$('defense-edit-modal').classList.contains('hidden')) closeDefenseEditModal();
+					// Wszystkie modale (poza bramką hasła gildii — ta musi zostać). Zamykamy TYLKO pierwszy
+					// otwarty wg kolejności wierzchni→spodni (modal skilli bywa POD modalem edycji skilli).
+					// Wzorzec .modal: otwarty = brak 'hidden'; wzorzec .hsk-modal-bg/.diff-modal-bg: otwarty = 'show'.
+					const openModals = [
+						['quick-select-modal', 'hidden', closeQuickSelect],
+						['hero-skills-edit-modal', 'show', closeHeroSkillsEdit],
+						['pet-skills-edit-modal', 'show', closePetSkillsEdit],
+						['book-edit-modal', 'show', closeBookEdit],
+						['book-meta-modal', 'show', closeBookMetaModal],
+						['skills-import-modal', 'show', closeSkillsImport],
+						['restore-diff-modal', 'show', closeRestoreDiff],
+						['screens-move-modal', 'hidden', closeScreenMove],
+						['defense-assign-modal', 'hidden', closeDefenseAssignModal],
+						['defense-edit-modal', 'hidden', closeDefenseEditModal],
+						['edit-modal', 'hidden', closeEditModal],
+						['duplicate-preview-modal', 'hidden', closeDuplicatePreviewModal],
+						['compare-modal', 'hidden', closeCompareModal],
+						['duplicates-modal', 'hidden', closeDuplicatesModal],
+						['admin-modal', 'hidden', closeAdminModal],
+						['hero-skills-modal', 'show', closeHeroSkills],
+					];
+					for (const [id, mode, close] of openModals) {
+						const m = $(id);
+						const isOpen = m && (mode === 'hidden' ? !m.classList.contains('hidden') : m.classList.contains('show'));
+						if (isOpen) { close(); break; }
+					}
 				}
 			});
 
