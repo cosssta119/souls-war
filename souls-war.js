@@ -36,7 +36,7 @@
             }
         });
 
-        let db, formationsRef, heroesRef, petsRef, heroSkillsRef, petSkillsRef, synonymsRef, bookBonusesRef, bookMetaRef;
+        let db, formationsRef, heroesRef, petsRef, heroSkillsRef, petSkillsRef, synonymsRef, bookBonusesRef, bookMetaRef, artifactsRef;
         let allFormations = [];
         let allBookBonuses = [];         // cache /bookBonuses (Księga bonusów; live przez .on; pusto → DEFAULT_BOOK_BONUSES)
         let allBookMeta = [];            // cache /bookMeta (definicje ksiąg; live przez .on; scalane z DEFAULT_BOOK_META)
@@ -75,7 +75,9 @@
         let screenCountByFolder = new Map(); // folderId(|null=korzeń) -> liczba screenów; utrzymywane przy rebuildzie; O(1) liczniki (siatka + chipy bohatera)
         let screensCacheTimer = null, screensDirty = { shots: false, folders: false };
         // Foldery bohaterów w Galerii (zarządzane, nie do edycji/usunięcia). Kategorie rozszerzalne — na razie tylko Mastery.
+        const KOMPENDIUM_ROOT_NAME = 'Kompendium'; // nadrzędny zarządzany folder Galerii (Heroes + Artefakty w środku)
         const HEROES_ROOT_NAME = 'Heroes';
+        const ARTIFACTS_ROOT_NAME = 'Artefakty';
         const HERO_GALLERY_CATEGORIES = [{ key: 'mastery', label: 'Mastery', icon: '⭐' }];
         let screenFavorites = storage.getJson('souls_screen_favorites', []); // per-user ulubione screeny (ids)
         let isOnline = false, isAdmin = false;
@@ -851,6 +853,7 @@
 					if (input.id.startsWith('add-') && !['add-name', 'add-comment'].includes(input.id)) {
 						setValidation(input, true);
 					}
+					syncArtifactSlotBtn(input.id); // wybór z autocomplete nie odpala 'input' — kwadracik artefaktu (add/edit)
 					updateAddFormTagsSelection();
 					updateSearchTagsSelection();
 					updateWarTagsSelection();
@@ -2390,13 +2393,13 @@
 							<div class="battle-section enemy">
 								<div class="battle-title enemy-title"><span class="title-icon">👹</span>${t('preview.enemy')}</div>
 								<div style="text-align:center">${renderComparePet(f.enemyPet, 'enemy', fIdx, allHeroesPerFormation)}</div>
-								${renderCompareBattleGrid(f.enemy, true, 'enemy', fIdx, allHeroesPerFormation)}
+								${renderCompareBattleGrid(f.enemy, true, 'enemy', fIdx, allHeroesPerFormation, f.enemyArtifacts)}
 							</div>
 							
 							<div class="vs-separator"><span class="vs-badge">VS</span></div>
 							
 							<div class="battle-section player">
-								${renderCompareBattleGrid(f.my, false, 'my', fIdx, allHeroesPerFormation)}
+								${renderCompareBattleGrid(f.my, false, 'my', fIdx, allHeroesPerFormation, f.myArtifacts)}
 								<div style="text-align:center">${renderComparePet(f.myPet, 'my', fIdx, allHeroesPerFormation)}</div>
 								<div class="battle-title player-title"><span class="title-icon">⚔️</span>${t('preview.yourTeam')}</div>
 							</div>
@@ -2412,21 +2415,21 @@
 			$('compare-content').innerHTML = html;
 		}
 
-		function renderCompareBattleGrid(arr, isEnemy, type, formationIdx, allData) {
+		function renderCompareBattleGrid(arr, isEnemy, type, formationIdx, allData, arts) {
 			const slot = (pos) => {
 				const name = arr[pos] || '';
-				
+
 				if (!name) {
 					return `<div class="battle-slot empty"></div>`;
 				}
-				
+
 				const normalizedName = normalize(name);
 				const diffClass = getHeroDiffClass(normalizedName, pos, type, formationIdx, allData);
-				
+
 				const hero = findHero(name);
 				const rc = hero ? `race-${hero.race.toLowerCase()}` : '';
 
-				return `<div class="battle-slot filled ${rc} ${diffClass} slot-clickable" onclick="event.stopPropagation();showHeroSkills('${jsStr(name)}')"><span class="hero-name">${name}</span></div>`;
+				return `<div class="battle-slot filled ${rc} ${diffClass} slot-clickable" onclick="event.stopPropagation();showHeroSkills('${jsStr(name)}')"><span class="hero-name">${escapeHtml(name)}</span>${artifactSlotBadge(arts && arts[pos])}</div>`;
 			};
 			
 			if (isEnemy) {
@@ -2612,13 +2615,13 @@
 					<div class="battle-section enemy">
 						<div class="battle-title enemy-title"><span class="title-icon">👹</span>${t('preview.enemy')}</div>
 						<div style="text-align:center">${renderBattlePet(f.enemyPet)}</div>
-						${renderBattleGrid(f.enemy, true)}
+						${renderBattleGrid(f.enemy, true, f.enemyArtifacts)}
 						<div class="battle-arrows animated"><div class="battle-arrow down"></div></div>
 					</div>
 					<div class="vs-separator"><span class="vs-badge">VS</span></div>
 					<div class="battle-section player">
 						<div class="battle-arrows animated"><div class="battle-arrow up"></div></div>
-						${renderBattleGrid(f.my, false)}
+						${renderBattleGrid(f.my, false, f.myArtifacts)}
 						<div style="text-align:center">${renderBattlePet(f.myPet)}</div>
 						<div class="battle-title player-title"><span class="title-icon">⚔️</span>${t('preview.yourTeam')}</div>
 					</div>
@@ -2779,13 +2782,13 @@
         // Przechowuj aktualne wyniki wojny
         let currentWarResults = null;
 
-        function renderBattleGrid(arr, isEnemy) {
+        function renderBattleGrid(arr, isEnemy, arts) {
             const slot = i => {
                 const name = arr[i] || '';
                 if (!name) return `<div class="battle-slot empty"></div>`;
                 const hero = findHero(name);
                 const rc = hero ? `race-${hero.race.toLowerCase()}` : '';
-                return `<div class="battle-slot filled ${rc} slot-clickable" onclick="event.stopPropagation();showHeroSkills('${jsStr(name)}')"><span class="hero-name">${name}</span></div>`;
+                return `<div class="battle-slot filled ${rc} slot-clickable" onclick="event.stopPropagation();showHeroSkills('${jsStr(name)}')"><span class="hero-name">${escapeHtml(name)}</span>${artifactSlotBadge(arts && arts[i])}</div>`;
             };
             
             const grid = isEnemy ? `<div class="battle-grid"><div class="battle-row">${slot(5)}${slot(6)}${slot(7)}</div><div class="battle-row">${slot(3)}${slot(4)}</div><div class="battle-row">${slot(0)}${slot(1)}${slot(2)}</div></div>` :
@@ -2873,13 +2876,24 @@
 				if (el) el.value = f.enemy[i - 1] || '';
 			}
 			$('edit-enemyPet').value = f.enemyPet || '';
-			
+
+			// Artefakty per slot → stan kwadracików edycji
+			clearFormArtifacts('edit-');
+			for (let i = 1; i <= 8; i++) {
+				const ma = (f.myArtifacts || [])[i - 1];
+				if (ma) formArtifacts['edit-my' + i] = ma;
+				const ea = (f.enemyArtifacts || [])[i - 1];
+				if (ea) formArtifacts['edit-enemy' + i] = ea;
+			}
+			syncAllArtifactSlotBtns('edit-');
+
 			$('edit-modal').classList.remove('hidden');
 		}
 
 		function closeEditModal() {
 			$('edit-modal').classList.add('hidden');
 			editingFormationId = null;
+			clearFormArtifacts('edit-');
 		}
 
 		async function saveEditFormation() {
@@ -2912,6 +2926,8 @@
 			if (!v.ok) { showToast(v.error, true); return; }
 			const { my, enemy, myPet, enemyPet } = v;
 			const comment = $('edit-comment').value.trim();
+			const myArts = collectFormArtifacts('edit-my', my);
+			const enemyArts = collectFormArtifacts('edit-enemy', enemy);
 			
 			// Checkbox isBase
 			const isBase = $('edit-isBase')?.checked || false;
@@ -2925,6 +2941,8 @@
 					enemyPet,
 					comment,
 					isBase,
+					myArtifacts: myArts.some(x => x) ? myArts : null, // null = usuń pole gdy wyczyszczono
+					enemyArtifacts: enemyArts.some(x => x) ? enemyArts : null,
 					lastEdited: new Date().toISOString()
 				});
 				
@@ -3156,8 +3174,11 @@
             document.querySelectorAll('#add-form-tags-container .quick-tag').forEach(tag => {
                 tag.classList.toggle('selected', activeValues.includes(tag.textContent.toLowerCase()));
             });
-            
+
             updateAddFormCounter();
+            // Kwadraciki artefaktów: tagi/autocomplete wpisują .value BEZ eventu 'input',
+            // a ta funkcja jest wołana po każdej takiej zmianie — synchronizujemy tu.
+            syncAllArtifactSlotBtns('add-');
         }
 
         function updateAddFormCounter() {
@@ -3238,6 +3259,11 @@
 				isBase: isBase,
 				dateAdded: new Date().toISOString()
 			};
+			// Artefakty per slot (opcjonalne) — z kwadracików formularza; pola tylko gdy jest ≥1 artefakt
+			const myArts = collectFormArtifacts('add-my', my);
+			const enemyArts = collectFormArtifacts('add-enemy', enemy);
+			if (myArts.some(x => x)) record.myArtifacts = myArts;
+			if (enemyArts.some(x => x)) record.enemyArtifacts = enemyArts;
 
 			try {
 				// Transakcja na pierwszym wolnym ID — samo max+1 i set() cicho nadpisywało
@@ -3343,6 +3369,7 @@
 			// Reset checkbox
 			const isBaseCheckbox = $('add-isBase');
 			if (isBaseCheckbox) isBaseCheckbox.checked = false;
+			clearFormArtifacts('add-');
 			updateAddFormTagsSelection();
 		}
 
@@ -5665,7 +5692,12 @@
         // Statyczne bonusy pasywne z gry, edytowalne przez admina (Firebase /bookBonuses, live przez .on).
         // Wyszukiwanie w duchu Bohaterów: spacja=ORAZ, |=ALBO, -=wyklucz, "fraza", pole:x (book/race/row/name/desc)
         // + rozwijanie synonimów (acc→accuracy itd.). Przy pustym /bookBonuses działa na DEFAULT_BOOK_BONUSES.
-        let heroesMode = storage.getJson('souls_heroes_mode', 'heroes'); // 'heroes' | 'book'
+        let heroesMode = storage.getJson('souls_heroes_mode', 'heroes'); // 'heroes' | 'book' | 'artifacts'
+        let allArtifacts = []; // cache /artifacts (live); pusty = fallback DEFAULT_ARTIFACTS
+        let artifactsSearchQuery = '', artifactsFilterClasses = new Set();
+        let artifactsHelpOpen = storage.getBool('souls_artifacts_help', false);
+        let artifactsTile = storage.getJson('souls_artifacts_tile', 'normal'); // rozmiar kafelków: small|normal|large
+        let editingArtifactId = null; // slug artefaktu w modalu edycji (null = dodawanie)
         if (heroesMode !== 'book') heroesMode = 'heroes';
         let bookSearchQuery = '', bookFilterBooks = new Set(); // filtr ksiąg (pusty = wszystkie)
         let bookOnlySet = null; // Set kluczy bonusów z „Pokaż w Księdze" (null = brak; pokazuje tylko te bonusy)
@@ -5969,15 +6001,20 @@
             name: 'name', nazwa: 'name', role: 'meta', rola: 'meta', stat: 'meta'
         };
         // Rozbij skille bohatera na bloki { field, text } — dopasowanie leci PER BLOK (słowa muszą trafić w JEDEN skill).
+        // ŚWIADOMIE bez NAZW skilli (active/passive/awaken/exclusive) — szukamy w TREŚCI + po nazwie bohatera;
+        // fantazyjne nazwy skilli ("Eternal Pain" itp.) dawały fałszywe trafienia.
         function heroSkillBlocks(name, s) {
             const b = [];
             if (name) b.push({ field: 'name', text: String(name) });
             if (s) {
-                if (s.active) b.push({ field: 'active', text: `${s.active.name || ''} ${s.active.desc || ''}` });
-                (s.passives || []).forEach(x => b.push({ field: 'passive', text: `${x.name || ''} ${x.desc || ''}` }));
-                if (s.awaken) b.push({ field: 'awaken', text: `${s.awaken.name || ''} ${s.awaken.desc || ''}` });
+                if (s.active && s.active.desc) b.push({ field: 'active', text: String(s.active.desc) });
+                (s.passives || []).forEach(x => x.desc && b.push({ field: 'passive', text: String(x.desc) }));
+                if (s.awaken && s.awaken.desc) b.push({ field: 'awaken', text: String(s.awaken.desc) });
                 if (s.engraving) Object.values(s.engraving).forEach(v => v && b.push({ field: 'engraving', text: String(v) }));
-                if (s.exclusive) b.push({ field: 'exclusive', text: `${s.exclusive.name || ''} ${Object.values(exclusiveLevels(s.exclusive)).filter(Boolean).join(' ')}` });
+                if (s.exclusive) {
+                    const lv = Object.values(exclusiveLevels(s.exclusive)).filter(Boolean).join(' ');
+                    if (lv) b.push({ field: 'exclusive', text: lv });
+                }
                 const meta = [s.role, s.stat].filter(Boolean).join(' ');
                 if (meta) b.push({ field: 'meta', text: meta });
             }
@@ -5988,8 +6025,8 @@
             const b = [];
             if (name) b.push({ field: 'name', text: String(name) });
             if (s) {
-                if (s.active) b.push({ field: 'active', text: `${s.active.name || ''} ${s.active.desc || ''}` });
-                if (s.passive) b.push({ field: 'passive', text: `${s.passive.name || ''} ${s.passive.desc || ''}` });
+                if (s.active && s.active.desc) b.push({ field: 'active', text: String(s.active.desc) });
+                if (s.passive && s.passive.desc) b.push({ field: 'passive', text: String(s.passive.desc) });
                 if (s.energy) b.push({ field: 'energy', text: String(s.energy) });
             }
             b.forEach(x => x.lc = x.text.toLowerCase());
@@ -6254,19 +6291,22 @@
 
         // ═══ Pod-widok „Księga" ═══════════════════════════════════
         // Przełącznik trybu Bohaterowie ↔ Księga (stan w localStorage).
+        const HEROES_MODES = ['heroes', 'book', 'artifacts'];
         function setHeroesMode(mode) {
-            heroesMode = (mode === 'book') ? 'book' : 'heroes';
+            heroesMode = HEROES_MODES.includes(mode) ? mode : 'heroes';
             storage.setJson('souls_heroes_mode', heroesMode);
             applyHeroesMode();
         }
         function applyHeroesMode() {
-            const isBook = heroesMode === 'book';
-            const hWrap = $('heroes-mode-heroes'), bWrap = $('heroes-mode-book');
-            if (hWrap) hWrap.style.display = isBook ? 'none' : '';
-            if (bWrap) bWrap.style.display = isBook ? '' : 'none';
-            $('heroes-mode-btn-heroes')?.classList.toggle('active', !isBook);
-            $('heroes-mode-btn-book')?.classList.toggle('active', isBook);
-            if (isBook) renderBookTab(); else renderHeroesTab();
+            if (!HEROES_MODES.includes(heroesMode)) heroesMode = 'heroes';
+            HEROES_MODES.forEach(m => {
+                const wrap = $('heroes-mode-' + m);
+                if (wrap) wrap.style.display = m === heroesMode ? '' : 'none';
+                $('heroes-mode-btn-' + m)?.classList.toggle('active', m === heroesMode);
+            });
+            if (heroesMode === 'book') renderBookTab();
+            else if (heroesMode === 'artifacts') renderArtifactsTab();
+            else renderHeroesTab();
         }
 
         // Lista bonusów: z bazy jeśli są, inaczej domyślne (syntetyczne id 'def-N', nieedytowalne do seedu).
@@ -6276,9 +6316,10 @@
         }
         const bookFromDb = () => allBookBonuses.length > 0;
 
-        // Tokenizer zapytania Księgi (mirror parseHeroQuery: |=OR, -=neg, "fraza", pole:term z BOOK_FIELD_ALIAS,
+        // Tokenizer zapytania Księgi (mirror parseHeroQuery: |=OR, -=neg, "fraza", pole:term z aliasu,
         // rozwijanie synonimów). Zwraca płaskie klauzule — dopasowanie w bookMatches (AND w obrębie CAŁEGO bonusu).
-        function parseBookQuery(raw) {
+        // Parametr alias pozwala reużyć parser dla Artefaktów (ARTIFACT_FIELD_ALIAS) — ta sama składnia i synonimy.
+        function parseBookQuery(raw, alias = BOOK_FIELD_ALIAS) {
             const str = String(raw || ''), tokens = [];
             let i = 0;
             while (i < str.length) {
@@ -6289,7 +6330,7 @@
                 if (str[i] === '-' && str[i + 1] && str[i + 1] !== ' ') { neg = true; i++; }
                 let field = null;
                 const fm = /^([a-zżźćńółęąś]+):/i.exec(str.slice(i));
-                if (fm && BOOK_FIELD_ALIAS[fm[1].toLowerCase()]) { field = BOOK_FIELD_ALIAS[fm[1].toLowerCase()]; i += fm[0].length; }
+                if (fm && alias[fm[1].toLowerCase()]) { field = alias[fm[1].toLowerCase()]; i += fm[0].length; }
                 let text = '', quoted = false;
                 if (str[i] === '"') { quoted = true; i++; while (i < str.length && str[i] !== '"') text += str[i++]; if (str[i] === '"') i++; }
                 else { while (i < str.length && str[i] !== ' ' && str[i] !== '\t' && str[i] !== '|') text += str[i++]; }
@@ -6705,13 +6746,486 @@
         // Panel „Słownik synonimów" — świadomy trybu: renderuje do aktywnego widoku (Bohaterowie LUB Księga),
         // czyści drugi. Ten sam słownik /synonyms i te same funkcje CRUD; tylko klik-termin szuka w odpowiednim polu.
         // Jeden panel na raz → inputy edycji (syn-forms/expand-input) nie dublują ID.
-        function renderHeroesSynonyms() {
-            const book = heroesMode === 'book';
-            const el = $(book ? 'book-synonyms' : 'heroes-synonyms');
-            const other = $(book ? 'heroes-synonyms' : 'book-synonyms');
-            if (other) other.innerHTML = '';
+        // ═══════════════════════════════════════════════════════════
+        // ARTEFAKTY (pod-widok Kompendium) — /artifacts + fallback DEFAULT_ARTIFACTS
+        // ═══════════════════════════════════════════════════════════
+        // Klasy = role z /heroSkills (Tank/Dealer/Support/Healer) + 'any' (uniwersalne).
+        // Klucz rekordu /artifacts i folderu galerii = artifactSlug(nazwa) — bez znaków zakazanych
+        // w kluczach Firebase (nazwy typu "Codex ... Vol. 3: Serenity" mają kropki).
+
+        const DEFAULT_ARTIFACTS = [
+            { order: 1, name: 'Mace of Judgment', klass: 'any', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'CC Resistance 24.0%', 'Accuracy 18.0%'], skill: 'When rendering an enemy incapable of action, there is a 50% chance of an additional 1 turn. ATK against enemies that are incapable of action increases by 30%.' },
+            { order: 2, name: 'Branch of Beginnings', klass: 'Healer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Crit Resistance 24.0%', 'Magic Resistance 18.0%'], skill: 'When an ally dies, grants the wearer a damage immunity shield for 1 turn. (Once per battle)\nWhen an ally is revived, applies continuous healing equal to 100% of ATK for 2 turns, and a 1-turn damage immunity shield to the revived ally. (Damage immunity shield can be applied up to 2 times per battle)' },
+            { order: 3, name: 'Helmet of Silence', klass: 'Tank', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Crit Resistance 24.0%', 'Crit Rate 18.0%'], skill: 'When attacked, there is a 50% chance to silence the enemy for 1 turn and reduce 30 energy.' },
+            { order: 4, name: 'Eternal Pain', klass: 'Dealer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Penetration 24.0%', 'Accuracy 18.0%'], skill: 'When applying DoT debuffs to enemies using Active Skill, there is a 100% chance of increasing duration by 1 turn. Crit Rate of Normal Attacks towards enemies affected by DoT increases by 30%' },
+            { order: 5, name: 'Oblivion', klass: 'any', rarity: 'Mythic', bonuses: ['Accuracy 24.0%', 'Crit Resistance 18.0%'], skill: 'All allies\' Crit Rate increases by 20%. Enemy heroes\' Crit Resistance is reduced by 10% each time they are hit by the wearer\'s active skill. (Up to 20% per target. This artifact\'s effect activates only once, even if equipped by multiple heroes.)' },
+            { order: 6, name: 'Shield of Earth', klass: 'Tank', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Crit Defense 24.0%', 'Penetration 18.0%'], skill: 'When attacked, energy obtained increases by 20. When energy is above 70%, damage taken decreases by 30%' },
+            { order: 7, name: 'Orb of Priests', klass: 'Support', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Crit Resistance 24.0%', 'Magic Resistance 18.0%'], skill: 'Reduce Speed of all enemies by 10 at the beginning of combat. Every time 1 ally dies, reduce energy of the enemy with highest energy by 100.' },
+            { order: 8, name: 'Reaping Scythe', klass: 'Healer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'CC Resistance 24.0%', 'Crit Rate 18.0%'], skill: 'When an enemy or ally is affected by crowd control, heals the ally with the lowest HP for 100% of ATK, and a random ally (excluding the wearer) gains 40 Energy. (Once per round)' },
+            { order: 9, name: 'Evidence of Miracle', klass: 'any', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Dodge Rate 24.0%', 'Accuracy 18.0%'], skill: '100% chance to increase duration of Shields, Heal Over Time, and Buffs activated by Active Skill by 1 turn' },
+            { order: 10, name: 'Serpent\'s Emblem', klass: 'Support', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Dodge Rate 24.0%', 'Accuracy 18.0%'], skill: 'Increase Dodge Rate of all allies by 30%. No debuffs will be applied when allies Dodge.' },
+            { order: 11, name: 'Demonic Beast Fang', klass: 'Dealer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Penetration 24.0%', 'CC Resistance 18.0%'], skill: 'Increase ATK against tankers by 30%. If you defeat a tanker, ATK increases by 15% (Stacks up to 3 times)' },
+            { order: 12, name: 'Staff of Bloodlord', klass: 'Tank', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Penetration 24.0%', 'Crit Damage 18.0%'], skill: 'Recover by 40% of damage dealt to enemy with any attack. Additionally increase ATK by 40% until round 4.' },
+            { order: 13, name: 'Mask of Madness', klass: 'Healer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Dodge Rate 24.0%', 'Magic Resistance 18.0%'], skill: 'Whenever the HP of you or an ally drops below 50%, gain 50 Energy, and permanently increase ATK by 8% each time (max 10 times)' },
+            { order: 14, name: 'Golden Ornament Cloak', klass: 'any', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Dodge Rate 24.0%', 'Accuracy 18.0%'], skill: 'The damage reduction upon dodging increases from the previous 50% to 65%, and you obtain 15 energy.' },
+            { order: 15, name: 'Tome of the Sun', klass: 'Dealer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Crit Damage 24.0%', 'CC Resistance 18.0%'], skill: 'Upon enemy death, applies Burn DoT equal to 50% of ATK for 2 turns to all enemies adjacent to the fallen enemy. The wearer can attack enemies in Shadow or Transparent states.' },
+            { order: 16, name: 'Death', klass: 'Dealer', rarity: 'Mythic', bonuses: ['Attack x 30.0%', 'Penetration 24.0%', 'Crit Damage 18.0%'], skill: 'When an attack deals more than 25% of the enemy\'s max HP, there is a 60% chance to stun the enemy for 1 turn and apply a debuff that increases damage taken by 25% for 2 turns (once per round).' },
+            { order: 17, name: 'Noble\'s Pocket Watch', klass: 'Support', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Accuracy 24.0%', 'Physical Resistance 18.0%'], skill: 'When an enemy hero resists a CC effect, permanently decreases their CC Resistance by 30%. This effect does not apply to Boss-type enemies. (3 times per battle)\nWhen an enemy hero removes a CC effect, there is a 100% chance to inflict a Healing Received -60% debuff for 2 turns on all enemy heroes who removed the effect, and grant a +20% ATK buff to the ally with the highest ATK for 2 turns. (Once per round)\n(This artifact\'s effect activates only once, even if equipped by multiple heroes.)' },
+            { order: 18, name: 'Paladin Cuirass', klass: 'Tank', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'CC Resistance 24.0%', 'Damage Reduction Rate 18.0%'], skill: 'While the wearer has a shield, reduces damage taken by 30% and increases all allies\' ATK by 15%. (Excludes damage-immune shields and Nullification shields)\nHowever, the wearer\'s Max HP is reduced by 15%.\nWhen hit by an enemy hero with higher max HP, the wearer and the ally with the highest Speed gain 25 Energy. (Once per round)\n(This Artifact effect only activates once, even if equipped by multiple heroes.)' },
+            { order: 19, name: 'Sacred Emblem', klass: 'Tank', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Dodge Rate 24.0%', 'CC Resistance 18.0%'], skill: 'When an adjacent ally hero (excluding the wearer) is hit, increases the wearer\'s Energy by 10. (Triggers once per round per ally hit)\nAt the start of every 2 rounds, grants a shield equal to 20% of the wearer\'s HP for 1 turn to adjacent allies without a shield (excluding the wearer), and applies a 20% DMG reduction buff for 1 turn to adjacent allies with a shield (excluding the wearer)' },
+            { order: 20, name: 'Harmony', klass: 'Healer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Crit Rate 24.0%', 'Magic Resistance 18.0%'], skill: 'All healing amount increases by 15%.\nWhen healing with an active skill (excluding continuous healing), deals damage to the enemy with the lowest HP equal to 80% of the total healing amount (capped at 300% of ATK).' },
+            { order: 21, name: 'Eternal Bond', klass: 'Tank', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Crit Resistance 24.0%', 'Crit Defense 36.0%'], skill: 'At the start of battle, max HP increases by 55%, and healing received increases by 25%. However, the wearer cannot be revived during battle.' },
+            { order: 22, name: 'Cursed Chalice', klass: 'Healer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Crit Resistance 24.0%', 'Crit Rate 18.0%'], skill: 'Increases Active Skill damage by 30%.\nWhen the wearer attacks an enemy with an Active Skill, the wearer and the ally with the lowest HP gain a shield equal to 80% of the damage dealt for 2 turns. (Once per round)\nIgnores Energy Reduction and Absorption effects until round 3.' },
+            { order: 23, name: 'Warrior\'s Axe', klass: 'Dealer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Crit Damage 24.0%', 'CC Resistance 18.0%'], skill: 'The wearer has a 100% chance to gain 50 Energy when inflicting a CC effect on an enemy hero. (Once per round)\nEnemy heroes affected by the wearer\'s CC effect suffer an 80% reduction to healing received.' },
+            { order: 24, name: 'Turbulent Lamp of Wrath', klass: 'Support', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'CC Resistance 24.0%', 'Magic Resistance 18.0%'], skill: 'At the start of battle, reduce your ATK by 10%, but the ATK and Crit Damage of all allies on the same row (excluding yourself) increase by 25%' },
+            { order: 25, name: 'Nightmare', klass: 'Dealer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Crit Rate 24.0%', 'Crit Resistance 18.0%'], skill: 'After using an Active Skill, deal fixed damage equal to 10% of the damage dealt by that Active Skill to the enemy hero with the highest HP among those hit. If the target has a Shield, deal 12% fixed damage to the target instead. If the Active Skill hits 4 or more heroes, this fixed damage changes to 50% (100% if the target has a Shield) of the damage dealt by that Active Skill. (Fixed damage cannot crit and does not exceed 250% of the wearer\'s ATK.)' },
+            { order: 26, name: 'Circlet of Amplification', klass: 'Support', rarity: 'Mythic', bonuses: ['Attack x 30.0%', 'Crit Rate 24.0%', 'Dodge Rate 18.0%'], skill: 'When placed in the 3rd row, increases ATK by 15% and Crit DMG by 25%. When an Active attack lands as a Crit, increases the Energy of allies in the same row (excluding the wearer) by 25. (Once per round)' },
+            { order: 27, name: 'Steel Bishop', klass: 'Healer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Dodge Rate 24.0%', 'Physical Resistance 18.0%'], skill: 'When healing allies with an Active Skill, grants a buff to 2 random healed allies that reduces damage taken by 25% for 2 turns. When any ally dies, grant all allies a shield equal to 200% of the wearer\'s ATK for 1 turn. (This artifact\'s effect triggers only once per battle from one wearer upon ally death, even if multiple heroes have it equipped.)' },
+            { order: 28, name: 'Codex of Flame Rites Vol. 3: Serenity', klass: 'any', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'CC Resistance 24.0%', 'Crit Defense 36.0%'], skill: 'Reduces all enemies\' Dodge Rate by 30%, and reduces damage reduction on Dodge by 10%.' },
+            { order: 29, name: 'Giant\'s Boomerang', klass: 'Dealer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Crit Damage 24.0%', 'Physical Resistance 18.0%'], skill: 'Crit Rate increases by 15%. When HP is 50% or higher during an Active or Normal Attack, ATK increases by 15%. If HP falls below 50% after the attack, recovers 15% of damage dealt.' },
+            { order: 30, name: 'Codex of Flame Rites Vol. 1: Fervor', klass: 'any', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Dodge Rate 24.0%', 'Accuracy 18.0%'], skill: 'Increases all allies\' Penetration by 20%, and the wearer and adjacent allies gain an additional 5% Penetration. Every 2 rounds, permanently reduces all enemies\' DEF by 5%. (This artifact\'s effect triggers only once from one wearer, even if multiple heroes have it equipped.)' },
+            { order: 31, name: 'Gloves of Resonance', klass: 'Support', rarity: 'Mythic', bonuses: ['Defense x 36.0%', 'Attack x 30.0%', 'CC Resistance 24.0%', 'Physical Resistance 18.0%'], skill: 'If the wearer is positioned in the front row, dodge rate and max HP increase by 25%, and when hit by an active or normal attack, all allies except the wearer gain 10 energy.' },
+        ];
+
+        const ARTIFACT_CLASSES = ['any', 'Tank', 'Dealer', 'Support', 'Healer']; // 'any' pierwsze — Uniwersalne na górze listy
+        const ARTIFACT_CLASS_ICON = { Tank: '🛡️', Dealer: '🗡️', Support: '💠', Healer: '➕', any: '🌐' };
+        const artifactClassLabel = k => k === 'any'
+            ? `${ARTIFACT_CLASS_ICON.any} ${t('artifacts.classAny')}`
+            : `${ARTIFACT_CLASS_ICON[k] || ''} ${t('role.' + k)}`.trim();
+        const artifactSlug = name => normalize(name).replace(/[.#$\[\]\/]/g, '').replace(/\s+/g, ' ').trim();
+
+        let _defaultArtifactsCache = null;
+        function getArtifacts() {
+            if (allArtifacts.length) return allArtifacts;
+            if (!_defaultArtifactsCache) _defaultArtifactsCache = DEFAULT_ARTIFACTS.map(a => ({ ...a, id: artifactSlug(a.name) }));
+            return _defaultArtifactsCache;
+        }
+        const artifactsFromDb = () => allArtifacts.length > 0;
+        function findArtifact(name) { const n = normalize(name); return getArtifacts().find(a => normalize(a.name) === n) || null; }
+
+        // Szukajka: ten sam mini-język i słownik synonimów co Księga — parseBookQuery z własnym aliasem pól.
+        const ARTIFACT_FIELD_ALIAS = {
+            name: 'name', n: 'name', nazwa: 'name',
+            klasa: 'klass', class: 'klass', klass: 'klass', rola: 'klass', role: 'klass',
+            bonus: 'bonuses', bonusy: 'bonuses', stat: 'bonuses', staty: 'bonuses',
+            skill: 'skill', opis: 'skill', desc: 'skill', effect: 'skill', efekt: 'skill',
+            rarity: 'rarity', rzadkosc: 'rarity', 'rzadkość': 'rarity',
+        };
+        // Teksty pól artefaktu do dopasowań; cache w _af (rekordy z DB są świeżymi obiektami per snapshot).
+        // Klasa indeksowana kluczem + labelami z OBU słowników (pl+en), żeby "klasa:tank" i "klasa:czołg"... działały niezależnie od języka UI.
+        function artifactFields(a) {
+            if (a._af) return a._af;
+            const roleWords = k => k === 'any'
+                ? 'any all wszystkie uniwersalne kazda każda'
+                : (k + ' ' + (translations.pl['role.' + k] || '') + ' ' + (translations.en['role.' + k] || ''));
+            const name = (a.name || '').toLowerCase();
+            const klass = roleWords(a.klass || '').toLowerCase();
+            const bonuses = (a.bonuses || []).join(' ').toLowerCase();
+            const skill = (a.skill || '').toLowerCase();
+            const rarity = (a.rarity || '').toLowerCase();
+            return (a._af = { name, klass, bonuses, skill, rarity, combined: [name, klass, bonuses, skill, rarity].join(' ') });
+        }
+        function artifactMatches(a, parsed) {
+            const f = artifactFields(a);
+            for (const c of parsed.negatives) if (c.alts.some(x => bookAltHits(x, f))) return false;
+            for (const c of parsed.positives) if (!c.alts.some(x => bookAltHits(x, f))) return false;
+            return true;
+        }
+
+        const ARTIFACTS_HELP = [
+            ['stun energy', 'oba słowa muszą wystąpić (ORAZ)'],
+            ['crit|dodge', 'którekolwiek (ALBO)'],
+            ['shield -tank', 'jest „shield", ale bez „tank"'],
+            ['"once per round"', 'dokładna fraza'],
+            ['klasa:tank', 'tylko artefakty Tanków'],
+            ['klasa:any', 'tylko uniwersalne'],
+            ['bonus:accuracy', 'szukaj w bonusach statystyk'],
+            ['skill:dot', 'szukaj tylko w opisie skilla'],
+        ];
+
+        function renderArtifactsTab() { applyArtifactsTile(); renderArtifactsHelp(); renderHeroesSynonyms(); renderArtifactsFilters(); renderArtifactsGrid(); syncArtifactsClearBtn(); }
+        function setArtifactsTile(v) { artifactsTile = v; storage.setJson('souls_artifacts_tile', v); applyArtifactsTile(); }
+        function applyArtifactsTile() {
+            const grid = $('artifacts-grid');
+            if (grid) grid.className = 'heroes-grid tiles-' + artifactsTile;
+            ['small', 'normal', 'large'].forEach(v => $('artifacts-tile-' + v)?.classList.toggle('active', artifactsTile === v));
+        }
+        function syncArtifactsClearBtn() { const c = $('artifacts-clear'); if (c) c.style.display = artifactsSearchQuery ? '' : 'none'; }
+        function setArtifactsSearch(v) { artifactsSearchQuery = v; syncArtifactsClearBtn(); renderArtifactsGrid(); }
+        function setArtifactsExample(q) { const inp = $('artifacts-search'); if (inp) inp.value = q; setArtifactsSearch(q); }
+        function clearArtifactsSearch() { const inp = $('artifacts-search'); if (inp) inp.value = ''; setArtifactsSearch(''); inp?.focus(); }
+        function toggleArtifactsClassFilter(k) { artifactsFilterClasses.has(k) ? artifactsFilterClasses.delete(k) : artifactsFilterClasses.add(k); renderArtifactsFilters(); renderArtifactsGrid(); }
+        function clearArtifactsFilters() { artifactsFilterClasses.clear(); renderArtifactsFilters(); renderArtifactsGrid(); }
+        function toggleArtifactsHelp() { artifactsHelpOpen = !artifactsHelpOpen; storage.setBool('souls_artifacts_help', artifactsHelpOpen); renderArtifactsHelp(); }
+
+        function renderArtifactsHelp() {
+            const el = $('artifacts-search-help');
             if (!el) return;
-            const onTerm = book ? 'setBookExample' : 'setHeroesSearchExample';
+            $('artifacts-help-toggle')?.classList.toggle('active', artifactsHelpOpen);
+            if (!artifactsHelpOpen) { el.innerHTML = ''; return; }
+            const rows = ARTIFACTS_HELP.map(([q, d]) =>
+                `<div style="display:flex;gap:8px;align-items:baseline;padding:2px 0;">`
+                + `<code onclick="setArtifactsExample('${jsStr(q)}')" style="cursor:pointer;background:var(--bg-input);border:1px solid var(--border);border-radius:5px;padding:1px 6px;color:var(--accent-gold);white-space:nowrap;">${escapeHtml(q)}</code>`
+                + `<span style="color:var(--text-muted);font-size:0.78rem;">${escapeHtml(d)}</span></div>`).join('');
+            el.innerHTML = `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;">${rows}</div>`;
+        }
+
+        function renderArtifactsFilters() {
+            const wrap = $('artifacts-filter-chips');
+            if (!wrap) return;
+            const counts = {};
+            getArtifacts().forEach(a => { counts[a.klass] = (counts[a.klass] || 0) + 1; });
+            let html = ARTIFACT_CLASSES.filter(k => counts[k]).map(k =>
+                `<button class="heroes-chip${artifactsFilterClasses.has(k) ? ' active' : ''}" onclick="toggleArtifactsClassFilter('${jsStr(k)}')">${artifactClassLabel(k)} (${counts[k]})</button>`).join('');
+            if (artifactsFilterClasses.size) html += `<button class="heroes-chip heroes-chip-clear" onclick="clearArtifactsFilters()">✕ ${t('heroes.clearFilters')}</button>`;
+            if (isAdmin) {
+                if (artifactsFromDb()) html += `<button class="heroes-chip book-admin-chip" onclick="openArtifactEdit(null)">➕ ${t('artifacts.addBtn')}</button>`;
+                else html += `<button class="heroes-chip book-admin-chip" onclick="openArtifactsSeed()">🏛️ ${t('artifacts.seedBtn')}</button>`;
+            }
+            wrap.innerHTML = html;
+        }
+
+        function artifactIconHTML(a) {
+            return a.iconUrl
+                ? `<img class="artifact-ico" src="${escapeHtml(a.iconUrl)}" alt="" loading="lazy">`
+                : `<span class="artifact-ico artifact-ico-ph">${ARTIFACT_CLASS_ICON[a.klass] || '🗡️'}</span>`;
+        }
+        function artifactCardHTML(a, parsed, usage) {
+            const terms = parsed.empty ? [] : parsed.terms;
+            const hl = s => terms.length ? highlightHTML(s, terms) : escSkill(s);
+            const slug = artifactSlug(a.name);
+            const used = usage ? (usage.get(normalize(a.name)) || 0) : 0;
+            const galleryBtn = (canSeeGallery() && artifactFolder(slug))
+                ? `<button class="book-card-btn" onclick="openArtifactGalleryFolder('${jsStr(slug)}')" title="${t('artifacts.galleryBtn')}">🖼️</button>` : '';
+            const admin = (isAdmin && artifactsFromDb())
+                ? `<button class="book-card-btn" onclick="openArtifactEdit('${jsStr(a.id)}')" title="${t('book.editBtn')}">✏️</button><button class="book-card-btn" onclick="deleteArtifact('${jsStr(a.id)}')" title="${t('book.deleteBtn')}">🗑️</button>` : '';
+            const bonuses = (a.bonuses || []).map(b => `<div class="artifact-bonus">${hl(b)}</div>`).join('');
+            return `<div class="artifact-card">`
+                + `<div class="artifact-card-top">${artifactIconHTML(a)}`
+                + `<div class="artifact-card-head"><span class="book-card-name">${hl(a.name)}</span>`
+                + `<div class="artifact-card-meta"><span class="artifact-class-chip">${artifactClassLabel(a.klass)}</span>${a.rarity ? `<span class="artifact-rarity">${escSkill(a.rarity)}</span>` : ''}${used ? `<span class="artifact-class-chip" title="${escSkill(t('artifacts.usedIn', { n: used }))}">📊 ${used}×</span>` : ''}</div></div>`
+                + `<div class="book-card-actions">${galleryBtn}${admin}</div></div>`
+                + (bonuses ? `<div class="artifact-bonuses">${bonuses}</div>` : '')
+                + (a.skill ? `<div class="book-card-desc">${hl(a.skill)}</div>` : '')
+                + `</div>`;
+        }
+
+        function renderArtifactsGrid() {
+            const grid = $('artifacts-grid');
+            if (!grid) return;
+            const parsed = parseBookQuery(artifactsSearchQuery, ARTIFACT_FIELD_ALIAS);
+            let list = getArtifacts();
+            if (artifactsFilterClasses.size) list = list.filter(a => artifactsFilterClasses.has(a.klass));
+            if (!parsed.empty) list = list.filter(a => artifactMatches(a, parsed));
+            const cnt = $('artifacts-count');
+            if (cnt) cnt.textContent = t('artifacts.count', { n: list.length });
+            const usage = artifactUsageMap();
+            const groups = {};
+            list.forEach(a => { (groups[a.klass] = groups[a.klass] || []).push(a); });
+            const section = (label, count, cards) => `<div class="quick-tags-section"><div class="quick-tags-header expanded" onclick="toggleQuickTagSection(this)">`
+                + `<span class="toggle-icon">▶</span>${label} (${count})</div>`
+                + `<div class="quick-tags-content show"><div class="artifact-cards">${cards}</div></div></div>`;
+            const html = ARTIFACT_CLASSES.filter(k => groups[k]).map(k =>
+                section(artifactClassLabel(k), groups[k].length,
+                    groups[k].sort((a, b) => (a.order || 0) - (b.order || 0)).map(a => artifactCardHTML(a, parsed, usage)).join(''))).join('');
+            if (!html) { grid.innerHTML = `<div class="heroes-empty">${t('artifacts.none')}</div>`; return; }
+            grid.innerHTML = `<button class="expand-all-btn" onclick="toggleAllHeroGroups(this)">▲ ${t('heroes.collapseAll')}</button>` + html;
+        }
+
+        function openArtifactGalleryFolder(slug) {
+            const f = artifactFolder(slug);
+            if (!f) return;
+            switchTab('screens');
+            screensGoTo(f.id);
+        }
+
+        // ─── Artefakty: edycja admina (Firebase /artifacts) ───
+        function closeArtifactEdit() { $('artifact-edit-modal')?.classList.remove('show'); editingArtifactId = null; }
+        function openArtifactEdit(id) {
+            if (!isAdmin) return;
+            // Przed seedem baza jest pusta — dodanie 1 rekordu ukryłoby 31 wbudowanych (getArtifacts czyta DB gdy niepusta).
+            if (!artifactsFromDb()) { showToast(t('artifacts.seedFirst'), true); return; }
+            editingArtifactId = id;
+            const a = id ? getArtifacts().find(x => x.id === id) : null;
+            $('artifact-edit-title').textContent = a ? `✏️ ${t('artifacts.editTitle')}: ${a.name}` : t('artifacts.addTitle');
+            $('ae-name').value = a ? a.name : '';
+            const sel = $('ae-klass');
+            sel.innerHTML = ARTIFACT_CLASSES.map(k => `<option value="${k}">${artifactClassLabel(k)}</option>`).join('');
+            sel.value = a ? a.klass : 'any';
+            $('ae-rarity').value = a ? (a.rarity || '') : 'Mythic';
+            $('ae-bonuses').value = a ? (a.bonuses || []).join('\n') : '';
+            $('ae-skill').value = a ? (a.skill || '') : '';
+            $('ae-icon').value = '';
+            $('ae-icon-preview').innerHTML = (a && a.iconUrl) ? `<img src="${escapeHtml(a.iconUrl)}" alt="" style="max-height:64px;border-radius:8px;">` : '';
+            $('artifact-edit-modal').classList.add('show');
+        }
+        async function saveArtifactEdit() {
+            if (!isAdmin || !artifactsRef) return;
+            if (!isOnline) { showToast(t('common.noConnection'), true); return; }
+            const name = $('ae-name').value.trim();
+            const slug = name ? artifactSlug(name) : '';
+            if (!slug) { showToast(t('artifacts.nameRequired'), true); return; }
+            if (slug !== editingArtifactId && getArtifacts().some(x => x.id === slug)) { showToast(t('artifacts.exists'), true); return; }
+            const old = editingArtifactId ? getArtifacts().find(x => x.id === editingArtifactId) : null;
+            const rec = {
+                id: slug, name,
+                klass: $('ae-klass').value,
+                rarity: $('ae-rarity').value.trim(),
+                bonuses: $('ae-bonuses').value.split('\n').map(s => s.trim()).filter(Boolean),
+                skill: $('ae-skill').value.trim(),
+                order: old ? (old.order || 0) : (Math.max(0, ...getArtifacts().map(a => a.order || 0)) + 1),
+            };
+            if (old && old.iconUrl) { rec.iconUrl = old.iconUrl; rec.iconPath = old.iconPath || null; }
+            try {
+                await ensureHeroFolders(false, [], [{ name }]); // folder galerii artefaktu (żeby upload ikonki miał dokąd trafić)
+                const iconFile = $('ae-icon').files && $('ae-icon').files[0];
+                if (iconFile) {
+                    const up = await uploadArtifactIcon(iconFile, name, slug);
+                    rec.iconUrl = up.iconUrl; rec.iconPath = up.iconPath;
+                }
+                const updates = { [slug]: rec };
+                if (editingArtifactId && editingArtifactId !== slug) updates[editingArtifactId] = null; // rename = przeniesienie klucza
+                await artifactsRef.update(updates);
+                // Rename → przepisz folder galerii (artifactKey + nazwa), żeby ikonki/screeny się trzymały (jak przy rename bohatera).
+                if (editingArtifactId && editingArtifactId !== slug) {
+                    const f = artifactFolder(editingArtifactId);
+                    if (f && screenFoldersRef) await screenFoldersRef.child(f.id).update({ artifactKey: slug, name });
+                }
+                showToast('✅ ' + t('artifacts.saved'));
+                closeArtifactEdit();
+            } catch (e) { showToast(t('common.error') + ': ' + e.message, true); }
+        }
+        function deleteArtifact(id) {
+            if (!isAdmin || !artifactsRef || !artifactsFromDb()) return;
+            const a = getArtifacts().find(x => x.id === id);
+            if (!a) return;
+            if (!confirm(t('artifacts.deleteConfirm', { name: a.name }))) return;
+            // Folder galerii zostaje (screeny cenne) — świadomie, jak przy usuwaniu bohatera.
+            artifactsRef.child(id).remove()
+                .then(() => showToast('🗑️ ' + t('artifacts.deleted')))
+                .catch(e => showToast(t('common.error') + ': ' + e.message, true));
+        }
+
+        // Upload ikonki artefaktu przez pipeline Galerii (pełny obraz + miniatura → Storage, rekord w /screenshots
+        // w folderze artefaktu). Miniatura (320px) staje się iconUrl — lekka, idealna do kart i przyszłych badge'y.
+        async function uploadArtifactIcon(file, name, slug) {
+            if (!screensStorageRef || !screenshotsRef) throw new Error('Storage niedostępny');
+            await ensureScreensLoaded();
+            const folder = artifactFolder(slug);
+            const folderId = folder ? folder.id : null;
+            const CACHE = 'public, max-age=604800';
+            const img = await decodeImageFile(file);
+            const [fullBlob, thumbBlob] = await Promise.all([
+                imageToBlob(img, SCREENS_MAX_DIM, SCREENS_JPEG_Q),
+                imageToBlob(img, SCREENS_THUMB_DIM, SCREENS_THUMB_Q),
+            ]);
+            const ref = screenshotsRef.push();
+            const id = ref.key;
+            const path = `screenshots/${id}`, thumbPath = `screenshots/${id}_thumb`;
+            const [url, thumbUrl] = await Promise.all([
+                screensStorageRef.child(path).put(fullBlob, { contentType: 'image/jpeg', cacheControl: CACHE }).then(s => s.ref.getDownloadURL()),
+                screensStorageRef.child(thumbPath).put(thumbBlob, { contentType: 'image/jpeg', cacheControl: CACHE }).then(s => s.ref.getDownloadURL()),
+            ]);
+            await ref.set({ id, folderId, url, storagePath: path, thumbUrl, thumbPath, size: fullBlob.size, title: name, comment: '', tags: [], uploadedAt: new Date().toISOString() });
+            return { iconUrl: thumbUrl || url, iconPath: thumbUrl ? thumbPath : path };
+        }
+
+        // Jednorazowy seed (guzik znika po użyciu — widoczny tylko gdy /artifacts puste): buduje strukturę
+        // Kompendium w Galerii (+ przenosi Heroes), wgrywa ikonki (pliki "NN_nazwa.png" dopasowane po numerze NN
+        // do pola order) i zapisuje 31 rekordów do /artifacts.
+        function openArtifactsSeed() { $('artifacts-seed-input')?.click(); }
+        async function seedArtifacts(event) {
+            const files = Array.from(event.target.files || []);
+            event.target.value = '';
+            if (!isAdmin || !artifactsRef) return;
+            if (artifactsFromDb()) { showToast(t('artifacts.seedAlready'), true); return; }
+            if (!files.length) return;
+            if (!confirm(t('artifacts.seedConfirm', { n: DEFAULT_ARTIFACTS.length, f: files.length }))) return;
+            const cnt = $('artifacts-count');
+            try {
+                await ensureHeroFolders(false, null, DEFAULT_ARTIFACTS); // pełna struktura: Kompendium → Heroes(przeniesiony) + Artefakty → foldery per artefakt
+                const byOrder = new Map();
+                files.forEach(f => { const m = /^(\d+)/.exec(f.name); if (m) byOrder.set(Number(m[1]), f); });
+                const updates = {}, noIcon = [];
+                let done = 0;
+                for (const a of DEFAULT_ARTIFACTS) {
+                    const slug = artifactSlug(a.name);
+                    const rec = { order: a.order, name: a.name, klass: a.klass, rarity: a.rarity, bonuses: a.bonuses, skill: a.skill, id: slug };
+                    const file = byOrder.get(a.order);
+                    if (file) {
+                        try {
+                            const up = await uploadArtifactIcon(file, a.name, slug);
+                            rec.iconUrl = up.iconUrl; rec.iconPath = up.iconPath;
+                        } catch (e) { noIcon.push(`${a.name} (${e.message})`); }
+                    } else noIcon.push(a.name);
+                    updates[slug] = rec;
+                    done++;
+                    if (cnt) cnt.textContent = t('artifacts.uploading', { done, n: DEFAULT_ARTIFACTS.length });
+                }
+                await artifactsRef.update(updates);
+                showToast('✅ ' + t('artifacts.seedDone', { n: done }));
+                if (noIcon.length) showToast('⚠️ ' + t('artifacts.seedNoIcon', { list: noIcon.slice(0, 5).join(', ') }) + (noIcon.length > 5 ? ` (+${noIcon.length - 5})` : ''), true);
+            } catch (e) { showToast(t('common.error') + ': ' + e.message, true); }
+            renderArtifactsTab();
+        }
+
+        // ─── Artefakt przy bohaterze w składzie (Dodaj/Edycja) ───
+        // Stan przypisań formularzy: id inputa bohatera → nazwa artefaktu (max 5 realnych, pet bez artefaktów).
+        // Zapis do formations/{id}.myArtifacts[8]/enemyArtifacts[8] — tablice wyrównane indeksami do slotów
+        // (wzorzec speeds z Obrony); pola dodawane tylko gdy jest ≥1 artefakt. Fingerprint/duplikaty ich NIE liczą.
+        let formArtifacts = {};
+        let artifactPickerTarget = null; // id inputa, dla którego otwarto picker
+        const ARTIFACT_FORM_PREFIXES = [['add-my', 8], ['add-enemy', 8], ['edit-my', 8], ['edit-enemy', 8]];
+
+        // Wstrzykuje przycisk-kwadracik do wrappera każdego pola bohatera (wariant „w inpucie" — zero zmian layoutu).
+        function initArtifactSlotButtons() {
+            for (const [prefix, n] of ARTIFACT_FORM_PREFIXES) {
+                for (let i = 1; i <= n; i++) {
+                    const input = $(prefix + i);
+                    if (!input || $(prefix + i + '-art')) continue;
+                    const wrap = input.closest('.autocomplete-wrapper') || input.parentElement;
+                    if (!wrap) continue;
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.id = prefix + i + '-art';
+                    btn.className = 'art-slot-btn';
+                    btn.style.display = 'none';
+                    btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openArtifactPicker(prefix + i); });
+                    input.classList.add('has-art-btn'); // padding-right pod dokowany kwadracik
+                    wrap.appendChild(btn);
+                    input.addEventListener('input', () => syncArtifactSlotBtn(prefix + i));
+                    syncArtifactSlotBtn(prefix + i);
+                }
+            }
+        }
+        // Kwadracik widoczny tylko przy poprawnym bohaterze; przypisanie trzyma się SLOTU (zmiana bohatera go nie kasuje —
+        // przy zapisie artefakt idzie na wypełniony slot; klasy pilnuje picker, nie zapis).
+        function syncArtifactSlotBtn(inputId) {
+            const input = $(inputId), btn = $(inputId + '-art');
+            if (!input || !btn) return;
+            const heroName = (input.value || '').trim();
+            const valid = heroName && findHero(heroName);
+            if (!valid) { btn.style.display = 'none'; return; }
+            const art = formArtifacts[inputId] ? findArtifact(formArtifacts[inputId]) : null;
+            btn.style.display = '';
+            btn.classList.toggle('set', !!art);
+            btn.title = art ? art.name : t('artifacts.assignTitle');
+            btn.innerHTML = art
+                ? (art.iconUrl ? `<img src="${escapeHtml(art.iconUrl)}" alt="">` : (ARTIFACT_CLASS_ICON[art.klass] || '🗡️'))
+                : '+';
+        }
+        function syncAllArtifactSlotBtns(prefixFilter) {
+            for (const [prefix, n] of ARTIFACT_FORM_PREFIXES) {
+                if (prefixFilter && !prefix.startsWith(prefixFilter)) continue;
+                for (let i = 1; i <= n; i++) syncArtifactSlotBtn(prefix + i);
+            }
+        }
+        function clearFormArtifacts(prefixFilter) {
+            Object.keys(formArtifacts).forEach(k => { if (!prefixFilter || k.startsWith(prefixFilter)) delete formArtifacts[k]; });
+            syncAllArtifactSlotBtns(prefixFilter);
+        }
+
+        // Picker: artefakty klasy bohatera (rola z /heroSkills) + uniwersalne; bez roli — wszystkie z dopiskiem.
+        async function openArtifactPicker(inputId) {
+            const input = $(inputId);
+            const heroName = (input?.value || '').trim();
+            const hero = heroName ? findHero(heroName) : null;
+            if (!hero) return;
+            artifactPickerTarget = inputId;
+            const modal = $('artifact-picker-modal');
+            $('artifact-picker-for').textContent = t('artifacts.pickerFor', { hero: hero.name });
+            $('artifact-picker-body').innerHTML = `<div class="heroes-empty">${t('heroes.loading')}</div>`;
+            modal.classList.add('show');
+            if (!heroSkillsLoaded) { try { await loadHeroSkills(); } catch (e) {} }
+            if (artifactPickerTarget !== inputId || !modal.classList.contains('show')) return; // zamknięty w międzyczasie
+            renderArtifactPicker(hero.name);
+        }
+        function renderArtifactPicker(heroName) {
+            const body = $('artifact-picker-body');
+            if (!body) return;
+            const role = (getHeroSkills(heroName) || {}).role || null;
+            const list = getArtifacts().filter(a => !role || a.klass === role || a.klass === 'any')
+                .slice().sort((a, b) => (a.klass === 'any') - (b.klass === 'any') || (a.order || 0) - (b.order || 0));
+            const current = formArtifacts[artifactPickerTarget] ? normalize(formArtifacts[artifactPickerTarget]) : '';
+            const note = role
+                ? `<div class="hero-help-note">${escSkill(t('artifacts.pickerRole', { role: t('role.' + role) }))}</div>`
+                : `<div class="hero-help-note">⚠️ ${escSkill(t('artifacts.pickerNoRole'))}</div>`;
+            const tiles = list.map(a => `<div class="artifact-pick-tile${normalize(a.name) === current ? ' selected' : ''}" onclick="pickArtifact('${jsStr(a.name)}')" title="${escapeHtml(a.name)}">`
+                + artifactIconHTML(a)
+                + `<div class="artifact-pick-name">${escSkill(a.name)}</div>`
+                + `<div class="artifact-pick-class">${artifactClassLabel(a.klass)}</div></div>`).join('');
+            body.innerHTML = note
+                + `<div class="artifact-pick-grid">${tiles || `<div class="heroes-empty">${t('artifacts.none')}</div>`}</div>`
+                + `<div class="hse-actions">`
+                + (current ? `<button class="btn btn-danger btn-small" onclick="pickArtifact(null)">${t('artifacts.pickerRemove')}</button>` : '')
+                + `<button class="btn btn-secondary btn-small" onclick="closeArtifactPicker()">${t('common.cancel')}</button></div>`;
+        }
+        function pickArtifact(name) {
+            if (artifactPickerTarget) {
+                if (name) formArtifacts[artifactPickerTarget] = name;
+                else delete formArtifacts[artifactPickerTarget];
+                syncArtifactSlotBtn(artifactPickerTarget);
+            }
+            closeArtifactPicker();
+        }
+        function closeArtifactPicker() { $('artifact-picker-modal')?.classList.remove('show'); artifactPickerTarget = null; }
+
+        // Zbiera tablicę artefaktów [8] dla prefiksu formularza — tylko wypełnione sloty, nazwy kanoniczne.
+        function collectFormArtifacts(prefix, heroArr) {
+            const out = new Array(8).fill('');
+            for (let i = 1; i <= 8; i++) {
+                const nm = formArtifacts[prefix + i];
+                if (!nm) continue;
+                const art = findArtifact(nm);
+                if (art && (heroArr[i - 1] || '').trim()) out[i - 1] = art.name;
+            }
+            return out;
+        }
+
+        // Badge artefaktu w rogu slotu siatki 3-2-3 (klik → info-modal; stopPropagation, bo slot otwiera skille bohatera).
+        function artifactSlotBadge(name) {
+            if (!name) return '';
+            const a = findArtifact(name);
+            const inner = (a && a.iconUrl) ? `<img src="${escapeHtml(a.iconUrl)}" alt="">` : (ARTIFACT_CLASS_ICON[a?.klass] || '🗡️');
+            const display = a ? a.name : name;
+            return `<span class="slot-badges"><span class="slot-badge" title="${escapeHtml(display)}" onclick="event.stopPropagation();showArtifactInfo('${jsStr(display)}')">${inner}</span></span>`;
+        }
+        // Mini-modal z pełnym opisem artefaktu (z badge'a i skądkolwiek).
+        function showArtifactInfo(name) {
+            const a = findArtifact(name);
+            if (!a) return;
+            $('artifact-info-body').innerHTML = `<div class="artifact-card-top">${artifactIconHTML(a)}`
+                + `<div class="artifact-card-head"><span class="book-card-name">${escSkill(a.name)}</span>`
+                + `<div class="artifact-card-meta"><span class="artifact-class-chip">${artifactClassLabel(a.klass)}</span>${a.rarity ? `<span class="artifact-rarity">${escSkill(a.rarity)}</span>` : ''}</div></div></div>`
+                + ((a.bonuses || []).length ? `<div class="artifact-bonuses">${a.bonuses.map(b => `<div class="artifact-bonus">${escSkill(b)}</div>`).join('')}</div>` : '')
+                + (a.skill ? `<div class="book-card-desc">${escSkill(a.skill)}</div>` : '');
+            $('artifact-info-modal').classList.add('show');
+        }
+        function closeArtifactInfo() { $('artifact-info-modal')?.classList.remove('show'); }
+
+        // Ile formacji używa artefaktu (my+enemy, po znormalizowanej nazwie) — licznik na kartach Kompendium.
+        function artifactUsageMap() {
+            const map = new Map();
+            const add = nm => { const k = normalize(nm); if (k) map.set(k, (map.get(k) || 0) + 1); };
+            allFormations.forEach(f => {
+                (f.myArtifacts || []).forEach(x => x && add(x));
+                (f.enemyArtifacts || []).forEach(x => x && add(x));
+            });
+            return map;
+        }
+
+        function renderHeroesSynonyms() {
+            // Świadomy trybu: renderuje do panelu aktywnego widoku (Bohaterowie/Księga/Artefakty), czyści pozostałe
+            // (jeden panel naraz → brak kolizji ID inputów edycji).
+            const targetId = heroesMode === 'book' ? 'book-synonyms'
+                : heroesMode === 'artifacts' ? 'artifacts-synonyms' : 'heroes-synonyms';
+            const el = $(targetId);
+            ['heroes-synonyms', 'book-synonyms', 'artifacts-synonyms'].forEach(tid => {
+                if (tid !== targetId) { const o = $(tid); if (o) o.innerHTML = ''; }
+            });
+            if (!el) return;
+            const onTerm = heroesMode === 'book' ? 'setBookExample'
+                : heroesMode === 'artifacts' ? 'setArtifactsExample' : 'setHeroesSearchExample';
             const open = storage.getBool('souls_heroes_syn_open', false);
             const groups = getSynonymGroups();
             const dbEmpty = allSynonyms.length === 0;
@@ -9111,13 +9625,13 @@
 					<div class="battle-section enemy">
 						<div class="battle-title enemy-title"><span class="title-icon">👹</span>${t('preview.enemy')}</div>
 						<div style="text-align:center">${renderBattlePet(f.enemyPet)}</div>
-						${renderBattleGrid(f.enemy, true)}
+						${renderBattleGrid(f.enemy, true, f.enemyArtifacts)}
 					</div>
 					
 					<div class="vs-separator"><span class="vs-badge">VS</span></div>
 					
 					<div class="battle-section player">
-						${renderBattleGrid(f.my, false)}
+						${renderBattleGrid(f.my, false, f.myArtifacts)}
 						<div style="text-align:center">${renderBattlePet(f.myPet)}</div>
 						<div class="battle-title player-title"><span class="title-icon">⚔️</span>${t('preview.yourTeam')}</div>
 					</div>
@@ -9212,29 +9726,43 @@
         function screenCount(folderId) { return screenCountByFolder.get(folderId || null) || 0; }
 
         // ── Foldery bohaterów (zarządzane) — lookup po heroKey/kategorii + idempotentny seed ──
+        function kompendiumRootFolder() { return allScreenFolders.find(f => f.kind === 'kompendiumRoot') || null; }
         function heroesRootFolder() { return allScreenFolders.find(f => f.kind === 'heroesRoot') || null; }
         function heroFolder(heroKey) { return allScreenFolders.find(f => f.kind === 'hero' && f.heroKey === heroKey) || null; }
         function heroCatFolder(heroKey, catKey) { return allScreenFolders.find(f => f.kind === 'heroCat' && f.heroKey === heroKey && f.category === catKey) || null; }
+        function artifactsRootFolder() { return allScreenFolders.find(f => f.kind === 'artifactsRoot') || null; }
+        function artifactFolder(artifactKey) { return allScreenFolders.find(f => f.kind === 'artifact' && f.artifactKey === artifactKey) || null; }
         // Serializacja: wywołania idą w łańcuchu, żeby dwa równoległe (np. podwójny klik „Synchronizuj" albo add+sync)
         // nie czytały tego samego nieaktualnego cache i nie tworzyły duplikatów folderów.
         let ensureHeroFoldersChain = Promise.resolve();
-        function ensureHeroFolders(announce, heroList) {
-            const run = () => ensureHeroFoldersImpl(announce, heroList);
+        function ensureHeroFolders(announce, heroList, artifactList) {
+            const run = () => ensureHeroFoldersImpl(announce, heroList, artifactList);
             ensureHeroFoldersChain = ensureHeroFoldersChain.then(run, run);
             return ensureHeroFoldersChain;
         }
-        // Tworzy brakujące foldery: Heroes → per-bohater → podfoldery kategorii. Idempotentne (tylko brakujące),
-        // JEDEN batchowy update (klucze z push().key bez zapisu) → jeden re-sync zamiast setek. heroList domyślnie = heroes
-        // (przy dodaniu bohatera podajemy [{name}] zanim cache się odświeży, żeby nie było wyścigu).
-        async function ensureHeroFoldersImpl(announce, heroList) {
+        // Tworzy brakujące foldery struktury Kompendium: Kompendium → Heroes (per-bohater → kategorie)
+        // + Artefakty (per-artefakt). Istniejący Heroes wiszący w korzeniu jest PRZENOSZONY pod Kompendium
+        // (jednorazowa migracja — partial-path update parentId). Idempotentne (tylko brakujące),
+        // JEDEN batchowy update (klucze z push().key bez zapisu) → jeden re-sync zamiast setek.
+        // heroList/artifactList domyślnie = pełne listy (przy dodaniu bytu podajemy [{name}] zanim cache się odświeży).
+        async function ensureHeroFoldersImpl(announce, heroList, artifactList) {
             if (!isAdmin || !screenFoldersRef) return;
             await ensureScreensLoaded(); // MUSI mieć pełny cache — na pustym utworzyłoby duplikaty wszystkich folderów
             const list = heroList || heroes;
-            const updates = {}, now = new Date().toISOString();
+            // Foldery artefaktów domyślnie tylko dla artefaktów JUŻ w bazie — auto-sync (addHero/restore)
+            // nie ma tworzyć 31 folderów z fallbacku przed seedem; seed podaje listę jawnie.
+            const artList = artifactList || (artifactsFromDb() ? getArtifacts() : []);
+            const updates = {}, patches = [], now = new Date().toISOString();
             const gen = () => screenFoldersRef.push().key;
+            // Korzeń Kompendium
+            let kroot = kompendiumRootFolder();
+            const krootId = kroot ? kroot.id : gen();
+            if (!kroot) updates[krootId] = { id: krootId, name: KOMPENDIUM_ROOT_NAME, parentId: null, createdAt: now, managed: true, kind: 'kompendiumRoot' };
+            // Heroes — nowy pod Kompendium; stary (z korzenia) przenosimy
             let root = heroesRootFolder();
             const rootId = root ? root.id : gen();
-            if (!root) updates[rootId] = { id: rootId, name: HEROES_ROOT_NAME, parentId: null, createdAt: now, managed: true, kind: 'heroesRoot' };
+            if (!root) updates[rootId] = { id: rootId, name: HEROES_ROOT_NAME, parentId: krootId, createdAt: now, managed: true, kind: 'heroesRoot' };
+            else if ((root.parentId || null) !== krootId) { updates[`${rootId}/parentId`] = krootId; patches.push([rootId, 'parentId', krootId]); }
             let created = 0;
             for (const h of list) {
                 const hk = normalize(h.name);
@@ -9249,11 +9777,24 @@
                     created++;
                 }
             }
+            // Artefakty — root + folder per artefakt (artifactKey = artifactSlug(nazwa))
+            let aroot = artifactsRootFolder();
+            const arootId = aroot ? aroot.id : gen();
+            if (!aroot) updates[arootId] = { id: arootId, name: ARTIFACTS_ROOT_NAME, parentId: krootId, createdAt: now, managed: true, kind: 'artifactsRoot' };
+            for (const a of artList) {
+                const ak = artifactSlug(a.name || '');
+                if (!ak || artifactFolder(ak)) continue;
+                const aid = gen();
+                updates[aid] = { id: aid, name: a.name, parentId: arootId, createdAt: now, managed: true, kind: 'artifact', artifactKey: ak };
+                created++;
+            }
             if (!Object.keys(updates).length) { if (announce) showToast(t('heroGallery.syncNone')); return; }
             try {
                 await screenFoldersRef.update(updates);
                 // Zaktualizuj cache NATYCHMIAST (nie czekaj na child_added+debounce) — kolejne wywołania widzą nowe foldery → brak duplikatów.
-                Object.entries(updates).forEach(([id, f]) => screenFoldersById.set(id, f));
+                // Pełne obiekty setujemy wprost; partial-path (przenosiny, klucz "id/pole") patchujemy na kopii z cache.
+                Object.entries(updates).forEach(([key, f]) => { if (!key.includes('/')) screenFoldersById.set(key, f); });
+                patches.forEach(([id, field, val]) => { const f = screenFoldersById.get(id); if (f) screenFoldersById.set(id, { ...f, [field]: val }); });
                 allScreenFolders = [...screenFoldersById.values()];
                 if ($('tab-screens')?.classList.contains('active')) renderScreensTab();
                 refreshOpenHeroGalleryBar();
@@ -9411,8 +9952,18 @@
             // ⭐ Ulubione (dla wszystkich, per-user) — ukryte w trybie zaznaczania.
             const favBtn = s => selecting ? '' : (on => `<button class="screen-fav${on ? ' on' : ''}" title="${t('screens.favTitle')}" onclick="event.stopPropagation(); toggleScreenFav('${jsStr(s.id)}')">${on ? '⭐' : '☆'}</button>`)(screenFavorites.includes(s.id));
             // Foldery zarządzane (bohaterów) — inna ikona (🦸 / ikona kategorii), bez drag i bez akcji edycji/usuwania.
-            const folderIcon = f => f.kind === 'heroCat' ? ((HERO_GALLERY_CATEGORIES.find(c => c.key === f.category) || {}).icon || '📁')
-                : (f.kind === 'hero' || f.kind === 'heroesRoot') ? '🦸' : '📁';
+            const folderIcon = f => {
+                // Folder artefaktu: prawdziwa ikonka z gry zamiast emoji (analogicznie kiedyś hero, gdy będą grafiki bohaterów)
+                if (f.kind === 'artifact') {
+                    const a = getArtifacts().find(x => artifactSlug(x.name) === f.artifactKey);
+                    if (a && a.iconUrl) return `<img class="screen-folder-ico-img" src="${escapeHtml(a.iconUrl)}" alt="" loading="lazy">`;
+                    return '🗡️';
+                }
+                return f.kind === 'heroCat' ? ((HERO_GALLERY_CATEGORIES.find(c => c.key === f.category) || {}).icon || '📁')
+                    : (f.kind === 'hero' || f.kind === 'heroesRoot') ? '🦸'
+                    : f.kind === 'kompendiumRoot' ? '🏛️'
+                    : f.kind === 'artifactsRoot' ? '🗡️' : '📁';
+            };
             const folderCard = (f, subLabel) => `<div class="screen-folder-card${f.managed ? ' managed' : ''}" data-kind="folder" data-id="${escapeHtml(f.id)}"${f.managed ? '' : dragA} onclick="screenCardClick('folder','${jsStr(f.id)}',event)">
                     ${f.managed ? `<div class="screen-folder-lock" title="${escapeHtml(t('heroGallery.protected'))}">🔒</div>` : actions('folder', f.id)}
                     <div class="screen-folder-icon">${folderIcon(f)}</div>
@@ -9612,7 +10163,7 @@
             let done = 0;
             for (const id of ids) {
                 const s = findScreenshot(id); if (!s) continue;
-                try { await deleteScreenStorageFiles(s); await screenshotsRef.child(id).remove(); done++; } catch (e) {}
+                try { await deleteScreenStorageFiles(s); await screenshotsRef.child(id).remove(); await clearArtifactIconIfDeleted(s); done++; } catch (e) {}
             }
             screensSelected.clear();
             showToast('🗑️ ' + t('screens.bulkDeleted', { n: done }));
@@ -9996,14 +10547,29 @@
                 if (p) { try { await screensStorageRef.child(p).delete(); } catch (e) {} }
             }
         }
+        // Screen może być IKONKĄ artefaktu (iconPath wskazuje jego pliki) — kasowanie bez sprzątnięcia
+        // zostawiało w /artifacts martwy URL 404 (ikonka znikała z kart/pickera/folderu bez śladu).
+        function artifactUsingScreenshot(s) {
+            if (!s) return null;
+            return getArtifacts().find(a => a.iconPath && (a.iconPath === s.thumbPath || a.iconPath === s.storagePath)) || null;
+        }
+        async function clearArtifactIconIfDeleted(s) {
+            const a = artifactUsingScreenshot(s);
+            if (a && artifactsRef && artifactsFromDb()) {
+                try { await artifactsRef.child(a.id).update({ iconUrl: null, iconPath: null }); } catch (e) {}
+            }
+        }
         async function deleteScreenshot(id) {
             if (!isAdmin) return;
             const s = findScreenshot(id);
             if (!s) return;
-            if (!confirm(t('screens.deleteShotConfirm'))) return;
+            const iconOf = artifactUsingScreenshot(s);
+            const msg = iconOf ? t('screens.deleteIconConfirm', { name: iconOf.name }) : t('screens.deleteShotConfirm');
+            if (!confirm(msg)) return;
             try {
                 await deleteScreenStorageFiles(s);
                 await screenshotsRef.child(id).remove();
+                await clearArtifactIconIfDeleted(s);
                 showToast('🗑️ ' + t('screens.deleted'));
             } catch (e) { showToast(t('common.error') + ': ' + e.message, true); }
         }
@@ -10238,6 +10804,8 @@
                     myPet: typeof f.myPet === 'string' ? f.myPet : '',
                     enemyPet: typeof f.enemyPet === 'string' ? f.enemyPet : '',
                     name: typeof f.name === 'string' ? f.name : '',
+                    myArtifacts: toSlots8(f.myArtifacts),
+                    enemyArtifacts: toSlots8(f.enemyArtifacts),
                 };
             };
 
@@ -10303,6 +10871,18 @@
                 allBookMeta = v ? Object.entries(v).map(([id, x]) => ({ ...x, id })) : [];
                 if (heroesMode === 'book' && $('tab-heroes')?.classList.contains('active')) renderBookTab();
                 if ($('book-meta-modal')?.classList.contains('show')) renderBookMetaList();
+            }, () => {});
+
+            // ─── Artefakty (live; przy pustym /artifacts widok używa DEFAULT_ARTIFACTS) ───
+            // WYMAGA reguły Firebase: "artifacts": { ".read": true, ".write": true } — bez niej seed/edycja cicho odpadają.
+            artifactsRef = db.ref('artifacts');
+            artifactsRef.on('value', snap => {
+                const v = snap.val();
+                allArtifacts = v ? Object.entries(v).map(([id, x]) => ({
+                    ...x, id,
+                    bonuses: Array.isArray(x.bonuses) ? x.bonuses : Object.values(x.bonuses || {}),
+                })).sort((a, b) => (a.order || 0) - (b.order || 0)) : [];
+                if (heroesMode === 'artifacts' && $('tab-heroes')?.classList.contains('active')) renderArtifactsTab();
             }, () => {});
 
             // ─── Defense (obrona gildii) ───
@@ -10455,6 +11035,9 @@
 						['pet-skills-edit-modal', 'show', closePetSkillsEdit],
 						['book-edit-modal', 'show', closeBookEdit],
 						['book-meta-modal', 'show', closeBookMetaModal],
+						['artifact-picker-modal', 'show', closeArtifactPicker],
+						['artifact-info-modal', 'show', closeArtifactInfo],
+						['artifact-edit-modal', 'show', closeArtifactEdit],
 						['skills-import-modal', 'show', closeSkillsImport],
 						['restore-diff-modal', 'show', closeRestoreDiff],
 						['screens-move-modal', 'hidden', closeScreenMove],
@@ -10477,6 +11060,9 @@
 
 			// Defense: Enter w polu nazwy gracza = dodaj
 			$('defense-new-player-name')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addDefensePlayer(); } });
+
+			// Kwadraciki artefaktów przy polach bohaterów (Dodaj + Edycja, obie strony)
+			initArtifactSlotButtons();
 
 			// Defense edit modal: live impact preview na zmianę któregokolwiek pola
 			['defense-edit-name', 'defense-edit-comment', 'defense-edit-myPet',

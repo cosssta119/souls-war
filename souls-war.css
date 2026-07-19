@@ -3083,6 +3083,88 @@
 			.hsk-title { flex-direction: column; }
 		}
 
+		/* ── Artefakty (pod-widok Kompendium) ── */
+		.artifact-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+		.artifact-card {
+			background: var(--bg-card);
+			border: 1px solid var(--border);
+			border-left: 4px solid var(--accent-gold);
+			border-radius: 10px;
+			padding: 12px;
+			box-sizing: border-box;
+		}
+		.artifact-card-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+		.artifact-card-head { flex: 1; min-width: 0; }
+		.artifact-card-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 3px; }
+		.artifact-ico {
+			width: 44px; height: 44px; flex: 0 0 44px;
+			border-radius: 8px; object-fit: cover;
+			background: var(--bg-input); border: 1px solid var(--border);
+		}
+		.artifact-ico-ph { display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+		.artifact-class-chip {
+			font-size: 0.68rem; color: var(--text-muted);
+			background: var(--bg-input); border: 1px solid var(--border);
+			border-radius: 10px; padding: 1px 8px;
+		}
+		.artifact-rarity { font-size: 0.68rem; color: var(--accent-gold); padding: 1px 4px; }
+		.artifact-bonuses {
+			background: rgba(0, 0, 0, 0.18);
+			border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;
+			font-size: 0.72rem; color: var(--text-muted); line-height: 1.5;
+		}
+		[data-theme="light"] .artifact-bonuses { background: rgba(0, 0, 0, 0.05); }
+		[data-theme="light"] .artifact-card { background: #ffffff; }
+
+		/* Kwadracik artefaktu dokowany w polu bohatera (Dodaj/Edycja) */
+		input.has-art-btn { padding-right: 30px; }
+		.art-slot-btn {
+			position: absolute; right: 4px; bottom: 5px;
+			width: 24px; height: 24px; padding: 0;
+			background: var(--bg-card); border: 1px dashed var(--border); border-radius: 6px;
+			color: var(--text-muted); font-size: 0.85rem; line-height: 1;
+			cursor: pointer; display: flex; align-items: center; justify-content: center;
+			z-index: 2; overflow: hidden;
+		}
+		.art-slot-btn:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+		.art-slot-btn.set { border-style: solid; border-color: var(--accent-gold); background: rgba(212, 175, 55, 0.12); }
+		.art-slot-btn img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; }
+
+		/* Picker artefaktu (modal) */
+		.artifact-pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin: 10px 0; max-height: 55vh; overflow-y: auto; }
+		.artifact-pick-tile {
+			background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px;
+			padding: 8px 6px; text-align: center; cursor: pointer;
+		}
+		.artifact-pick-tile:hover { border-color: var(--accent-gold); }
+		.artifact-pick-tile.selected { border-color: var(--accent-gold); background: rgba(212, 175, 55, 0.12); }
+		.artifact-pick-tile .artifact-ico { width: 40px; height: 40px; margin: 0 auto; display: block; }
+		.artifact-pick-name { font-size: 0.66rem; margin-top: 4px; line-height: 1.2; }
+		.artifact-pick-class { font-size: 0.6rem; color: var(--text-muted); margin-top: 2px; }
+
+		/* Badge artefaktu w rogu slotu 3-2-3 (kontener mieści przyszłą drugą ikonkę) */
+		.battle-slot { position: relative; }
+		.slot-badges { position: absolute; top: -7px; right: -5px; display: flex; gap: 2px; z-index: 2; }
+		.slot-badge {
+			width: 18px; height: 18px; border-radius: 5px; overflow: hidden;
+			background: var(--bg-card); border: 1px solid var(--accent-gold);
+			font-size: 0.6rem; display: flex; align-items: center; justify-content: center;
+			cursor: pointer;
+		}
+		.slot-badge img { width: 100%; height: 100%; object-fit: cover; }
+
+		/* Rozmiar kafelków Artefaktów (S/M/L jak w Bohaterach) */
+		#artifacts-grid.tiles-small .artifact-cards { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+		#artifacts-grid.tiles-small .artifact-card { padding: 8px; }
+		#artifacts-grid.tiles-small .artifact-ico { width: 30px; height: 30px; flex-basis: 30px; }
+		#artifacts-grid.tiles-small .book-card-desc, #artifacts-grid.tiles-small .artifact-bonuses { font-size: 0.68rem; }
+		#artifacts-grid.tiles-large .artifact-cards { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 12px; }
+		#artifacts-grid.tiles-large .artifact-ico { width: 64px; height: 64px; flex-basis: 64px; }
+		#artifacts-grid.tiles-large .book-card-desc, #artifacts-grid.tiles-large .artifact-bonuses { font-size: 0.82rem; }
+
+		/* Obrazkowa ikonka folderu artefaktu w Galerii (zamiast emoji) */
+		.screen-folder-ico-img { width: 1.15em; height: 1.15em; object-fit: cover; border-radius: 6px; vertical-align: -0.18em; }
+
 		/* ═══ 21c. SCREENS TAB (Galeria) ═══ */
 		.screens-breadcrumb {
 			display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
