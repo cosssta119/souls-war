@@ -6777,7 +6777,7 @@
             { order: 21, name: 'Eternal Bond', klass: 'Tank', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Crit Resistance 24.0%', 'Crit Defense 36.0%'], skill: 'At the start of battle, max HP increases by 55%, and healing received increases by 25%. However, the wearer cannot be revived during battle.' },
             { order: 22, name: 'Cursed Chalice', klass: 'Healer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Crit Resistance 24.0%', 'Crit Rate 18.0%'], skill: 'Increases Active Skill damage by 30%.\nWhen the wearer attacks an enemy with an Active Skill, the wearer and the ally with the lowest HP gain a shield equal to 80% of the damage dealt for 2 turns. (Once per round)\nIgnores Energy Reduction and Absorption effects until round 3.' },
             { order: 23, name: 'Warrior\'s Axe', klass: 'Dealer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Crit Damage 24.0%', 'CC Resistance 18.0%'], skill: 'The wearer has a 100% chance to gain 50 Energy when inflicting a CC effect on an enemy hero. (Once per round)\nEnemy heroes affected by the wearer\'s CC effect suffer an 80% reduction to healing received.' },
-            { order: 24, name: 'Turbulent Lamp of Wrath', klass: 'Support', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'CC Resistance 24.0%', 'Magic Resistance 18.0%'], skill: 'At the start of battle, reduce your ATK by 10%, but the ATK and Crit Damage of all allies on the same row (excluding yourself) increase by 25%' },
+            { order: 24, name: 'Turbulent Lamp of Wrath', klass: 'Healer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'CC Resistance 24.0%', 'Magic Resistance 18.0%'], skill: 'At the start of battle, reduce your ATK by 10%, but the ATK and Crit Damage of all allies on the same row (excluding yourself) increase by 25%' },
             { order: 25, name: 'Nightmare', klass: 'Dealer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Crit Rate 24.0%', 'Crit Resistance 18.0%'], skill: 'After using an Active Skill, deal fixed damage equal to 10% of the damage dealt by that Active Skill to the enemy hero with the highest HP among those hit. If the target has a Shield, deal 12% fixed damage to the target instead. If the Active Skill hits 4 or more heroes, this fixed damage changes to 50% (100% if the target has a Shield) of the damage dealt by that Active Skill. (Fixed damage cannot crit and does not exceed 250% of the wearer\'s ATK.)' },
             { order: 26, name: 'Circlet of Amplification', klass: 'Support', rarity: 'Mythic', bonuses: ['Attack x 30.0%', 'Crit Rate 24.0%', 'Dodge Rate 18.0%'], skill: 'When placed in the 3rd row, increases ATK by 15% and Crit DMG by 25%. When an Active attack lands as a Crit, increases the Energy of allies in the same row (excluding the wearer) by 25. (Once per round)' },
             { order: 27, name: 'Steel Bishop', klass: 'Healer', rarity: 'Mythic', bonuses: ['HP x 48.0%', 'Defense x 36.0%', 'Attack x 30.0%', 'Dodge Rate 24.0%', 'Physical Resistance 18.0%'], skill: 'When healing allies with an Active Skill, grants a buff to 2 random healed allies that reduces damage taken by 25% for 2 turns. When any ally dies, grant all allies a shield equal to 200% of the wearer\'s ATK for 1 turn. (This artifact\'s effect triggers only once per battle from one wearer upon ally death, even if multiple heroes have it equipped.)' },
@@ -6879,8 +6879,10 @@
                 `<button class="heroes-chip${artifactsFilterClasses.has(k) ? ' active' : ''}" onclick="toggleArtifactsClassFilter('${jsStr(k)}')">${artifactClassLabel(k)} (${counts[k]})</button>`).join('');
             if (artifactsFilterClasses.size) html += `<button class="heroes-chip heroes-chip-clear" onclick="clearArtifactsFilters()">✕ ${t('heroes.clearFilters')}</button>`;
             if (isAdmin) {
-                if (artifactsFromDb()) html += `<button class="heroes-chip book-admin-chip" onclick="openArtifactEdit(null)">➕ ${t('artifacts.addBtn')}</button>`;
-                else html += `<button class="heroes-chip book-admin-chip" onclick="openArtifactsSeed()">🏛️ ${t('artifacts.seedBtn')}</button>`;
+                if (artifactsFromDb()) {
+                    html += `<button class="heroes-chip book-admin-chip" onclick="openArtifactEdit(null)">➕ ${t('artifacts.addBtn')}</button>`;
+                    html += `<button class="heroes-chip book-admin-chip" onclick="openArtifactsIconsReimport()">🖼️ ${t('artifacts.reimportBtn')}</button>`;
+                } else html += `<button class="heroes-chip book-admin-chip" onclick="openArtifactsSeed()">🏛️ ${t('artifacts.seedBtn')}</button>`;
             }
             wrap.innerHTML = html;
         }
@@ -7028,6 +7030,39 @@
             ]);
             await ref.set({ id, folderId, url, storagePath: path, thumbUrl, thumbPath, size: fullBlob.size, title: name, comment: '', tags: [], uploadedAt: new Date().toISOString() });
             return { iconUrl: thumbUrl || url, iconPath: thumbUrl ? thumbPath : path };
+        }
+
+        // Wymiana ikonek istniejących artefaktów z plików "NN_nazwa.png" (dopasowanie numeru NN do pola order) —
+        // do naprawy pomylonych/zdublowanych grafik po seedzie. Stary screen-ikonka jest usuwany (wraz z plikami
+        // Storage), nowy wgrywany pipeline'em Galerii do folderu artefaktu; można podać podzbiór plików.
+        function openArtifactsIconsReimport() { $('artifacts-icons-input')?.click(); }
+        async function reimportArtifactIcons(event) {
+            const files = Array.from(event.target.files || []);
+            event.target.value = '';
+            if (!isAdmin || !artifactsRef || !artifactsFromDb()) return;
+            if (!files.length) return;
+            const byOrder = new Map();
+            files.forEach(f => { const m = /^(\d+)/.exec(f.name); if (m) byOrder.set(Number(m[1]), f); });
+            if (!byOrder.size) { showToast('⚠️ ' + t('artifacts.reimportNoMatch'), true); return; }
+            if (!confirm(t('artifacts.reimportConfirm', { n: byOrder.size }))) return;
+            const cnt = $('artifacts-count');
+            let done = 0; const missed = [];
+            try {
+                await ensureScreensLoaded();
+                for (const [ord, file] of byOrder) {
+                    const a = getArtifacts().find(x => x.order === ord);
+                    if (!a) { missed.push(file.name); continue; }
+                    const oldShot = allScreenshots.find(s => a.iconPath && (s.thumbPath === a.iconPath || s.storagePath === a.iconPath));
+                    const up = await uploadArtifactIcon(file, a.name, a.id);
+                    await artifactsRef.child(a.id).update({ iconUrl: up.iconUrl, iconPath: up.iconPath });
+                    if (oldShot) { try { await deleteScreenStorageFiles(oldShot); await screenshotsRef.child(oldShot.id).remove(); } catch (e) {} }
+                    done++;
+                    if (cnt) cnt.textContent = t('artifacts.uploading', { done, n: byOrder.size });
+                }
+                showToast('✅ ' + t('artifacts.reimportDone', { n: done }));
+                if (missed.length) showToast('⚠️ ' + t('artifacts.reimportSkipped', { list: missed.slice(0, 5).join(', ') }), true);
+            } catch (e) { showToast(t('common.error') + ': ' + e.message, true); }
+            renderArtifactsTab();
         }
 
         // Jednorazowy seed (guzik znika po użyciu — widoczny tylko gdy /artifacts puste): buduje strukturę
