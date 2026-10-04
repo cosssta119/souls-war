@@ -141,8 +141,8 @@
 		const GUILD_PASSWORD_ENABLED = true; // Zmień na true aby włączyć hasło na wejście
 		// ===============================================
 
-		// Hashe haseł (SHA-256) — WERSJA TESTOWA (sandbox)
-		// Hasło gildii: "sandbox"
+		// Hashe haseł (SHA-256). GUILD_PASSWORD_HASH tutaj jest testowy — przy wdrożeniu
+		// tools/deploy-prod.sh podmienia go na produkcyjny (hasła nie trzymamy w kodzie).
 		const GUILD_PASSWORD_HASH = '249dc54f04e8c635d90121519b23214d62bf91c4f28edc27ec8c989bc897de70';
 		const ADMIN_PASSWORD_HASH = '73e27fdb26c47415340900ae682ca124348f26663db2f797fb7cee6232126ac5';
         
