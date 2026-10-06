@@ -311,8 +311,8 @@ Tylko admin może edytować i usuwać formacje, oznaczać je jako bazowe, zarzą
 
 Informacje dla opiekunów aplikacji:
 
-- Aplikacja ma **wersję testową** w repozytorium [`sw-test`](https://github.com/cosssta119/sw-test). Każda zmiana trafia najpierw tam i jest sprawdzana.
-- Na produkcję (repozytorium `souls-war`, strona dla graczy) sprawdzone zmiany przenosi **skrypt**. Procedura krok po kroku: [WDROZENIE.md](https://github.com/cosssta119/sw-test/blob/main/WDROZENIE.md).
+- Aplikacja ma **wersję testową** w osobnym, prywatnym repozytorium. Każda zmiana trafia najpierw tam i jest sprawdzana lokalnie.
+- Na produkcję (repozytorium `souls-war`, strona dla graczy) sprawdzone zmiany przenosi **skrypt** wdrożeniowy.
 - Skrypt sam przenosi wszystkie pliki aplikacji (razem z folderem `runes/`), podmienia hasło gildii na produkcyjne i przed publikacją sprawdza, czy niczego nie brakuje.
 - Wersja testowa korzysta z **tej samej bazy Firebase** co produkcja — usuwanie i operacje masowe w teście działają na prawdziwych danych gildii.
 - Lokalnie aplikację uruchamia się przez serwer HTTP w folderze projektu (np. `python -m http.server 8000`); nie ma kroku budowania ani testów automatycznych.

@@ -187,6 +187,142 @@
             .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const getPetName = p => typeof p === 'string' ? p : p.name;
 
+        // ─── Sanityzacja danych z bazy (plaster ratunkowy 2026-10-06) ───
+        // Baza ma .write:true, więc KAŻDY rekord z Firebase jest niezaufany. Każdy listener i lazy-load
+        // przepuszcza dane przez sanitizer: nazwy z niebezpiecznymi znakami → '' / rekord odrzucony,
+        // ID → liczby, rasy/role/klasy/kolory/URL-e → whitelista. Wyświetlanie i tak escapuje (obrona w głąb),
+        // a reguły zapisu (firebase/database.rules.json) blokują te same znaki już przy zapisie.
+        // Nowy nod z bazy → dopisz sanitizer tutaj i test w tools/security.test.mjs.
+        const KNOWN_RACES = ['Dark', 'Light', 'Human', 'Fire', 'Elf', 'Undead'];
+        const UNSAFE_NAME = /[<>"'`&]/;   // nazwy bohaterów/petów/slotów (jak reguła zapisu)
+        const UNSAFE_ART = /[<>"`&]/;     // artefakty: apostrof dozwolony („Giant's Boomerang")
+        const SAFE_COLOR = /^(#[0-9a-fA-F]{3,8}|var\(--[\w-]+\))$/;
+        const STORAGE_URL_PREFIX = 'https://firebasestorage.googleapis.com/';
+        const asStr = v => (v == null ? '' : String(v));
+        const safeName = v => (typeof v === 'string' && v.length <= 40 && !UNSAFE_NAME.test(v) ? v : '');
+        const safeArtName = v => (typeof v === 'string' && v.length <= 60 && !UNSAFE_ART.test(v) ? v : '');
+        const safeRune = v => (typeof v === 'string' && v && parseRune(v) ? v : '');
+        const safeUrl = v => (typeof v === 'string' && v.startsWith(STORAGE_URL_PREFIX) ? v : '');
+        const safeId = v => Number(v) || 0;
+        const safeSpeed = v => {
+            if (typeof v !== 'number' && !(typeof v === 'string' && v.trim() !== '')) return null;
+            const n = Number(v);
+            return Number.isFinite(n) ? Math.round(n) : null;
+        };
+
+        // 8-slotowa tablica (sparse-tablica z RTDB wraca jako obiekt {0:'A',5:'B'} bez .filter/.map — jeden
+        // zły rekord wywracał kiedyś updateUI i apka wisiała na „Ładowanie" u wszystkich). clean = filtr wartości.
+        function toSlots8(v, clean = x => (typeof x === 'string' ? x : ''), empty = '') {
+            const out = new Array(8).fill(empty);
+            const put = (i, x) => { if (x !== undefined && x !== null) out[i] = clean(x); };
+            if (Array.isArray(v)) v.slice(0, 8).forEach((x, i) => put(i, x));
+            else if (v && typeof v === 'object') Object.keys(v).forEach(k => {
+                const i = Number(k);
+                if (Number.isInteger(i) && i >= 0 && i < 8) put(i, v[k]);
+            });
+            return out;
+        }
+        function sanitizeFormation(f) {
+            if (!f || typeof f !== 'object') return null;
+            const out = {
+                ...f,
+                id: safeId(f.id),
+                name: asStr(f.name),
+                comment: asStr(f.comment),
+                dateAdded: asStr(f.dateAdded),
+                isBase: !!f.isBase,
+                my: toSlots8(f.my, safeName),
+                enemy: toSlots8(f.enemy, safeName),
+                myPet: safeName(f.myPet),
+                enemyPet: safeName(f.enemyPet),
+                myArtifacts: toSlots8(f.myArtifacts, safeArtName),
+                enemyArtifacts: toSlots8(f.enemyArtifacts, safeArtName),
+                myRunes: toSlots8(f.myRunes, safeRune),
+                enemyRunes: toSlots8(f.enemyRunes, safeRune),
+            };
+            if (f.lastEdited != null) out.lastEdited = asStr(f.lastEdited);
+            return out;
+        }
+        function sanitizeHero(h) {
+            if (!h || typeof h !== 'object') return null;
+            const name = safeName(h.name);
+            return name && KNOWN_RACES.includes(h.race) ? { ...h, name, race: h.race } : null;
+        }
+        function sanitizePet(p) {
+            return safeName(typeof p === 'string' ? p : p && p.name) || null;
+        }
+        function sanitizeDefenseFormation(f) {
+            if (!f || typeof f !== 'object') return null;
+            return { ...f, id: safeId(f.id), my: toSlots8(f.my, safeName), myPet: safeName(f.myPet),
+                name: asStr(f.name), comment: asStr(f.comment), fingerprint: asStr(f.fingerprint) };
+        }
+        function sanitizeDefensePlayer(p) {
+            if (!p || typeof p !== 'object') return null;
+            return { ...p, id: safeId(p.id), name: asStr(p.name) };
+        }
+        function sanitizeDefenseAssignment(a) {
+            if (!a || typeof a !== 'object') return null;
+            const out = { ...a, id: safeId(a.id), playerId: safeId(a.playerId), formationId: safeId(a.formationId) };
+            if (a.speeds != null) out.speeds = toSlots8(a.speeds, safeSpeed, null);
+            if (a.artifacts != null) out.artifacts = toSlots8(a.artifacts, safeArtName);
+            return out;
+        }
+        function sanitizeBookMeta(m) {
+            if (!m || typeof m !== 'object') return null;
+            const out = { ...m, key: asStr(m.key), label: asStr(m.label) };
+            // niepoprawna ikona/kolor → pole usunięte (zadziała domyślna z DEFAULT_BOOK_META)
+            if (typeof m.icon === 'string' && !/[<>&"']/.test(m.icon)) out.icon = m.icon; else delete out.icon;
+            if (typeof m.color === 'string' && SAFE_COLOR.test(m.color)) out.color = m.color; else delete out.color;
+            return out;
+        }
+        function sanitizeBookBonus(b) {
+            if (!b || typeof b !== 'object') return null;
+            const book = asStr(b.book);
+            const out = { ...b, name: asStr(b.name), desc: asStr(b.desc), book: /^[\w-]{0,40}$/.test(book) ? book : '' };
+            if (b.calc && typeof b.calc === 'object') {
+                const c = { ...b.calc };
+                if ('race' in c) c.race = Array.isArray(c.race) ? c.race.filter(r => KNOWN_RACES.includes(r))
+                    : (KNOWN_RACES.includes(c.race) ? c.race : undefined);
+                if ('row' in c) { const r = Number(c.row); c.row = [1, 2, 3].includes(r) ? r : undefined; }
+                for (const k of ['value', 'stackMax']) if (k in c) { const n = Number(c[k]); c[k] = Number.isFinite(n) ? n : undefined; }
+                if ('trig' in c && !/^[\w.]*$/.test(asStr(c.trig))) c.trig = undefined;
+                if ('stat' in c) c.stat = asStr(c.stat);
+                out.calc = c;
+            }
+            return out;
+        }
+        function sanitizeArtifact(a) {
+            if (!a || typeof a !== 'object') return null;
+            return {
+                ...a,
+                name: asStr(a.name),
+                klass: ARTIFACT_CLASSES.includes(a.klass) ? a.klass : 'any',
+                rarity: a.rarity === 'Legendary' ? 'Legendary' : 'Mythic',
+                bonuses: (Array.isArray(a.bonuses) ? a.bonuses : Object.values(a.bonuses || {})).map(asStr),
+                skill: asStr(a.skill),
+                iconUrl: safeUrl(a.iconUrl),
+            };
+        }
+        function sanitizeScreenshot(x) {
+            if (!x || typeof x !== 'object') return null;
+            return {
+                ...x,
+                url: safeUrl(x.url),
+                thumbUrl: safeUrl(x.thumbUrl),
+                uploadedAt: asStr(x.uploadedAt),
+                title: asStr(x.title),
+                comment: asStr(x.comment),
+                tags: (Array.isArray(x.tags) ? x.tags : Object.values(x.tags || {})).map(asStr),
+            };
+        }
+        function sanitizeHeroSkills(sk) {
+            if (!sk || typeof sk !== 'object') return null;
+            const out = { ...sk };
+            if (!(sk.role in ROLE_ICON)) delete out.role;
+            if (!(sk.stat in STAT_ICON)) delete out.stat;
+            return out;
+        }
+
         // Helpery menedżerów wykluczeń (search / war / kreator)
         const findCanonicalHeroName = name => {
             const n = normalize(name);
@@ -526,6 +662,34 @@
         }
 
         // UI
+        // ─── Brak danych przy starcie (offline / błąd Firebase) ───
+        // RTDB bez internetu NIE zgłasza błędu — bez limitu czasu nakładka „Ładowanie" wisiała w nieskończoność,
+        // a błąd odczytu kończył się cichą „pustą bazą". Teraz: komunikat + przycisk odświeżenia.
+        const LOAD_TIMEOUT_MS = 15000;
+        let formationsArrived = false;
+        function showLoadError() {
+            if (formationsArrived) return;
+            const ov = $('loading');
+            if (!ov) return;
+            ov.classList.remove('hidden');
+            ov.classList.add('load-error');
+            ov.innerHTML = `<div class="load-error-icon">📡</div>`
+                + `<div class="load-error-title">${escapeHtml(t('app.offlineTitle'))}</div>`
+                + `<div class="load-error-text">${escapeHtml(t('app.offlineText'))}</div>`
+                + `<button class="btn btn-primary" onclick="location.reload()">${escapeHtml(t('app.offlineRetry'))}</button>`;
+        }
+        function hideLoadError() {
+            formationsArrived = true;
+            const ov = $('loading');
+            if (ov) { ov.classList.add('hidden'); ov.classList.remove('load-error'); }
+        }
+        // Wspólny handler błędu listenera (np. brak reguły w Firebase) — log + jednorazowy toast zamiast ciszy.
+        let listenErrorShown = false;
+        const onListenError = what => err => {
+            console.error(`[Firebase] odczyt ${what} nieudany:`, err);
+            if (!listenErrorShown) { listenErrorShown = true; showToast(t('app.listenError'), true); }
+        };
+
         function setOnlineStatus(online) {
             isOnline = online;
             $('status-dot').className = `status-dot ${online ? 'online' : 'offline'}`;
@@ -540,6 +704,12 @@
             dbRenderDirty = false;
             if (currentDbFilter === 'packages') renderPackagesView(); else filterDatabase();
         }
+        let packagesLiveTimer = null;
+        function renderDatabaseViewLive() {
+            if (currentDbFilter !== 'packages') return renderDatabaseView();
+            clearTimeout(packagesLiveTimer);
+            packagesLiveTimer = setTimeout(renderDatabaseView, 800);
+        }
 
         function updateUI() {
             const total = allFormations.length;
@@ -550,7 +720,7 @@
             $('db-stat-base').textContent = baseCount;
             $('db-stat-user').textContent = total - baseCount;
             // Render Bazy tylko gdy zakładka aktywna; inaczej oznacz „brudne" i odłóż do wejścia (switchTab) — bez rebuildu DOM w tle przy każdym live-update gildii.
-            if ($('tab-database')?.classList.contains('active')) renderDatabaseView();
+            if ($('tab-database')?.classList.contains('active')) renderDatabaseViewLive();
             else dbRenderDirty = true;
             // Tagi Szukajki liczą wrogów z formacji → odświeżamy je tutaj.
             // Tagi War/Kreator/Dodaj zależą TYLKO od heroes/pets → generują je listenery heroes/pets (nie przebudowujemy ich na każdą zmianę formacji, bo to najczęstszy event).
@@ -913,8 +1083,8 @@
 					if (!filtered.length) { targetList.classList.remove('show'); return; }
 					
 					targetList.innerHTML = filtered.map(item => type === 'pet' ?
-						`<div class="autocomplete-item" data-value="${item}">${item}</div>` :
-						`<div class="autocomplete-item race-${item.race.toLowerCase()}" data-value="${item.name}">${item.name} <span class="race">(${raceLabel(item.race)})</span></div>`
+						`<div class="autocomplete-item" data-value="${escapeHtml(item)}">${escapeHtml(item)}</div>` :
+						`<div class="autocomplete-item race-${item.race.toLowerCase()}" data-value="${escapeHtml(item.name)}">${escapeHtml(item.name)} <span class="race">(${raceLabel(item.race)})</span></div>`
 					).join('');
 					
 					targetList.classList.add('show');
@@ -1175,7 +1345,8 @@
         // Display labels — pozwala renomować rasę w UI bez ruszania danych/CSS/Firebase.
         // Klucz = identyfikator wewnętrzny (jak w hero.race), wartość = co user widzi.
         const RACE_LABEL = { Fire: 'Horde' };
-        const raceLabel = race => RACE_LABEL[race] || race;
+        // Nieznana rasa (dane z bazy/localStorage) → escapowana; znane bez zmian (brak podwójnego escapowania).
+        const raceLabel = race => RACE_LABEL[race] || (KNOWN_RACES.includes(race) ? race : escapeHtml(race));
 
         // Funkcje zarządzania kolejnością ras
         function moveRaceUp(race) {
@@ -1244,12 +1415,12 @@
 			
 			RACE_ORDER.forEach(race => {
 				if (raceGroups[race]?.length) {
-					html += `<div class="quick-tags-section"><div class="quick-tags-header" onclick="toggleQuickTagSection(this)"><span class="toggle-icon">▶</span>${RACE_EMOJI[race]} ${raceLabel(race)} (${raceGroups[race].length})</div><div class="quick-tags-content"><div class="quick-tags">${raceGroups[race].map(h => `<span class="quick-tag tag-${race.toLowerCase()}" onclick="${clickHandler}('${h.name || h}', event)"${showCounts && h.count ? ` title="${h.count}x"` : ''}>${h.name || h}</span>`).join('')}</div></div></div>`;
+					html += `<div class="quick-tags-section"><div class="quick-tags-header" onclick="toggleQuickTagSection(this)"><span class="toggle-icon">▶</span>${RACE_EMOJI[race]} ${raceLabel(race)} (${raceGroups[race].length})</div><div class="quick-tags-content"><div class="quick-tags">${raceGroups[race].map(h => `<span class="quick-tag tag-${race.toLowerCase()}" onclick="${clickHandler}('${jsStr(h.name || h)}', event)"${showCounts && h.count ? ` title="${Number(h.count) || ''}x"` : ''}>${escapeHtml(h.name || h)}</span>`).join('')}</div></div></div>`;
 				}
 			});
 			
 			if (petsData?.length) {
-				html += `<div class="quick-tags-section"><div class="quick-tags-header" onclick="toggleQuickTagSection(this)"><span class="toggle-icon">▶</span>🐾 ${t('quickTags.pets')} (${petsData.length})</div><div class="quick-tags-content"><div class="quick-tags">${petsData.map(p => `<span class="quick-tag tag-pet" onclick="${petClickHandler}('${p.name || p}')"${showCounts && p.count ? ` title="${p.count}x"` : ''}>${p.name || p}</span>`).join('')}</div></div></div>`;
+				html += `<div class="quick-tags-section"><div class="quick-tags-header" onclick="toggleQuickTagSection(this)"><span class="toggle-icon">▶</span>🐾 ${t('quickTags.pets')} (${petsData.length})</div><div class="quick-tags-content"><div class="quick-tags">${petsData.map(p => `<span class="quick-tag tag-pet" onclick="${petClickHandler}('${jsStr(p.name || p)}')"${showCounts && p.count ? ` title="${Number(p.count) || ''}x"` : ''}>${escapeHtml(p.name || p)}</span>`).join('')}</div></div></div>`;
 			}
 			
 			return html;
@@ -1271,8 +1442,8 @@
 				<div class="race-order-item">
 					<span class="race-order-label">${RACE_EMOJI[race]} ${raceLabel(race)}</span>
 					<div class="race-order-buttons">
-						<button class="btn btn-tiny" onclick="moveRaceUp('${race}')" ${idx === 0 ? 'disabled' : ''}>▲</button>
-						<button class="btn btn-tiny" onclick="moveRaceDown('${race}')" ${idx === RACE_ORDER.length - 1 ? 'disabled' : ''}>▼</button>
+						<button class="btn btn-tiny" onclick="moveRaceUp('${jsStr(race)}')" ${idx === 0 ? 'disabled' : ''}>▲</button>
+						<button class="btn btn-tiny" onclick="moveRaceDown('${jsStr(race)}')" ${idx === RACE_ORDER.length - 1 ? 'disabled' : ''}>▼</button>
 					</div>
 				</div>
 			`).join('') + `
@@ -1631,8 +1802,8 @@
 			const searchMoreCount = displayedResults.length - searchRenderLimit;
 			html += displayedResults.slice(0, searchRenderLimit).map(r => {
 				const f = r.formation;
-				const enemyDisplay = f.enemy.filter(h => h).map(h => r.matchedHeroes.some(mh => normalize(h) === mh || normalize(h).startsWith(mh)) ? `<span class="matched-hero">${h}</span>` : h).join(', ');
-				const petDisplay = r.petMatched ? `<span class="matched-hero">${f.enemyPet}</span>` : (f.enemyPet || '—');
+				const enemyDisplay = f.enemy.filter(h => h).map(h => r.matchedHeroes.some(mh => normalize(h) === mh || normalize(h).startsWith(mh)) ? `<span class="matched-hero">${escapeHtml(h)}</span>` : escapeHtml(h)).join(', ');
+				const petDisplay = r.petMatched ? `<span class="matched-hero">${escapeHtml(f.enemyPet)}</span>` : (escapeHtml(f.enemyPet) || '—');
 				const missingHeroes = searchHeroes.filter(sh => !r.matchedHeroes.includes(sh));
 				
 				// Sprawdź wykluczone (dla trybu "pokaż wszystkie")
@@ -1651,10 +1822,10 @@
 							</div>
 							<div class="result-name">${escapeHtml(f.name)}</div>
 							<div class="result-heroes">${t('search.enemy')}: ${enemyDisplay} + ${petDisplay}</div>
-							<div class="result-heroes result-my-heroes">⚔️ Kontra: ${f.my.filter(h => h).map(h => `<span class="my-hero">${h}</span>`).join(', ') || '—'}${f.myPet ? ` + <span class="my-pet">${f.myPet}</span>` : ''}</div>
-							${missingHeroes.length ? `<div class="result-missing">❌ ${t('search.missing')}: ${missingHeroes.join(', ')}</div>` : ''}
+							<div class="result-heroes result-my-heroes">⚔️ Kontra: ${f.my.filter(h => h).map(h => `<span class="my-hero">${escapeHtml(h)}</span>`).join(', ') || '—'}${f.myPet ? ` + <span class="my-pet">${escapeHtml(f.myPet)}</span>` : ''}</div>
+							${missingHeroes.length ? `<div class="result-missing">❌ ${t('search.missing')}: ${missingHeroes.map(escapeHtml).join(', ')}</div>` : ''}
 							${f.comment ? `<div class="result-comment clamped" onclick="event.stopPropagation(); this.classList.toggle('clamped')" title="${t('search.toggleComment')}"><span class="comment-icon">💬</span>${escapeHtml(f.comment)}</div>` : ''}
-							${hasExcluded ? `<div class="result-excluded-heroes">🚫 ${t('exclude.has')}: ${exclusionCheck.heroes.join(', ')}</div>` : ''}
+							${hasExcluded ? `<div class="result-excluded-heroes">🚫 ${t('exclude.has')}: ${exclusionCheck.heroes.map(escapeHtml).join(', ')}</div>` : ''}
 						</div>
 					</div>`;
 			}).join('');
@@ -1686,7 +1857,7 @@
             const last = searchHistory[0];
             const lastFilled = (last?.heroes || []).filter(v => v);
             const lastBtn = (last && (lastFilled.length || last.pet))
-                ? `<button class="btn btn-secondary repeat-search-btn" onclick="loadSearchFromHistory(0)">🔁 ${t('search.repeatLast')}: ${lastFilled.slice(0, 3).join(', ')}${last.pet ? ` 🐾${last.pet}` : ''}</button>`
+                ? `<button class="btn btn-secondary repeat-search-btn" onclick="loadSearchFromHistory(0)">🔁 ${t('search.repeatLast')}: ${lastFilled.slice(0, 3).map(escapeHtml).join(', ')}${last.pet ? ` 🐾${escapeHtml(last.pet)}` : ''}</button>`
                 : '';
             section.innerHTML = `<div class="empty-state"><p>${t('search.emptyState')}</p>${lastBtn}</div>`;
         }
@@ -1818,7 +1989,7 @@
 				}
 				
 				list.innerHTML = filtered.map(h => 
-					`<div class="autocomplete-item race-${h.race.toLowerCase()}" data-value="${h.name}">${h.name} <span class="race">(${raceLabel(h.race)})</span></div>`
+					`<div class="autocomplete-item race-${h.race.toLowerCase()}" data-value="${escapeHtml(h.name)}">${escapeHtml(h.name)} <span class="race">(${raceLabel(h.race)})</span></div>`
 				).join('');
 				
 				list.classList.add('show');
@@ -1930,8 +2101,8 @@
 				return `
 					<div class="search-history-item" onclick="loadSearchFromHistory(${idx})">
 						<button class="search-history-item-remove" onclick="event.stopPropagation(); removeSearchHistoryItem(${idx})" title="${t('common.delete')}">✕</button>
-						<div class="search-history-item-heroes">👹 ${heroesText}</div>
-						${petText ? `<div class="search-history-item-pet">${petText}</div>` : ''}
+						<div class="search-history-item-heroes">👹 ${escapeHtml(heroesText)}</div>
+						${petText ? `<div class="search-history-item-pet">${escapeHtml(petText)}</div>` : ''}
 						<div class="search-history-item-time">🕐 ${timeAgo}</div>
 					</div>
 				`;
@@ -2017,9 +2188,13 @@
         // ─── Pakiety bohaterów (frequent itemsets) ──────────────
 
         let packageOptions = { minSize: 3, mode: 'exact', source: 'enemy', window: 'all', minSupport: 5 };
+        // Próg < 3 przy „co najmniej" + „oba" generował setki tysięcy pakietów i zamrażał kartę na minuty.
+        const PKG_MIN_SUPPORT = 3;
+        const clampMinSupport = v => Math.max(PKG_MIN_SUPPORT, Number(v) || 5);
 
         function setPackageOption(key, value) {
-            packageOptions[key] = value;
+            packageOptions[key] = key === 'minSupport' ? clampMinSupport(value) : value;
+            if (key === 'minSupport' && $('packages-min-support')) $('packages-min-support').value = packageOptions.minSupport;
             // Update active state na wszystkich grupach przycisków pakietowych
             document.querySelectorAll('.pkg-btn[data-pkg-size]').forEach(b => b.classList.toggle('active', String(b.dataset.pkgSize) === String(packageOptions.minSize)));
             document.querySelectorAll('.pkg-btn[data-pkg-mode]').forEach(b => b.classList.toggle('active', b.dataset.pkgMode === packageOptions.mode));
@@ -2101,18 +2276,24 @@
             // 5. Dla "at-least" wytnij niemaksymalne (zbiory zdominowane przez większy z tym samym/lepszym count)
             if (mode === 'atleast') {
                 // posortuj po size DESC, count DESC dla optymalizacji
+                // Pakiet jest zdominowany, gdy któryś PRZYJĘTY większy nadzbiór ma count >= jego count.
+                // Zamiast porównania każdy-z-każdym (O(n²), minuty przy dużej bazie): każdy przyjęty pakiet
+                // zapisuje swoje podzbiory (max 2^5) w mapie „najlepszy count przyjętego nadzbioru".
+                // Kolejność po size DESC gwarantuje, że przy sprawdzaniu pakietu rozmiaru s w mapie są
+                // tylko podzbiory przyjętych pakietów rozmiaru > s — dokładnie jak w starym algorytmie.
                 packages.sort((a, b) => b.size - a.size || b.count - a.count);
                 const accepted = [];
+                const bestSuper = new Map(); // key podzbioru → max count przyjętego nadzbioru
                 for (const p of packages) {
-                    const heroSet = new Set(p.heroes);
-                    let dominated = false;
-                    for (const acc of accepted) {
-                        if (acc.size > p.size && acc.count >= p.count) {
-                            // czy acc zawiera wszystkie p.heroes?
-                            if (p.heroes.every(h => acc.heroes.includes(h))) { dominated = true; break; }
-                        }
+                    const key = p.heroes.join('|');
+                    if ((bestSuper.get(key) || 0) >= p.count) continue; // zdominowany
+                    accepted.push(p);
+                    for (let k = minSize; k < p.size; k++) {
+                        enumerateSubsets(p.heroes, k, sub => {
+                            const sk = sub.join('|');
+                            if ((bestSuper.get(sk) || 0) < p.count) bestSuper.set(sk, p.count);
+                        });
                     }
-                    if (!dominated) accepted.push(p);
                 }
                 packages = accepted;
             }
@@ -2261,9 +2442,9 @@
 					<div class="db-item-info">
 						<div class="db-item-header"><span class="db-item-id">#${f.id}</span><span class="badge ${f.isBase ? 'base-badge' : 'user-badge'}">${t(f.isBase ? 'badge.base' : 'badge.user')}</span>${isNewFormation(f) ? `<span class="badge new-badge">${t('badge.new')}</span>` : ''}</div>
 						<div class="db-item-name">${escapeHtml(f.name)}</div>
-						<div class="db-item-details"><div>⚔️ ${f.my.filter(h => h).join(', ') || '—'} + ${f.myPet || '—'}</div><div>👹 ${f.enemy.filter(h => h).join(', ') || '—'} + ${f.enemyPet || '—'}</div></div>
+						<div class="db-item-details"><div>⚔️ ${f.my.filter(h => h).map(escapeHtml).join(', ') || '—'} + ${escapeHtml(f.myPet) || '—'}</div><div>👹 ${f.enemy.filter(h => h).map(escapeHtml).join(', ') || '—'} + ${escapeHtml(f.enemyPet) || '—'}</div></div>
 						${f.comment ? `<div class="result-comment clamped" onclick="event.stopPropagation(); this.classList.toggle('clamped')" title="${t('search.toggleComment')}"><span class="comment-icon">💬</span>${escapeHtml(f.comment)}</div>` : ''}
-						${hasExcluded ? `<div style="font-size:0.65rem;color:#f44336;margin-top:3px;">🚫 ${exclusionCheck.heroes.join(', ')}</div>` : ''}
+						${hasExcluded ? `<div style="font-size:0.65rem;color:#f44336;margin-top:3px;">🚫 ${exclusionCheck.heroes.map(escapeHtml).join(', ')}</div>` : ''}
 					</div>
 					<div class="db-item-date">${formatDate(f.dateAdded) ? `📅 ${formatDate(f.dateAdded)}` : ''}</div>
 					<div class="db-item-actions">
@@ -2523,7 +2704,7 @@
 				diffClass = 'compare-unique';
 			}
 			
-			return `<div class="battle-pet filled ${diffClass} slot-clickable" onclick="event.stopPropagation();showPetSkills('${jsStr(petName)}')"><span class="pet-icon">🐾</span><span>${petName}</span></div>`;
+			return `<div class="battle-pet filled ${diffClass} slot-clickable" onclick="event.stopPropagation();showPetSkills('${jsStr(petName)}')"><span class="pet-icon">🐾</span><span>${escapeHtml(petName)}</span></div>`;
 		}
 
         function openQuickSelect(targetId, label) {
@@ -2536,8 +2717,8 @@
             RACE_ORDER.forEach(r => raceGroups[r].sort((a, b) => a.localeCompare(b)));
             
             $('quick-select-tags').innerHTML = isPet ? 
-                `<div class="quick-tags-section"><div class="quick-tags-header expanded" onclick="toggleQuickTagSection(this)"><span class="toggle-icon">▶</span> 🐾 ${t('quickTags.pets')}</div><div class="quick-tags-content show"><div class="quick-tags">${pets.map(p => `<span class="quick-tag tag-pet" onclick="selectQuickItem('${getPetName(p)}')">${getPetName(p)}</span>`).join('')}</div></div></div>` :
-                RACE_ORDER.filter(r => raceGroups[r].length).map(r => `<div class="quick-tags-section"><div class="quick-tags-header expanded" onclick="toggleQuickTagSection(this)"><span class="toggle-icon">▶</span>${RACE_EMOJI[r]} ${raceLabel(r)} (${raceGroups[r].length})</div><div class="quick-tags-content show"><div class="quick-tags">${raceGroups[r].map(n => `<span class="quick-tag tag-${r.toLowerCase()}" onclick="selectQuickItem('${n}')">${n}</span>`).join('')}</div></div></div>`).join('');
+                `<div class="quick-tags-section"><div class="quick-tags-header expanded" onclick="toggleQuickTagSection(this)"><span class="toggle-icon">▶</span> 🐾 ${t('quickTags.pets')}</div><div class="quick-tags-content show"><div class="quick-tags">${pets.map(p => `<span class="quick-tag tag-pet" onclick="selectQuickItem('${jsStr(getPetName(p))}')">${escapeHtml(getPetName(p))}</span>`).join('')}</div></div></div>` :
+                RACE_ORDER.filter(r => raceGroups[r].length).map(r => `<div class="quick-tags-section"><div class="quick-tags-header expanded" onclick="toggleQuickTagSection(this)"><span class="toggle-icon">▶</span>${RACE_EMOJI[r]} ${raceLabel(r)} (${raceGroups[r].length})</div><div class="quick-tags-content show"><div class="quick-tags">${raceGroups[r].map(n => `<span class="quick-tag tag-${r.toLowerCase()}" onclick="selectQuickItem('${jsStr(n)}')">${escapeHtml(n)}</span>`).join('')}</div></div></div>`).join('');
             
             $('quick-select-modal').classList.remove('hidden');
         }
@@ -2668,7 +2849,7 @@
 			
 			container.innerHTML = recentlyViewed.map(item => `
 				<div class="recently-viewed-item" onclick="showFormation(${Number(item.id) || 0})" title="${escapeHtml(item.name)}">
-					<span class="rv-id">#${item.id}</span>${escapeHtml(item.name.substring(0, 15))}${item.name.length > 15 ? '..' : ''}
+					<span class="rv-id">#${Number(item.id) || ''}</span>${escapeHtml(item.name.substring(0, 15))}${item.name.length > 15 ? '..' : ''}
 				</div>
 			`).join('');
 			
@@ -2720,7 +2901,7 @@
 								<div class="similar-formation-item" onclick="showFormation(${f.id})">
 									<div class="similar-formation-info">
 										<div class="similar-formation-name">${escapeHtml(f.name)}</div>
-										<div class="similar-formation-heroes">⚔️ ${f.my.filter(h => h).join(', ') || '—'} + ${f.myPet || '—'}</div>
+										<div class="similar-formation-heroes">⚔️ ${f.my.filter(h => h).map(escapeHtml).join(', ') || '—'} + ${escapeHtml(f.myPet) || '—'}</div>
 									</div>
 									<span class="similar-formation-id">#${f.id}</span>
 								</div>
@@ -2815,7 +2996,7 @@
         }
 
         function renderBattlePet(name) {
-            return name ? `<div class="battle-pet filled slot-clickable" onclick="event.stopPropagation();showPetSkills('${jsStr(name)}')"><span class="pet-icon">🐾</span><span>${name}</span></div>` :
+            return name ? `<div class="battle-pet filled slot-clickable" onclick="event.stopPropagation();showPetSkills('${jsStr(name)}')"><span class="pet-icon">🐾</span><span>${escapeHtml(name)}</span></div>` :
                 `<div class="battle-pet empty"><span class="pet-icon">🐾</span><span>${t('preview.noPet')}</span></div>`;
         }
 
@@ -4393,16 +4574,16 @@
 						<div class="pinned-combo-formations">
 							${pinned.formations.map((f, i) => `
 								<div class="pinned-formation">
-									<strong>${t('war.battle')} ${i+1}</strong> (#${f.formationId}):
+									<strong>${t('war.battle')} ${i+1}</strong> (#${Number(f.formationId) || ''}):
 									${f.my.filter(h => h).slice(0, 4).map(escapeHtml).join(', ')}${f.my.filter(h => h).length > 4 ? '...' : ''}
 								</div>
 							`).join('')}
 						</div>
 						<div class="pinned-combo-actions">
-							<button class="btn btn-small btn-secondary" onclick="loadPinnedCombo(${pinned.id})">
+							<button class="btn btn-small btn-secondary" onclick="loadPinnedCombo(${Number(pinned.id) || 0})">
 								${t('war.pinnedPreview')}
 							</button>
-							<button class="btn btn-small btn-danger" onclick="unpinCombo(${pinned.id})">
+							<button class="btn btn-small btn-danger" onclick="unpinCombo(${Number(pinned.id) || 0})">
 								${t('war.unpin')}
 							</button>
 						</div>
@@ -4649,8 +4830,8 @@
 					return `
 						<div class="war-history-enemy">
 							<strong>W${eIdx + 1}:</strong>
-							<span class="heroes">${heroesText || '—'}${moreCount > 0 ? ` +${moreCount}` : ''}</span>
-							${petText ? `<span class="pet">${petText}</span>` : ''}
+							<span class="heroes">${escapeHtml(heroesText) || '—'}${moreCount > 0 ? ` +${moreCount}` : ''}</span>
+							${petText ? `<span class="pet">${escapeHtml(petText)}</span>` : ''}
 						</div>
 					`;
 				}).filter(h => h).join('');
@@ -4959,7 +5140,7 @@
 						<div>
 							${conflictList.map(c => `
 								<span class="war-conflict-item">
-									${c.type === 'pet' ? '🐾 ' : ''}${c.name} <span class="battles">(${t('war.battles')} ${c.battles.join(', ')})</span>
+									${c.type === 'pet' ? '🐾 ' : ''}${escapeHtml(c.name)} <span class="battles">(${t('war.battles')} ${c.battles.join(', ')})</span>
 								</span>
 							`).join('')}
 						</div>
@@ -5677,12 +5858,12 @@
 					.join('');
 				
 				return `
-					<div class="kreator-saved-item" onclick="loadKreatorSaved(${saved.id})">
+					<div class="kreator-saved-item" onclick="loadKreatorSaved(${Number(saved.id) || 0})">
 						<div class="kreator-saved-item-header">
 							<span class="kreator-saved-item-name">${escapeHtml(saved.name)}</span>
 							<div style="display:flex;align-items:center;gap:8px;">
 								<span class="kreator-saved-item-date">${getTimeAgo(new Date(saved.timestamp))}</span>
-								<button class="btn btn-small btn-secondary" onclick="deleteKreatorSaved(${saved.id}, event)" title="Usuń">🗑️</button>
+								<button class="btn btn-small btn-secondary" onclick="deleteKreatorSaved(${Number(saved.id) || 0}, event)" title="Usuń">🗑️</button>
 							</div>
 						</div>
 						<div class="kreator-saved-item-content">${preview}</div>
@@ -5867,7 +6048,7 @@
                     return { who: 'rows23', whoLabel: `${t('bookcalc.rows23')} ${names(mem)}`, stat: c.stat, value: c.value, flat: c.flat, dynamic: !!c.dynamic, note: c.trig ? t(c.trig) : undefined };
                 }
                 const mem = members.filter(m => m.row === c.row); if (!mem.length) return null;
-                return { who: 'row:' + c.row, whoLabel: `${t('bookcalc.onlyRow', { n: c.row })} ${names(mem)}`, stat: c.stat, value: c.value, flat: c.flat, dynamic: !!c.dynamic, stackMax: c.stackMax, note: c.trig ? t(c.trig) : undefined };
+                return { who: 'row:' + c.row, whoLabel: `${t('bookcalc.onlyRow', { n: Number(c.row) || '' })} ${names(mem)}`, stat: c.stat, value: c.value, flat: c.flat, dynamic: !!c.dynamic, stackMax: c.stackMax, note: c.trig ? t(c.trig) : undefined };
             }
             return null;
         }
@@ -5894,7 +6075,7 @@
             }
             const sortG = m => [...m.values()].sort((a, b) => a.order - b.order);
             const statLine = g => Array.from(g.stats.entries()).map(([s, v]) => `<div class="bkw-stat">${bookValStr(v, false)} ${escSkill(s)}</div>`).join('');
-            const dynLine = g => g.list.map(it => `<div class="bkw-stat">${bookValStr(it.value, it.flat)} ${escSkill(it.stat)}${it.stackMax ? ` (${t('bookcalc.upTo')} ${it.stackMax}×)` : ''}${it.note ? ` <span class="bkw-note">· ${escSkill(it.note)}</span>` : ''}</div>`).join('');
+            const dynLine = g => g.list.map(it => `<div class="bkw-stat">${bookValStr(it.value, it.flat)} ${escSkill(it.stat)}${it.stackMax ? ` (${t('bookcalc.upTo')} ${Number(it.stackMax) || ''}×)` : ''}${it.note ? ` <span class="bkw-note">· ${escSkill(it.note)}</span>` : ''}</div>`).join('');
             const grpHtml = (g, line) => `<div class="bkw-group"><span class="bkw-who">${g.label}</span><div class="bkw-stats">${line(g)}</div></div>`;
             let body = sortG(staticG).map(g => grpHtml(g, statLine)).join('');
             const dg = sortG(dynG);
@@ -6006,7 +6187,7 @@
         // STR=mięsień, AGI=łuk jak w grze, INT=kula). Łatwa podmiana na grafiki gdyby pojawiło się dobre źródło.
         const ROLE_ICON = { Dealer: '🗡️', Tank: '🛡️', Healer: '➕', Support: '💠' };
         const STAT_ICON = { STR: '🔨', AGI: '🏹', INT: '🪄' };
-        const roleLabel = r => `${ROLE_ICON[r] || ''} ${t('role.' + r)}`.trim();
+        const roleLabel = r => (ROLE_ICON[r] ? `${ROLE_ICON[r]} ${t('role.' + r)}` : escapeHtml(r));
         const statLabel = s => s ? `${STAT_ICON[s] || ''} ${escSkill(s)}`.trim() : '';
         // Znaczek „zweryfikowany" (jak niebieski ptaszek na social media) — gdy obj.verified === true.
         const verifiedBadge = obj => obj && obj.verified ? `<span class="verified-badge" title="${escSkill(t('heroes.verified'))}">✓</span>` : '';
@@ -6024,7 +6205,7 @@
         }
 
         // Escape HTML — skille to tekst z gry, zabezpieczamy wstrzyknięcie. \n zostają (CSS pre-line je renderuje).
-        const escSkill = s => String(s == null ? '' : s).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+        const escSkill = s => String(s == null ? '' : s).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]));
 
         // Przykłady wyszukiwania po treści skilla (pokazywane gdy pole puste).
         const HEROES_SEARCH_EXAMPLES = ['Shock', 'Silence', 'Stun', 'Heal', 'Energy', 'Crit', 'Shield', 'Dodge', 'Bleed'];
@@ -6295,7 +6476,9 @@
             if (!heroSkillsRef) return;
             try {
                 const snap = await heroSkillsRef.once('value');
-                allHeroSkills = snap.val() || {};
+                const v = snap.val() || {};
+                allHeroSkills = {};
+                Object.entries(v).forEach(([name, sk]) => { const x = sanitizeHeroSkills(sk); if (x) allHeroSkills[name] = x; });
                 heroSkillsLoaded = true;
             } catch (e) {
                 console.error('heroSkills load error:', e);
@@ -6451,7 +6634,7 @@
             const counts = {};
             getBookBonuses().forEach(b => { counts[b.book] = (counts[b.book] || 0) + 1; });
             // chipy tylko dla ksiąg z ≥1 bonusem (pusta nowa księga pojawi się dopiero gdy dostanie bonus)
-            let html = getBooks().filter(m => counts[m.key]).map(m => `<button class="heroes-chip book-chip${bookFilterBooks.has(m.key) ? ' active' : ''}" onclick="toggleBookFilter('${jsStr(m.key)}')">${m.icon} ${escapeHtml(m.label)} (${counts[m.key]})</button>`).join('');
+            let html = getBooks().filter(m => counts[m.key]).map(m => `<button class="heroes-chip book-chip${bookFilterBooks.has(m.key) ? ' active' : ''}" onclick="toggleBookFilter('${jsStr(m.key)}')">${escapeHtml(m.icon)} ${escapeHtml(m.label)} (${counts[m.key]})</button>`).join('');
             if (bookFilterBooks.size) html += `<button class="heroes-chip heroes-chip-clear" onclick="clearBookFilters()">✕ ${t('heroes.clearFilters')}</button>`;
             if (isAdmin) {
                 html += `<button class="heroes-chip book-admin-chip" onclick="openBookEdit(null)">➕ ${t('book.addBonus')}</button>`;
@@ -6468,7 +6651,7 @@
             const admin = (isAdmin && bookFromDb())
                 ? `<div class="book-card-actions"><button class="book-card-btn" onclick="openBookEdit('${jsStr(b.id)}')" title="${t('book.editBtn')}">✏️</button><button class="book-card-btn" onclick="deleteBookBonus('${jsStr(b.id)}')" title="${t('book.deleteBtn')}">🗑️</button></div>`
                 : '';
-            return `<div class="book-card" style="border-left-color:${bookMeta(b.book).color}">`
+            return `<div class="book-card" style="border-left-color:${escapeHtml(bookMeta(b.book).color)}">`
                 + `<div class="book-card-top"><span class="book-card-name">${nameHtml}</span>${admin}</div>`
                 + `<div class="book-card-desc">${descHtml}</div></div>`;
         }
@@ -6494,7 +6677,7 @@
                 + `<span class="toggle-icon">▶</span>${label} (${count})</div>`
                 + `<div class="quick-tags-content show"><div class="book-cards">${cards}</div></div></div>`;
             const html = getBooks().filter(m => groups[m.key]).map(m =>
-                section(`${m.icon} ${escapeHtml(m.label)}`, groups[m.key].length,
+                section(`${escapeHtml(m.icon)} ${escapeHtml(m.label)}`, groups[m.key].length,
                     groups[m.key].sort((a, b) => a.order - b.order).map(b => bookCardHTML(b, parsed)).join(''))).join('');
             if (!html) { grid.innerHTML = banner + `<div class="heroes-empty">${t('book.none')}</div>`; return; }
             grid.innerHTML = banner + `<button class="expand-all-btn" onclick="toggleAllBookGroups(this)">▲ ${t('heroes.collapseAll')}</button>` + html;
@@ -6609,7 +6792,7 @@
             const b = id ? getBookBonuses().find(x => x.id === id) : null;
             $('book-edit-title').textContent = b ? t('book.editTitle') : t('book.addTitle');
             const sel = $('be-book');
-            sel.innerHTML = getBooks().map(m => `<option value="${escapeHtml(m.key)}">${m.icon} ${escapeHtml(m.label)}</option>`).join('');
+            sel.innerHTML = getBooks().map(m => `<option value="${escapeHtml(m.key)}">${escapeHtml(m.icon)} ${escapeHtml(m.label)}</option>`).join('');
             sel.value = b ? b.book : (getBooks()[0]?.key || 'heroes');
             $('be-name').value = b ? b.name : '';
             $('be-desc').value = b ? b.desc : '';
@@ -6707,8 +6890,8 @@
                 const isDefault = DEFAULT_BOOK_META.some(d => d.key === m.key);
                 const delAttr = n ? `disabled title="${t('book.metaHasBonuses')}"` : (bookMetaRecord(m.key) ? '' : `disabled title="${t('book.metaDefaultOnly')}"`);
                 return `<div class="book-meta-row">
-                    <span class="book-meta-swatch" style="background:${m.color}"></span>
-                    <span class="book-meta-info">${m.icon} <b>${escapeHtml(m.label)}</b> <span style="color:var(--text-muted)">(${escapeHtml(m.key)} · ${n} ${t('book.bonusesShort')}${isDefault ? ' · ' + t('book.defaultTag') : ''})</span></span>
+                    <span class="book-meta-swatch" style="background:${escapeHtml(m.color)}"></span>
+                    <span class="book-meta-info">${escapeHtml(m.icon)} <b>${escapeHtml(m.label)}</b> <span style="color:var(--text-muted)">(${escapeHtml(m.key)} · ${n} ${t('book.bonusesShort')}${isDefault ? ' · ' + t('book.defaultTag') : ''})</span></span>
                     <span class="book-meta-acts">
                         <button class="book-card-btn" onclick="editBookMetaRow('${jsStr(m.key)}')" title="${t('book.editBtn')}">✏️</button>
                         <button class="book-card-btn" onclick="deleteBookMeta('${jsStr(m.key)}')" ${delAttr}>🗑️</button>
@@ -6924,7 +7107,7 @@
         const ARTIFACT_CLASS_ICON = { Tank: '🛡️', Dealer: '🗡️', Support: '💠', Healer: '➕', any: '🌐' };
         const artifactClassLabel = k => k === 'any'
             ? `${ARTIFACT_CLASS_ICON.any} ${t('artifacts.classAny')}`
-            : `${ARTIFACT_CLASS_ICON[k] || ''} ${t('role.' + k)}`.trim();
+            : (ARTIFACT_CLASS_ICON[k] ? `${ARTIFACT_CLASS_ICON[k]} ${t('role.' + k)}` : escapeHtml(k));
         const artifactSlug = name => normalize(name).replace(/[.#$\[\]\/]/g, '').replace(/\s+/g, ' ').trim();
 
         let _defaultArtifactsCache = null;
@@ -7690,7 +7873,7 @@
             const box = $('global-search-results');
             gsearchFlat = [];
             const total = groups.reduce((s, g) => s + g.items.length, 0);
-            if (!total) { box.innerHTML = `<div class="gs-empty">${escapeHtml(t('search.noResults'))} „${escapeHtml(gsTrunc(q, 40))}"</div>`; gsearchSel = -1; return; }
+            if (!total) { box.innerHTML = `<div class="gs-empty">${escapeHtml(t('gsearch.noResultsFor'))} „${escapeHtml(gsTrunc(q, 40))}"</div>`; gsearchSel = -1; return; }
             let html = '';
             for (const g of groups) {
                 if (!g.items.length) continue;
@@ -9138,7 +9321,7 @@
                     const chips = sorted.map(x => {
                         const hero = findHero(x.hero);
                         const rc = hero ? `race-${hero.race.toLowerCase()}` : '';
-                        return `<span class="defense-speed-chip"><span class="${rc}">${escapeHtml(x.hero)}</span> <strong>${x.speed}</strong></span>`;
+                        return `<span class="defense-speed-chip"><span class="${rc}">${escapeHtml(x.hero)}</span> <strong>${Number(x.speed) || ''}</strong></span>`;
                     }).join('<span class="defense-speed-arrow">→</span>');
                     const partial = filledCount < total
                         ? `<span style="font-size: 0.65rem; color: var(--text-muted); margin-left: 6px;">(${t('defense.speedPartial').replace('{n}', filledCount).replace('{total}', total)})</span>`
@@ -9156,7 +9339,7 @@
                 const rc = hero ? `race-${hero.race.toLowerCase()}` : '';
                 return `<div class="defense-speed-row">
                             <span class="${rc}" style="font-size: 0.75rem; flex: 1;">${escapeHtml(h)}</span>
-                            <input type="number" min="1" id="speed-input-${assignmentId}-${i}" value="${currentVal}" placeholder="—" class="defense-speed-input">
+                            <input type="number" min="1" id="speed-input-${assignmentId}-${i}" value="${escapeHtml(currentVal)}" placeholder="—" class="defense-speed-input">
                         </div>`;
             }).join('');
 
@@ -10284,8 +10467,8 @@
                 screenFoldersRef.on('child_added', s => { screenFoldersById.set(s.key, { ...s.val(), id: s.key }); scheduleScreensCache('folders'); });
                 screenFoldersRef.on('child_changed', s => { screenFoldersById.set(s.key, { ...s.val(), id: s.key }); scheduleScreensCache('folders'); });
                 screenFoldersRef.on('child_removed', s => { screenFoldersById.delete(s.key); scheduleScreensCache('folders'); });
-                screenshotsRef.on('child_added', s => { screenshotsById.set(s.key, { ...s.val(), id: s.key }); scheduleScreensCache('shots'); });
-                screenshotsRef.on('child_changed', s => { screenshotsById.set(s.key, { ...s.val(), id: s.key }); scheduleScreensCache('shots'); });
+                screenshotsRef.on('child_added', s => { const x = sanitizeScreenshot(s.val()); if (x) screenshotsById.set(s.key, { ...x, id: s.key }); scheduleScreensCache('shots'); });
+                screenshotsRef.on('child_changed', s => { const x = sanitizeScreenshot(s.val()); if (x) screenshotsById.set(s.key, { ...x, id: s.key }); scheduleScreensCache('shots'); });
                 screenshotsRef.on('child_removed', s => { screenshotsById.delete(s.key); scheduleScreensCache('shots'); });
                 screensInitialLoad = Promise.all([
                     screenFoldersRef.once('value'),
@@ -10566,7 +10749,7 @@
                     <div class="screen-thumb-name">${escapeHtml(s.title || '') || '—'}</div>
                     ${(s.tags && s.tags.length) ? `<div class="screen-thumb-tags">${s.tags.slice(0, 3).map(tg => `<span class="screen-tag">${escapeHtml(tg)}</span>`).join('')}</div>` : ''}
                     ${locLabel ? `<div class="screen-thumb-loc">📁 ${locLabel}</div>` : ''}
-                    <div class="screen-thumb-meta">${typeof s.size === 'number' ? fmtBytes(s.size) + ' | ' : ''}${(s.uploadedAt || '').slice(0, 10)}</div>
+                    <div class="screen-thumb-meta">${typeof s.size === 'number' ? fmtBytes(s.size) + ' | ' : ''}${escapeHtml(String(s.uploadedAt || '').slice(0, 10))}</div>
                 </div>`;
 
             // Paginacja: zmiana widoku (folder/filtry/sort) resetuje limit renderowania; „pokaż więcej" go zwiększa.
@@ -10888,6 +11071,8 @@
         async function downloadScreenshot(id) {
             const s = findScreenshot(id || screensLightboxId);
             if (!s) return;
+            // Tylko pliki z naszego Firebase Storage — URL z bazy jest niezaufany (np. javascript:).
+            if (!safeUrl(s.url)) { showToast(t('screens.badUrl'), true); return; }
             const fname = (s.title || 'screen').replace(/[\\/:*?"<>|]+/g, '_') + '.jpg';
             try {
                 const resp = await fetch(s.url);
@@ -10899,7 +11084,7 @@
                 document.body.appendChild(a); a.click(); a.remove();
                 setTimeout(() => URL.revokeObjectURL(objUrl), 2000);
             } catch (e) {
-                window.open(s.url, '_blank'); // fallback — użytkownik zapisuje ręcznie
+                window.open(s.url, '_blank', 'noopener'); // fallback — użytkownik zapisuje ręcznie
             }
         }
         // Nawigacja ‹ › po screenach bieżącego folderu (zawija się na końcach).
@@ -11368,51 +11553,21 @@
             bookBonusesRef = db.ref('bookBonuses');
             bookMetaRef = db.ref('bookMeta');
 
-            // Sanityzacja rekordu z /formations — baza ma .write:true, więc rekord może być
-            // dowolnie uszkodzony (brak my/enemy; sparse-tablica wraca z RTDB jako obiekt
-            // {0:'A',5:'B'} bez .filter/.map). Wymuszamy 8-slotowe tablice stringów, bo jeden
-            // zły rekord wywracał updateUI w listenerze i apka wisiała na „Ładowanie" u wszystkich.
-            const toSlots8 = v => {
-                const out = new Array(8).fill('');
-                if (Array.isArray(v)) {
-                    v.slice(0, 8).forEach((h, i) => { if (typeof h === 'string') out[i] = h; });
-                } else if (v && typeof v === 'object') {
-                    Object.keys(v).forEach(k => {
-                        const i = Number(k);
-                        if (Number.isInteger(i) && i >= 0 && i < 8 && typeof v[k] === 'string') out[i] = v[k];
-                    });
-                }
-                return out;
-            };
-            const sanitizeFormation = f => {
-                if (!f || typeof f !== 'object') return null;
-                return {
-                    ...f,
-                    id: Number(f.id) || 0,
-                    my: toSlots8(f.my),
-                    enemy: toSlots8(f.enemy),
-                    myPet: typeof f.myPet === 'string' ? f.myPet : '',
-                    enemyPet: typeof f.enemyPet === 'string' ? f.enemyPet : '',
-                    name: typeof f.name === 'string' ? f.name : '',
-                    myArtifacts: toSlots8(f.myArtifacts),
-                    enemyArtifacts: toSlots8(f.enemyArtifacts),
-                    myRunes: toSlots8(f.myRunes),
-                    enemyRunes: toSlots8(f.enemyRunes),
-                };
-            };
-
             formationsRef.on('value', snap => {
                 allFormations = snap.val()
                     ? Object.values(snap.val()).map(sanitizeFormation).filter(Boolean).sort((a, b) => a.id - b.id)
                     : [];
                 updateUI();
-                $('loading').classList.add('hidden');
+                hideLoadError();
                 setOnlineStatus(true);
-            }, () => { setOnlineStatus(false); $('loading').classList.add('hidden'); });
+            }, err => { setOnlineStatus(false); onListenError('formations')(err); showLoadError(); });
+            setTimeout(showLoadError, LOAD_TIMEOUT_MS);
             
             heroesRef.on('value', snap => {
                 if (snap.val()) {
-                    heroes = Object.values(snap.val()).sort((a, b) => a.name.localeCompare(b.name));
+                    const clean = Object.values(snap.val()).map(sanitizeHero).filter(Boolean);
+                    if (!clean.length) return; // same złe rekordy → zostaje dotychczasowa lista/fallback
+                    heroes = clean.sort((a, b) => a.name.localeCompare(b.name));
                     if (isAdmin) renderHeroesList();
                     // Nowy/zmieniony bohater pojawia się od razu w zakładce Bohaterowie (z „brak danych" dopóki admin nie uzupełni skilli)
                     if ($('tab-heroes')?.classList.contains('active')) renderHeroesGrid();
@@ -11422,11 +11577,13 @@
                     generateAddFormTags();
                     generateQuickTags();
                 }
-            });
+            }, onListenError('heroes'));
 
             petsRef.on('value', snap => {
                 if (snap.val()) {
-                    pets = Object.values(snap.val()).map(getPetName).sort();
+                    const clean = Object.values(snap.val()).map(sanitizePet).filter(Boolean);
+                    if (!clean.length) return;
+                    pets = clean.sort();
                     if (isAdmin) renderPetsList();
                     if ($('tab-heroes')?.classList.contains('active')) renderHeroesGrid(); // nowy pet pojawia się od razu w sekcji Pety
                     // Regeneruj tagi zależne od pets (War/Kreator/Dodaj + pety w Szukajce) — updateUI już ich nie rusza
@@ -11435,47 +11592,46 @@
                     generateAddFormTags();
                     generateQuickTags();
                 }
-            });
+            }, onListenError('pets'));
             
             // ─── Słownik synonimów (live; przy pustym /synonyms szukajka używa DEFAULT_SYNONYMS) ───
             synonymsRef.on('value', snap => {
                 const v = snap.val();
-                allSynonyms = v ? Object.entries(v).map(([id, g]) => ({ id, forms: (g && g.forms) || [], expand: (g && g.expand) || [] })) : [];
+                const strList = x => (Array.isArray(x) ? x : Object.values(x || {})).map(asStr).filter(Boolean);
+                allSynonyms = v ? Object.entries(v).map(([id, g]) => ({ id, forms: strList(g && g.forms), expand: strList(g && g.expand) })) : [];
                 rebuildSynonymIndex();
                 if ($('tab-heroes')?.classList.contains('active')) {
                     renderHeroesSynonyms(); // mode-aware (panel Bohaterów albo Księgi)
                     if (heroesMode === 'book') renderBookGrid(); else renderHeroesGrid();
                 }
-            }, () => {});
+            }, onListenError('synonyms'));
 
             // ─── Księga bonusów (live; przy pustym /bookBonuses szukajka używa DEFAULT_BOOK_BONUSES) ───
             // WYMAGA reguły Firebase: "bookBonuses": { ".read": true, ".write": true } — bez niej seed/edycja cicho odpadają.
             bookBonusesRef.on('value', snap => {
                 const v = snap.val();
-                allBookBonuses = v ? Object.entries(v).map(([id, x]) => ({ ...x, id })) : [];
+                allBookBonuses = v ? Object.entries(v).map(([id, x]) => { const b = sanitizeBookBonus(x); return b && { ...b, id }; }).filter(Boolean) : [];
                 const ord = {}; getBooks().forEach(m => { ord[m.key] = m.order || 0; });
                 allBookBonuses.sort((a, b) => (ord[a.book] ?? 90) - (ord[b.book] ?? 90) || (a.order || 0) - (b.order || 0));
                 if (heroesMode === 'book' && $('tab-heroes')?.classList.contains('active')) renderBookTab();
-            }, () => {});
+            }, onListenError('bookBonuses'));
             // ─── Definicje ksiąg (live). WYMAGA reguły: "bookMeta": { ".read": true, ".write": true } ───
             bookMetaRef.on('value', snap => {
                 const v = snap.val();
-                allBookMeta = v ? Object.entries(v).map(([id, x]) => ({ ...x, id })) : [];
+                allBookMeta = v ? Object.entries(v).map(([id, x]) => { const m = sanitizeBookMeta(x); return m && { ...m, id }; }).filter(Boolean) : [];
                 if (heroesMode === 'book' && $('tab-heroes')?.classList.contains('active')) renderBookTab();
                 if ($('book-meta-modal')?.classList.contains('show')) renderBookMetaList();
-            }, () => {});
+            }, onListenError('bookMeta'));
 
             // ─── Artefakty (live; przy pustym /artifacts widok używa DEFAULT_ARTIFACTS) ───
             // WYMAGA reguły Firebase: "artifacts": { ".read": true, ".write": true } — bez niej seed/edycja cicho odpadają.
             artifactsRef = db.ref('artifacts');
             artifactsRef.on('value', snap => {
                 const v = snap.val();
-                allArtifacts = v ? Object.entries(v).map(([id, x]) => ({
-                    ...x, id,
-                    bonuses: Array.isArray(x.bonuses) ? x.bonuses : Object.values(x.bonuses || {}),
-                })).sort((a, b) => (a.order || 0) - (b.order || 0)) : [];
+                allArtifacts = v ? Object.entries(v).map(([id, x]) => { const a = sanitizeArtifact(x); return a && { ...a, id }; })
+                    .filter(Boolean).sort((a, b) => (a.order || 0) - (b.order || 0)) : [];
                 if (heroesMode === 'artifacts' && $('tab-heroes')?.classList.contains('active')) renderArtifactsTab();
-            }, () => {});
+            }, onListenError('artifacts'));
 
             // ─── Defense (obrona gildii) ───
             defenseFormationsRef = db.ref('defenseFormations');
@@ -11483,17 +11639,17 @@
             defenseAssignmentsRef = db.ref('defenseAssignments');
 
             defenseFormationsRef.on('value', snap => {
-                allDefenseFormations = snap.val() ? Object.values(snap.val()).sort((a, b) => a.id - b.id) : [];
+                allDefenseFormations = snap.val() ? Object.values(snap.val()).map(sanitizeDefenseFormation).filter(Boolean).sort((a, b) => a.id - b.id) : [];
                 if (isAdmin) rerenderDefenseCurrent();
-            });
+            }, onListenError('defenseFormations'));
             defensePlayersRef.on('value', snap => {
-                allDefensePlayers = snap.val() ? Object.values(snap.val()).sort((a, b) => a.id - b.id) : [];
+                allDefensePlayers = snap.val() ? Object.values(snap.val()).map(sanitizeDefensePlayer).filter(Boolean).sort((a, b) => a.id - b.id) : [];
                 if (isAdmin) rerenderDefenseCurrent();
-            });
+            }, onListenError('defensePlayers'));
             defenseAssignmentsRef.on('value', snap => {
-                allDefenseAssignments = snap.val() ? Object.values(snap.val()).sort((a, b) => a.id - b.id) : [];
+                allDefenseAssignments = snap.val() ? Object.values(snap.val()).map(sanitizeDefenseAssignment).filter(Boolean).sort((a, b) => a.id - b.id) : [];
                 if (isAdmin) rerenderDefenseCurrent();
-            });
+            }, onListenError('defenseAssignments'));
 
             // ─── Galeria screenów (Firebase Storage + RTDB /screenFolders + /screenshots) ───
             screenFoldersRef = db.ref('screenFolders');
@@ -11553,7 +11709,7 @@
                 // Domyślne „widoku" (filtr bazy + pakiety) stosujemy tylko raz, przy pierwszym załadowaniu
                 if (!configInitApplied) {
                     configInitApplied = true;
-                    packageOptions.minSupport = appConfig.defaultPackageMinSupport;
+                    packageOptions.minSupport = clampMinSupport(appConfig.defaultPackageMinSupport);
                     packageOptions.window = appConfig.defaultPackageWindow;
                     if ($('packages-min-support')) $('packages-min-support').value = packageOptions.minSupport;
                     document.querySelectorAll('.pkg-btn[data-pkg-window]').forEach(b =>
@@ -11564,7 +11720,7 @@
                 renderConfigForm();
                 if (allFormations.length) filterDatabase();              // odśwież badge NOWE w bazie
                 if (lastSearch) displayResults(lastSearch.results, lastSearch.searchHeroes); // odśwież aktywne wyniki
-            });
+            }, onListenError('config/settings'));
 
             // Fallback: gdyby config nie dotarł (offline/wolny Firebase), odsłoń pasek z domyślnymi po 2.5s
             setTimeout(() => { if (!navConfigReady) { navConfigReady = true; applyTabVisibility(); } }, 2500);
@@ -11573,7 +11729,7 @@
         } catch (e) {
             console.error('Firebase error:', e);
             setOnlineStatus(false);
-            $('loading').classList.add('hidden');
+            showLoadError();
         }
 
         // =====================================================

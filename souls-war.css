@@ -1429,6 +1429,11 @@
 		}
 		
 		.loading-overlay.hidden { display: none; }
+		/* Brak danych przy starcie (offline / błąd Firebase) — komunikat zamiast wiecznego spinnera */
+		.loading-overlay.load-error { padding: 24px; text-align: center; }
+		.load-error-icon { font-size: 2.5rem; }
+		.load-error-title { color: var(--accent-gold); font-size: 1.1rem; font-weight: 700; }
+		.load-error-text { color: var(--text-light); max-width: 320px; }
 
 		.spinner {
 			width: 50px;
